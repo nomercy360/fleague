@@ -1,0 +1,7 @@
+.idea
+config.yml
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+
