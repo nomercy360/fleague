@@ -4,12 +4,12 @@ import "context"
 
 func (s *storage) SaveMatch(ctx context.Context, match Match) error {
 	query := `
-        INSERT INTO matches (id, tournament, home_team, away_team, match_date, status, away_score, home_score)
+        INSERT INTO matches (id, tournament, home_team_id, away_team_id, match_date, status, away_score, home_score)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
         tournament = excluded.tournament,
-        home_team = excluded.home_team,
-        away_team = excluded.away_team,
+        home_team_id = excluded.home_team_id,
+        away_team_id = excluded.away_team_id,
         match_date = excluded.match_date,
         status = excluded.status,
         away_score = excluded.away_score,
@@ -18,8 +18,8 @@ func (s *storage) SaveMatch(ctx context.Context, match Match) error {
 	_, err := s.db.ExecContext(ctx, query,
 		match.ID,
 		match.Tournament,
-		match.HomeTeam,
-		match.AwayTeam,
+		match.HomeTeamID,
+		match.AwayTeamID,
 		match.MatchDate,
 		match.Status,
 		match.AwayScore,
@@ -37,8 +37,8 @@ func (s *storage) GetActiveMatches(ctx context.Context, leagueID *int) ([]Match,
             SELECT
                 m.id,
                 m.tournament,
-                m.home_team,
-                m.away_team,
+                m.home_team_id,
+                m.away_team_id,
                 m.match_date,
                 m.status
             FROM matches m
@@ -50,8 +50,8 @@ func (s *storage) GetActiveMatches(ctx context.Context, leagueID *int) ([]Match,
             SELECT
                 id,
                 tournament,
-                home_team,
-                away_team,
+                home_team_id,
+                away_team_id,
                 match_date,
                 status
             FROM matches
@@ -67,7 +67,7 @@ func (s *storage) GetActiveMatches(ctx context.Context, leagueID *int) ([]Match,
 	var matches []Match
 	for rows.Next() {
 		var match Match
-		if err := rows.Scan(&match.ID, &match.Tournament, &match.HomeTeam, &match.AwayTeam, &match.MatchDate, &match.Status); err != nil {
+		if err := rows.Scan(&match.ID, &match.Tournament, &match.HomeTeamID, &match.AwayTeamID, &match.MatchDate, &match.Status); err != nil {
 			return nil, err
 		}
 		matches = append(matches, match)

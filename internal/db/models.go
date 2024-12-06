@@ -6,8 +6,8 @@ import "time"
 type Match struct {
 	ID         int       `db:"id"`
 	Tournament string    `db:"tournament"`
-	HomeTeam   string    `db:"home_team"`
-	AwayTeam   string    `db:"away_team"`
+	HomeTeamID int       `db:"home_team_id"`
+	AwayTeamID int       `db:"away_team_id"`
 	MatchDate  time.Time `db:"match_date"`
 	Status     string    `db:"status"`
 	HomeScore  *int      `db:"home_score"` // Nullable, set after match completion
@@ -80,4 +80,14 @@ type SeasonMatch struct {
 	ID       int `db:"id"`
 	SeasonID int `db:"season_id"`
 	MatchID  int `db:"match_id"`
+}
+
+// Team represents a sports team
+type Team struct {
+	ID           int    `db:"id"`
+	Name         string `db:"name"`
+	ShortName    string `db:"short_name"`
+	Abbreviation string `db:"abbreviation"`
+	CrestURL     string `db:"crest_url"`
+	Country      string `db:"country"`
 }

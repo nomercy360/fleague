@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"sort"
 )
 
 // storager interface for database operations
@@ -15,6 +16,7 @@ type storager interface {
 	AddUserToLeague(ctx context.Context, leagueID int, userID string) error
 	GetUserByChatID(chatID int64) (*db.User, error)
 	CreateUser(user db.User) error
+	GetTeamByID(ctx context.Context, teamID int) (db.Team, error)
 }
 
 // Service struct for handling business logic
@@ -56,15 +58,44 @@ func (s Service) GetActiveMatches(ctx context.Context, leagueID *int) ([]contrac
 
 	var matches []contract.MatchResponse
 	for _, match := range res {
+		homeTeam, err := s.storage.GetTeamByID(ctx, match.HomeTeamID)
+		if err != nil {
+			return nil, err
+		}
+
+		awayTeam, err := s.storage.GetTeamByID(ctx, match.AwayTeamID)
+		if err != nil {
+			return nil, err
+		}
+
 		matches = append(matches, contract.MatchResponse{
 			ID:         match.ID,
 			Tournament: match.Tournament,
-			HomeTeam:   match.HomeTeam,
-			AwayTeam:   match.AwayTeam,
 			MatchDate:  match.MatchDate,
 			Status:     match.Status,
+			HomeTeam: contract.TeamResponse{
+				ID:           homeTeam.ID,
+				Name:         homeTeam.Name,
+				ShortName:    homeTeam.ShortName,
+				CrestURL:     homeTeam.CrestURL,
+				Country:      homeTeam.Country,
+				Abbreviation: homeTeam.Abbreviation,
+			},
+			AwayTeam: contract.TeamResponse{
+				ID:           awayTeam.ID,
+				Name:         awayTeam.Name,
+				ShortName:    awayTeam.ShortName,
+				CrestURL:     awayTeam.CrestURL,
+				Country:      awayTeam.Country,
+				Abbreviation: awayTeam.Abbreviation,
+			},
 		})
 	}
+
+	// sort matches by date
+	sort.Slice(matches, func(i, j int) bool {
+		return matches[i].MatchDate.Before(matches[j].MatchDate)
+	})
 
 	return matches, nil
 }

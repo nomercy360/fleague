@@ -99,6 +99,11 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 
 func main() {
 	configFilePath := "config.yml"
+	configFilePathEnv := os.Getenv("CONFIG_FILE_PATH")
+	if configFilePathEnv != "" {
+		configFilePath = configFilePathEnv
+	}
+
 	cfg, err := ReadConfig(configFilePath)
 	if err != nil {
 		log.Fatalf("error reading configuration: %v", err)
@@ -145,7 +150,7 @@ func main() {
 
 	go gracefulShutdown(server, done)
 
-	sync := syncer.NewSyncer(storage, footballAPIBaseURL, cfg.FootballAPIKey, "PL")
+	sync := syncer.NewSyncer(storage, footballAPIBaseURL, cfg.FootballAPIKey, "CL")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

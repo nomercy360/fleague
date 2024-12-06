@@ -19,22 +19,6 @@ export const queryClient = new QueryClient({
 	},
 })
 
-function transformStartParam(startParam?: string): string | null {
-	if (!startParam) return null
-
-	// Check if the parameter starts with "redirect-to-"
-	if (startParam.startsWith('t-')) {
-		const path = startParam.slice('t-'.length)
-
-		return '/' + path.replace(/-/g, '/')
-	} else if (startParam.startsWith('redirect-to=')) {
-		const path = startParam.slice('redirect-to='.length)
-
-		return '/' + path.replace(/-/g, '/')
-	} else {
-		return null
-	}
-}
 
 export default function App(props: any) {
 	const [isAuthenticated, setIsAuthenticated] = createSignal(false)
@@ -66,14 +50,6 @@ export default function App(props: any) {
 			// if there is a redirect url, redirect to it
 			// ?startapp=redirect-to=/users/
 
-			const startapp = window.Telegram.WebApp.initDataUnsafe.start_param
-
-			const redirectUrl = transformStartParam(startapp)
-
-			if (redirectUrl) {
-				navigate(redirectUrl)
-				return
-			}
 		} catch (e) {
 			console.error('Failed to authenticate user:', e)
 			setIsAuthenticated(false)

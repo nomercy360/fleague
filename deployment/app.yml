@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    service: fleague-api
+  name: fleague-api
+  namespace: default
+spec:
+  serviceName: "fleague-api"
+  replicas: 1
+  selector:
+    matchLabels:
+      service: fleague-api
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  template:
+    metadata:
+      labels:
+        service: fleague-api
+    spec:
+      containers:
+        - image: maksim1111/fleague-api:latest
+          name: fleague-api
+          imagePullPolicy: IfNotPresent
+          command: [ "/app/main" ]
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+          volumeMounts:
+            - mountPath: /app/storage
+              subPath: storage
+              name: fleague-api-data
+            - mountPath: /app/config
+              name: fleague-api-config
+              subPath: config.yml
+          env:
+            - name: CONFIG_FILE_PATH
+              value: /app/config/config.yml
+          readinessProbe:
+            exec:
+              command: [ "sqlite3", "/app/storage/db.sqlite", ".tables" ]
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 2
+      volumes:
+        - name: fleague-api-config
+          secret:
+            secretName: fleague-api-secrets
+  volumeClaimTemplates:
+    - metadata:
+        name: fleague-api-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: "do-block-storage"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: fleague-api
+  name: fleague-api
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    service: fleague-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleague-api
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: fleague-api.mxksim.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fleague-api
+                port:
+                  number: 8080

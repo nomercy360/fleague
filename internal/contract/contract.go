@@ -19,13 +19,22 @@ type UserAuthResponse struct {
 	Token        string    `json:"token"`
 }
 
+type TeamResponse struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	ShortName    string `json:"short_name"`
+	CrestURL     string `json:"crest_url"`
+	Country      string `json:"country"`
+	Abbreviation string `json:"abbreviation"`
+}
+
 type MatchResponse struct {
-	ID         int       `json:"id"`
-	Tournament string    `json:"tournament"`
-	HomeTeam   string    `json:"home_team"`
-	AwayTeam   string    `json:"away_team"`
-	MatchDate  time.Time `json:"match_date"`
-	Status     string    `json:"status"`
-	AwayScore  int       `json:"away_score"`
-	HomeScore  int       `json:"home_score"`
+	ID         int          `json:"id"`
+	Tournament string       `json:"tournament"`
+	HomeTeam   TeamResponse `json:"home_team"`
+	AwayTeam   TeamResponse `json:"away_team"`
+	MatchDate  time.Time    `json:"match_date"`
+	Status     string       `json:"status"`
+	AwayScore  int          `json:"away_score"`
+	HomeScore  int          `json:"home_score"`
 }

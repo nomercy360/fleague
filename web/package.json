@@ -19,8 +19,14 @@
     "vite-plugin-solid": "^2.11.0"
   },
   "dependencies": {
+    "@corvu/drawer": "^0.2.2",
+    "@kobalte/core": "^0.13.7",
     "@solidjs/router": "^0.15.1",
     "@tanstack/solid-query": "^5.62.2",
-    "solid-js": "^1.9.3"
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "solid-js": "^1.9.3",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7"
   }
 }

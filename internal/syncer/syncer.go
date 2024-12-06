@@ -13,6 +13,7 @@ import (
 
 type storager interface {
 	SaveMatch(ctx context.Context, match db.Match) error
+	GetTeamByName(ctx context.Context, name string) (db.Team, error)
 }
 
 type Syncer struct {
@@ -146,6 +147,18 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 			continue
 		}
 
+		homeTeam, err := s.storage.GetTeamByName(ctx, *match.HomeTeam.Name)
+		if err != nil {
+			log.Printf("Failed to save or retrieve home team ID: %v", err)
+			continue
+		}
+
+		awayTeam, err := s.storage.GetTeamByName(ctx, *match.AwayTeam.Name)
+		if err != nil {
+			log.Printf("Failed to save or retrieve away team ID: %v", err)
+			continue
+		}
+
 		matchDate, err := time.Parse(time.RFC3339, match.UtcDate.Format(time.RFC3339))
 		if err != nil {
 			log.Printf("Skipping match with invalid date format: %v", err)
@@ -155,8 +168,8 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 		err = s.storage.SaveMatch(ctx, db.Match{
 			ID:         match.Id,
 			Tournament: match.Competition.Name,
-			HomeTeam:   *match.HomeTeam.Name,
-			AwayTeam:   *match.AwayTeam.Name,
+			HomeTeamID: homeTeam.ID,
+			AwayTeamID: awayTeam.ID,
 			MatchDate:  matchDate,
 			Status:     statusMapper(match.Status),
 			HomeScore:  match.Score.FullTime.Home,
