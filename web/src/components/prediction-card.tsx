@@ -1,7 +1,7 @@
 // Пример данных. Замените на реальные данные из API.
 import { cn, formatDate } from '~/lib/utils'
 import { Button } from '~/components/ui/button'
-import { IconPencil } from '~/components/icons'
+import { IconChevronDown, IconChevronRight, IconPencil } from '~/components/icons'
 
 const completedMatches = [
 	{
@@ -12,6 +12,7 @@ const completedMatches = [
 		awayScore: 1,
 		predictedWinner: 'Celtic FC',
 		resultStatus: 'incorrect',
+		pointsEarned: 0,
 	},
 	{
 		tournament: 'UEFA Champions League',
@@ -21,6 +22,17 @@ const completedMatches = [
 		awayScore: 0,
 		predictedWinner: 'Real Madrid CF',
 		resultStatus: 'correct',
+		pointsEarned: 3,
+	},
+	{
+		tournament: 'UEFA Champions League',
+		homeTeam: 'FC Bayern München',
+		awayTeam: 'FC Barcelona',
+		homeScore: 2,
+		awayScore: 1,
+		predictedWinner: 'FC Bayern München',
+		resultStatus: 'correct',
+		pointsEarned: 3,
 	},
 ]
 
@@ -36,63 +48,65 @@ const upcomingMatches = [
 
 const PredictionCard = () => {
 	return (
-		<div class="space-y-2">
-			{/* Завершённые матчи */}
-			<div>
-				<div class="space-y-2">
-					{completedMatches.map((match) => (
-						<div class={cn('rounded-xl max-w-md mx-auto p-2.5 bg-secondary flex flex-col justify-between', {
-							'bg-green-50': match.resultStatus === 'correct',
-							'bg-red-50': match.resultStatus === 'incorrect',
-						})}>
-							<div class="flex items-center space-x-1 mb-2.5">
-								<img src={`/logos/uefa.png`} alt="" class="w-4" />
-								<p class="text-xs">UEFA Champions League</p>
-							</div>
-							<div class="grid grid-cols-2 gap-0.5">
-								<div class="flex items-center space-x-1">
-									<img src={`/logos/${match.homeTeam}.png`} alt="" class="w-4" />
-									<p class="text-xs font-bold">{match.homeTeam}</p>
-								</div>
-								<span class="text-xs font-bold">{match.homeScore}</span>
-								<div class="flex items-center space-x-1">
-									<img src={`/logos/${match.awayTeam}.png`} alt="" class="w-4" />
-									<p class="text-xs font-bold">{match.awayTeam}</p>
-								</div>
-								<span class="text-xs font-bold">{match.awayScore}</span>
-							</div>
+		<div class="px-4">
+			<p class="mb-1 px-2 text-lg font-semibold">
+				All Activity
+			</p>
+			<div class="space-y-2">
+				{completedMatches.map((match) => (
+					<div
+						class="h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card">
+						<div
+							class={cn('h-6 rounded-b-xl w-12 flex items-center justify-center text-white text-xs font-semibold absolute top-0 left-1/2 -translate-x-1/2 transform', {
+								'bg-green-500': match.resultStatus === 'correct',
+								'bg-red-500': match.resultStatus === 'incorrect',
+							})}>
+							{match.resultStatus === 'correct' ? 'win' : 'lose'}
 						</div>
-					))}
-				</div>
+						<div class="flex flex-col items-center space-y-2 text-center">
+							<img src={`/logos/${match.homeTeam}.png`} alt="" class="w-8" />
+							<p class="text-sm font-bold">{match.homeTeam}</p>
+						</div>
+						<div class="flex flex-col items-center text-center">
+							<p class="text-xs text-muted-foreground text-center">
+								{match.tournament}
+							</p>
+							<span class="text-2xl font-bold text-center">{match.homeScore}:{match.awayScore}</span>
+						</div>
+						<div class="flex flex-col items-center space-y-2 text-center">
+							<img src={`/logos/${match.awayTeam}.png`} alt="" class="w-8" />
+							<p class="text-sm font-bold">{match.awayTeam}</p>
+						</div>
+					</div>
+				))}
 			</div>
-			<div>
-				<div class="space-y-4">
-					{upcomingMatches.map((match) => (
-						<div class="rounded-xl max-w-md mx-auto p-2.5 bg-secondary flex flex-row items-center justify-between">
-							<div class="space-y-2">
+			<p class="mt-6 mb-1 px-2 text-lg font-semibold">
+				Upcoming
+			</p>
+			<div class="space-y-2">
+				{upcomingMatches.map((match) => (
+					<div class="h-[140px] rounded-2xl p-3 bg-card flex flex-row items-start justify-between">
+						<div class="space-y-2">
+							<p class="text-xs text-muted-foreground">UEFA Champions League</p>
+							<div class="grid gap-0.5">
 								<div class="flex items-center space-x-1">
-									<img src={`/logos/uefa.png`} alt="" class="w-4" />
-									<p class="text-xs">UEFA Champions League</p>
+									<img src={`/logos/${match.homeTeam}.png`} alt="" class="w-6" />
+									<p class="text-sm font-bold">{match.homeTeam}</p>
 								</div>
-								<div class="grid gap-0.5">
-									<div class="flex items-center space-x-1">
-										<img src={`/logos/${match.homeTeam}.png`} alt="" class="w-4" />
-										<p class="text-xs font-bold">{match.homeTeam}</p>
-									</div>
-									<div class="flex items-center space-x-1">
-										<img src={`/logos/${match.awayTeam}.png`} alt="" class="w-4" />
-										<p class="text-xs font-bold">{match.awayTeam}</p>
-									</div>
+								<div class="flex items-center space-x-1">
+									<img src={`/logos/${match.awayTeam}.png`} alt="" class="w-6" />
+									<p class="text-sm font-bold">{match.awayTeam}</p>
 								</div>
-								<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
 							</div>
-							<Button variant="default" size="sm">
-								<IconPencil />
-								{match.predictedWinner} 3:1
-							</Button>
+							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
 						</div>
-					))}
-				</div>
+						<Button variant="secondary" class="gap-1" size="sm">
+							<span class="text-muted-foreground text-xs font-normal">{match.predictedWinner}</span>
+							<span class="text-xs font-semibold">3:0</span>
+							<IconChevronRight />
+						</Button>
+					</div>
+				))}
 			</div>
 		</div>
 	)

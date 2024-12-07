@@ -4,18 +4,17 @@ import {
 } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchMatches } from '~/lib/api'
-import { IconChevronDown, IconPlot, IconMinus, IconPlus, IconTrophy, IconSparkles } from '~/components/icons'
-import { Button } from '~/components/ui/button'
 import {
-	Drawer, DrawerClose,
-	DrawerContent,
-	DrawerFooter,
-	DrawerTrigger,
-} from '~/components/ui/drawer'
+	IconMinus,
+	IconPlus,
+	IconUsers,
+	IconActivity, IconCalendar, IconChevronRight,
+} from '~/components/icons'
+import { Button } from '~/components/ui/button'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 import PredictionCard from '~/components/prediction-card'
-import { formatDate } from '~/lib/utils'
+import { Link } from '~/components/link'
+import { Badge } from '~/components/ui/badge'
 
 
 export default function FeedPage() {
@@ -69,127 +68,63 @@ export default function FeedPage() {
 	const [awayTeam, setAwayTeam] = createSignal('')
 
 	return (
-		<div class="bg-background text-foreground min-h-[110vh] pt-12">
-			<div class="flex flex-row items-center space-x-4 border-b p-2.5 fixed top-0 left-0 right-0 bg-background z-50">
+		<div class="bg-background text-foreground pb-24">
+			<div class="w-full bg-purple-100 rounded-b-[10%] p-4 mb-10 flex flex-col items-center">
 				<img
 					src={window.Telegram.WebApp.initDataUnsafe.user.photo_url}
 					alt=""
-					class="w-10 h-10 rounded-full object-cover"
+					class="size-24 rounded-full object-cover"
 				/>
-				<div class="space-x-1.5 flex flex-row flex-nowrap">
-					<Button
-						variant="secondary"
-						size="sm"
-					>
-						<IconTrophy class="size-5" />
-						Таблица лидеров
-					</Button>
-					<Button
-						variant="secondary"
-						size="sm"
-					>
-						<IconPlot class="size-5" />
-						Матчи
-					</Button>
-					<Button
-						variant="secondary"
-						size="sm"
-					>
-						<IconSparkles class="size-5" />
-						Прогнозы
-					</Button>
+				<p class="text-lg font-semibold mt-2">
+					{window.Telegram.WebApp.initDataUnsafe.user.first_name}
+				</p>
+				<Link href="/" class="text-muted-foreground flex flex-row items-center">
+					<p class="text-sm">
+						@{window.Telegram.WebApp.initDataUnsafe.user.username}
+					</p>
+				</Link>
+				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+						<span class="text-2xl font-semibold">10</span>
+						<span class="text-xs">Correct predictions</span>
+					</div>
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+						<span class="text-2xl font-semibold">#123</span>
+						<span class="text-xs">Global ranking</span>
+					</div>
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+						<span class="text-2xl font-semibold">300</span>
+						<span class="text-xs">Points earned</span>
+					</div>
 				</div>
 			</div>
-			<Collapsible defaultOpen={true} class="p-1.5">
-				<CollapsibleTrigger
-					class="w-full mt-6 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
-					<div class="space-x-1 flex flex-row items-center">
-						<IconTrophy class="size-5" />
-						<p class="font-semibold text-sm">
-							Мои прогнозы
-						</p>
-					</div>
-					<IconChevronDown class="size-5 text-muted-foreground" />
-				</CollapsibleTrigger>
-				<CollapsibleContent class="space-y-2 mt-2 rounded-t-xl">
-					<PredictionCard />
-				</CollapsibleContent>
-			</Collapsible>
-			<Show when={query.data}>
-				<Drawer>
-					<Collapsible defaultOpen={true}>
-						<div class="sticky top-14 z-50 px-1.5 pb-2 bg-background">
-							<CollapsibleTrigger
-								class="w-full mt-6 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
-								<div class="space-x-1 flex flex-row items-center">
-									<IconPlot class="size-5" />
-									<p class="font-semibold text-sm">
-										Ближайшие матчи
-									</p>
-								</div>
-								<IconChevronDown class="size-5 text-muted-foreground" />
-							</CollapsibleTrigger>
-						</div>
-						<CollapsibleContent class="space-y-2 overflow-y-scroll h-screen rounded-t-xl p-1.5">
-							<For
-								each={query.data}
-								fallback={<div>Loading...</div>}
-							>
-								{match => (
-									<div class="rounded-xl max-w-md mx-auto p-3 bg-secondary flex flex-col justify-between">
-										<div class="grid grid-cols-2 gap-6">
-											<div class="space-y-1">
-												<div class="flex items-center space-x-1">
-													<img src={`/logos/uefa.png`} alt="" class="w-4" />
-													<p class="text-xs">UEFA Champions League</p>
-												</div>
-												<div class="flex items-center space-x-1">
-													<img src={`/logos/${match.home_team.name}.png`} alt="" class="w-4" />
-													<p class="text-xs font-bold">{match.home_team.name}</p>
-												</div>
-												<div class="flex items-center space-x-1">
-													<img src={`/logos/${match.away_team.name}.png`} alt="" class="w-4" />
-													<p class="text-xs font-bold">{match.away_team.name}</p>
-												</div>
-												<p class="text-xs text-muted-foreground">{formatDate(match.match_date)}</p>
-											</div>
-											<div class="flex items-center justify-end space-x-1">
-												<DrawerTrigger
-													as={Button<'button'>}
-													variant="default"
-													size="sm"
-													onClick={() => {
-														setHomeTeam(match.home_team.name)
-														setAwayTeam(match.away_team.name)
-													}}
-												>
-													Прогноз
-												</DrawerTrigger>
-											</div>
-										</div>
-									</div>
-								)}
-							</For>
-						</CollapsibleContent>
-					</Collapsible>
-					<DrawerContent>
-						<div class="mx-auto w-full max-w-sm">
-							<FootballScoreboard
-								home_team={homeTeam()}
-								away_team={awayTeam()}
-							/>
-							<DrawerFooter>
-								<Button>
-									Сохранить
-								</Button>
-								<DrawerClose as={Button<'button'>} variant="outline">
-									Закрыть
-								</DrawerClose>
-							</DrawerFooter>
-						</div>
-					</DrawerContent>
-				</Drawer>
-			</Show>
+			<PredictionCard />
+			<div
+				class="flex flex-row items-center space-x-4 border-t px-2.5 h-20 fixed bottom-0 left-0 right-0 bg-background z-50">
+				<div class="grid grid-cols-3 w-full">
+					<Link
+						href="/"
+						class="flex items-center flex-col h-full text-sm gap-1"
+					>
+						<IconActivity class="size-6" />
+						Activity
+					</Link>
+					<Link
+						href="/"
+						class="flex items-center flex-col h-full text-sm gap-1"
+					>
+						<IconCalendar class="size-6" />
+						Matches
+					</Link>
+					<Link
+						href="/"
+						class="flex items-center flex-col h-full text-sm gap-1"
+					>
+						<IconUsers class="size-6" />
+						Friends
+					</Link>
+				</div>
+			</div>
 		</div>
 	)
 }
@@ -308,3 +243,81 @@ function FootballScoreboard(props: ScoreboardProps) {
 		</div>
 	)
 }
+
+// function Matches() {
+// 	return (
+// 		<Drawer>
+// 			<Collapsible defaultOpen={true}>
+// 				<div class="sticky top-14 z-50 px-1.5 pb-2 bg-background">
+// 					<CollapsibleTrigger
+// 						class="w-full mt-6 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
+// 						<div class="space-x-1 flex flex-row items-center">
+// 							<IconPlot class="size-5" />
+// 							<p class="font-semibold text-sm">
+// 								Ближайшие матчи
+// 							</p>
+// 						</div>
+// 						<IconChevronDown class="size-5 text-muted-foreground" />
+// 					</CollapsibleTrigger>
+// 				</div>
+// 				<CollapsibleContent class="space-y-2 overflow-y-scroll h-screen rounded-t-xl p-1.5">
+// 					<For
+// 						each={query.data}
+// 						fallback={<div>Loading...</div>}
+// 					>
+// 						{match => (
+// 							<div class="rounded-xl max-w-md mx-auto p-3 bg-secondary flex flex-col justify-between">
+// 								<div class="grid grid-cols-2 gap-6">
+// 									<div class="space-y-1">
+// 										<div class="flex items-center space-x-1">
+// 											<img src={`/logos/uefa.png`} alt="" class="w-4" />
+// 											<p class="text-xs">UEFA Champions League</p>
+// 										</div>
+// 										<div class="flex items-center space-x-1">
+// 											<img src={`/logos/${match.home_team.name}.png`} alt="" class="w-4" />
+// 											<p class="text-xs font-bold">{match.home_team.name}</p>
+// 										</div>
+// 										<div class="flex items-center space-x-1">
+// 											<img src={`/logos/${match.away_team.name}.png`} alt="" class="w-4" />
+// 											<p class="text-xs font-bold">{match.away_team.name}</p>
+// 										</div>
+// 										<p class="text-xs text-muted-foreground">{formatDate(match.match_date)}</p>
+// 									</div>
+// 									<div class="flex items-center justify-end space-x-1">
+// 										<DrawerTrigger
+// 											as={Button<'button'>}
+// 											variant="default"
+// 											size="sm"
+// 											onClick={() => {
+// 												setHomeTeam(match.home_team.name)
+// 												setAwayTeam(match.away_team.name)
+// 											}}
+// 										>
+// 											Прогноз
+// 										</DrawerTrigger>
+// 									</div>
+// 								</div>
+// 							</div>
+// 						)}
+// 					</For>
+// 				</CollapsibleContent>
+// 			</Collapsible>
+// 			<DrawerContent>
+// 				<div class="mx-auto w-full max-w-sm">
+// 					<FootballScoreboard
+// 						home_team={homeTeam()}
+// 						away_team={awayTeam()}
+// 					/>
+// 					<DrawerFooter>
+// 						<Button>
+// 							Сохранить
+// 						</Button>
+// 						<DrawerClose as={Button<'button'>} variant="outline">
+// 							Закрыть
+// 						</DrawerClose>
+// 					</DrawerFooter>
+// 				</div>
+// 			</DrawerContent>
+// 		</Drawer>
+// 	)
+// }

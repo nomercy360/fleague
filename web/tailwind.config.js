@@ -17,9 +17,9 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "var(--background)",
-        foreground: "hsl(var(--foreground))",
+        foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "var(--primary)",
           foreground: "hsl(var(--primary-foreground))"
         },
         secondary: {
@@ -59,7 +59,7 @@ export default {
           foreground: "hsl(var(--popover-foreground))"
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
+          DEFAULT: "var(--card)",
           foreground: "hsl(var(--card-foreground))"
         }
       },

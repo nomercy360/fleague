@@ -66,6 +66,14 @@ export function IconChevronDown(props: IconProps) {
 	)
 }
 
+export function IconChevronRight(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<path d="M9 18 15 12 9 6" />
+		</Icon>
+	)
+}
+
 export function IconPencil(props: IconProps) {
 	return (
 		<Icon {...props}>
@@ -85,6 +93,43 @@ export function IconTrophy(props: IconProps) {
 			<path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
 			<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
 			<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+		</Icon>
+	)
+}
+
+export function IconActivity(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<rect width="18" height="18" x="3" y="3" rx="2" />
+			<path d="M17 12h-2l-2 5-2-10-2 5H7" />
+		</Icon>
+	)
+}
+
+export function IconCalendar(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<path d="M8 2v4" />
+			<path d="M16 2v4" />
+			<rect width="18" height="18" x="3" y="4" rx="2" />
+			<path d="M3 10h18" />
+			<path d="M8 14h.01" />
+			<path d="M12 14h.01" />
+			<path d="M16 14h.01" />
+			<path d="M8 18h.01" />
+			<path d="M12 18h.01" />
+			<path d="M16 18h.01" />
+		</Icon>
+	)
+}
+
+export function IconUsers(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+			<circle cx="9" cy="7" r="4" />
+			<path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+			<path d="M16 3.13a4 4 0 0 1 0 7.75" />
 		</Icon>
 	)
 }
