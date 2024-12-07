@@ -29,38 +29,14 @@ export function IconCrown(props: IconProps) {
 	)
 }
 
-export function IconFootball(props: IconProps) {
+export function IconPlot(props: IconProps) {
 	return (
-		<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" {...props}>
-			<path
-				d="M16 27.25C22.2132 27.25 27.25 22.2132 27.25 16C27.25 9.78679 22.2132 4.74998 16 4.74998C9.78676 4.74998 4.75 9.78679 4.75 16C4.75 22.2132 9.78676 27.25 16 27.25Z"
-				stroke="currentColor" stroke-width="1.70382" stroke-linecap="round" stroke-linejoin="round" />
-			<path d="M16.0002 9.3996L9.79004 13.9139L12.1627 21.2149H19.8378L22.2105 13.9139L16.0002 9.3996Z"
-						stroke="currentColor"
-						stroke-width="1.70382" stroke-linecap="round" stroke-linejoin="round" />
-			<path d="M16 4.75V9.3997" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M22.209 13.9141L26.6835 12.481" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M22.6325 25.0845L19.8379 21.2151" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M12.1615 21.2151L9.35889 25.0845" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M5.30762 12.481L9.79011 13.9141" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M10.3384 23.7307L10.633 25.8963" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M10.3396 23.7307L8.18994 24.1287" stroke="currentColor" stroke-width="1.70382" stroke-linecap="round"
-						stroke-linejoin="round" />
-			<path d="M4.93311 13.9217L6.89965 12.9822L5.87259 11.0555" stroke="currentColor" stroke-width="1.70382"
-						stroke-linecap="round" stroke-linejoin="round" />
-			<path d="M14.4785 4.84558L15.9913 6.41405L17.4881 4.82965" stroke="currentColor" stroke-width="1.70382"
-						stroke-linecap="round" stroke-linejoin="round" />
-			<path d="M26.1104 11.0555L25.0913 12.9902L27.0658 13.9138" stroke="currentColor" stroke-width="1.70382"
-						stroke-linecap="round" stroke-linejoin="round" />
-			<path d="M23.811 24.0969L21.6613 23.7307L21.3906 25.8884" stroke="currentColor" stroke-width="1.70382"
-						stroke-linecap="round" stroke-linejoin="round" />
-		</svg>
+		<Icon {...props}>
+			<path d="m12 8 6-3-6-3v10" />
+			<path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12" />
+			<path d="m6.49 12.85 11.02 6.3" />
+			<path d="M17.51 12.85 6.5 19.15" />
+		</Icon>
 	)
 }
 
@@ -96,6 +72,32 @@ export function IconPencil(props: IconProps) {
 			<path
 				d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
 			<path d="m15 5 4 4" />
+		</Icon>
+	)
+}
+
+export function IconTrophy(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+			<path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+			<path d="M4 22h16" />
+			<path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+			<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+			<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+		</Icon>
+	)
+}
+
+export function IconSparkles(props: IconProps) {
+	return (
+		<Icon {...props}>
+			<path
+				d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+			<path d="M20 3v4" />
+			<path d="M22 5h-4" />
+			<path d="M4 17v2" />
+			<path d="M5 18H3" />
 		</Icon>
 	)
 }

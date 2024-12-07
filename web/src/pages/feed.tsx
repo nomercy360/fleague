@@ -4,7 +4,7 @@ import {
 } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchMatches } from '~/lib/api'
-import { IconChevronDown, IconFootball, IconMinus, IconPlus } from '~/components/icons'
+import { IconChevronDown, IconPlot, IconMinus, IconPlus, IconTrophy, IconSparkles } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 import {
 	Drawer, DrawerClose,
@@ -69,32 +69,68 @@ export default function FeedPage() {
 	const [awayTeam, setAwayTeam] = createSignal('')
 
 	return (
-		<div class="bg-background text-foreground min-h-screen pt-2 p-1.5">
-			<div
-				class="mb-2 w-full mt-10 bg-green-100 rounded-xl px-3 h-12 flex flex-row items-center space-x-1">
-				<IconFootball class="size-6" />
-				<p class="font-semibold text-sm">
-					Мои прогнозы
-				</p>
+		<div class="bg-background text-foreground min-h-[110vh] pt-12">
+			<div class="flex flex-row items-center space-x-4 border-b p-2.5 fixed top-0 left-0 right-0 bg-background z-50">
+				<img
+					src={window.Telegram.WebApp.initDataUnsafe.user.photo_url}
+					alt=""
+					class="w-10 h-10 rounded-full object-cover"
+				/>
+				<div class="space-x-1.5 flex flex-row flex-nowrap">
+					<Button
+						variant="secondary"
+						size="sm"
+					>
+						<IconTrophy class="size-5" />
+						Таблица лидеров
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+					>
+						<IconPlot class="size-5" />
+						Матчи
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+					>
+						<IconSparkles class="size-5" />
+						Прогнозы
+					</Button>
+				</div>
 			</div>
-			<PredictionCard />
-			<Show when={query.isLoading}>
-				<div>Loading...</div>
-			</Show>
+			<Collapsible defaultOpen={true} class="p-1.5">
+				<CollapsibleTrigger
+					class="w-full mt-6 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
+					<div class="space-x-1 flex flex-row items-center">
+						<IconTrophy class="size-5" />
+						<p class="font-semibold text-sm">
+							Мои прогнозы
+						</p>
+					</div>
+					<IconChevronDown class="size-5 text-muted-foreground" />
+				</CollapsibleTrigger>
+				<CollapsibleContent class="space-y-2 mt-2 rounded-t-xl">
+					<PredictionCard />
+				</CollapsibleContent>
+			</Collapsible>
 			<Show when={query.data}>
 				<Drawer>
-					<Collapsible>
-						<CollapsibleTrigger
-							class="w-full mt-10 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
-							<div class="space-x-1 flex flex-row items-center">
-								<IconFootball class="size-6" />
-								<p class="font-semibold text-sm">
-									Предстоящие матчи
-								</p>
-							</div>
-							<IconChevronDown class="size-6 text-muted-foreground" />
-						</CollapsibleTrigger>
-						<CollapsibleContent class="space-y-2 mt-2 overflow-y-scroll h-screen rounded-t-xl">
+					<Collapsible defaultOpen={true}>
+						<div class="sticky top-14 z-50 px-1.5 pb-2 bg-background">
+							<CollapsibleTrigger
+								class="w-full mt-6 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
+								<div class="space-x-1 flex flex-row items-center">
+									<IconPlot class="size-5" />
+									<p class="font-semibold text-sm">
+										Ближайшие матчи
+									</p>
+								</div>
+								<IconChevronDown class="size-5 text-muted-foreground" />
+							</CollapsibleTrigger>
+						</div>
+						<CollapsibleContent class="space-y-2 overflow-y-scroll h-screen rounded-t-xl p-1.5">
 							<For
 								each={query.data}
 								fallback={<div>Loading...</div>}
