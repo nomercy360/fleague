@@ -39,12 +39,12 @@ spec:
             - mountPath: /app/storage
               subPath: storage
               name: fleague-api-data
-            - mountPath: /app/config
+            - mountPath: /app/config.yml
               name: fleague-api-config
               subPath: config.yml
           env:
             - name: CONFIG_FILE_PATH
-              value: /app/config/config.yml
+              value: /app/config.yml
           readinessProbe:
             exec:
               command: [ "sqlite3", "/app/storage/db.sqlite", ".tables" ]

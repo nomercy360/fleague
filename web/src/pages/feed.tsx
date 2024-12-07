@@ -4,29 +4,19 @@ import {
 } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchMatches } from '~/lib/api'
-import { IconCrown, IconFootball, IconMinus, IconPlus } from '~/components/icons'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/components/ui/accordion'
+import { IconChevronDown, IconFootball, IconMinus, IconPlus } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 import {
 	Drawer, DrawerClose,
 	DrawerContent,
-	DrawerDescription, DrawerFooter,
-	DrawerHeader,
-	DrawerTitle,
+	DrawerFooter,
 	DrawerTrigger,
 } from '~/components/ui/drawer'
 
-function formatDate(dateString: string) {
-	const date = new Date(dateString)
-	const options = {
-		weekday: 'short',
-		hour: '2-digit',
-		minute: '2-digit',
-		day: 'numeric',
-		month: 'long',
-	}
-	return date.toLocaleDateString('en-GB', options as any)
-}
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
+import PredictionCard from '~/components/prediction-card'
+import { formatDate } from '~/lib/utils'
+
 
 export default function FeedPage() {
 	const query = createQuery(() => ({
@@ -78,90 +68,73 @@ export default function FeedPage() {
 	const [awayTeam, setAwayTeam] = createSignal('')
 
 	return (
-		<div class="bg-secondary text-foreground min-h-screen pt-2 p-1.5">
-			<div class="bg-background rounded-t-lg px-3 h-12 flex flex-row items-center space-x-1">
-				<IconCrown class="size-6 text-primary" />
-				<p class="font-bold text-sm">
-					Таблица лидеров
+		<div class="bg-background text-foreground min-h-screen pt-2 p-1.5">
+			<div
+				class="mb-2 w-full mt-10 bg-green-100 rounded-xl px-3 h-12 flex flex-row items-center space-x-1">
+				<IconFootball class="size-6" />
+				<p class="font-semibold text-sm">
+					Мои прогнозы
 				</p>
 			</div>
-			<div class="rounded-b-lg flex flex-col space-y-1 overflow-y-scroll h-64">
-				<For each={dummyUsers}>
-					{user => (
-						<UserLeaderboardCard
-							title={user.title}
-							subtitle={user.subtitle}
-							image={user.image}
-							score={user.score}
-						/>
-					)}
-				</For>
-			</div>
+			<PredictionCard />
 			<Show when={query.isLoading}>
 				<div>Loading...</div>
 			</Show>
 			<Show when={query.data}>
 				<Drawer>
-					<div class="mt-4 bg-background rounded-t-lg px-3 h-12 flex flex-row items-center space-x-1">
-						<IconFootball class="size-7 text-primary" />
-						<p class="font-bold text-sm">Upcoming matches</p>
-					</div>
-					<div class="w-full h-px bg-primary"></div>
-					<Accordion multiple={false} collapsible class="w-full" defaultValue={['item-1']}>
-						<AccordionItem value="item-1">
-							<AccordionTrigger class="h-10 bg-background">
-								<div class="flex items-center space-x-1 px-3">
-									<img src={`/logos/uefa.png`} alt="" class="w-4" />
-									<p class="text-xs">UEFA Champions League</p>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent>
-								<div class="space-y-1 mt-1 overflow-y-scroll h-screen">
-									<For
-										each={query.data}
-										fallback={<div>Loading...</div>}
-									>
-										{match => (
-											<div class="max-w-md mx-auto p-3 bg-background flex flex-col justify-between">
-												<div class="grid grid-cols-2 gap-6">
-													<div class="space-y-1">
-														<div class="flex items-center space-x-1">
-															<img src={`/logos/${match.home_team.name}.png`} alt="" class="w-4" />
-															<p class="text-xs font-bold">{match.home_team.name}</p>
-														</div>
-														<div class="flex items-center space-x-1">
-															<img src={`/logos/${match.away_team.name}.png`} alt="" class="w-4" />
-															<p class="text-xs font-bold">{match.away_team.name}</p>
-														</div>
-														<p class="text-xs text-muted-foreground">{formatDate(match.match_date)}</p>
-													</div>
-													<div class="flex items-center justify-end space-x-1">
-														<DrawerTrigger
-															class="h-full w-14"
-															as={Button<'button'>}
-															variant="secondary"
-															onClick={() => {
-																setHomeTeam(match.home_team.name)
-																setAwayTeam(match.away_team.name)
-															}}
-														>
-															П1
-														</DrawerTrigger>
-														<DrawerTrigger class="h-full w-14" as={Button<'button'>} variant="secondary">
-															Х
-														</DrawerTrigger>
-														<DrawerTrigger class="h-full w-14" as={Button<'button'>} variant="secondary">
-															П2
-														</DrawerTrigger>
-													</div>
+					<Collapsible>
+						<CollapsibleTrigger
+							class="w-full mt-10 bg-blue-100 rounded-xl px-3 h-12 flex flex-row items-center justify-between">
+							<div class="space-x-1 flex flex-row items-center">
+								<IconFootball class="size-6" />
+								<p class="font-semibold text-sm">
+									Предстоящие матчи
+								</p>
+							</div>
+							<IconChevronDown class="size-6 text-muted-foreground" />
+						</CollapsibleTrigger>
+						<CollapsibleContent class="space-y-2 mt-2 overflow-y-scroll h-screen rounded-t-xl">
+							<For
+								each={query.data}
+								fallback={<div>Loading...</div>}
+							>
+								{match => (
+									<div class="rounded-xl max-w-md mx-auto p-3 bg-secondary flex flex-col justify-between">
+										<div class="grid grid-cols-2 gap-6">
+											<div class="space-y-1">
+												<div class="flex items-center space-x-1">
+													<img src={`/logos/uefa.png`} alt="" class="w-4" />
+													<p class="text-xs">UEFA Champions League</p>
 												</div>
+												<div class="flex items-center space-x-1">
+													<img src={`/logos/${match.home_team.name}.png`} alt="" class="w-4" />
+													<p class="text-xs font-bold">{match.home_team.name}</p>
+												</div>
+												<div class="flex items-center space-x-1">
+													<img src={`/logos/${match.away_team.name}.png`} alt="" class="w-4" />
+													<p class="text-xs font-bold">{match.away_team.name}</p>
+												</div>
+												<p class="text-xs text-muted-foreground">{formatDate(match.match_date)}</p>
 											</div>
-										)}
-									</For>
-								</div>
-							</AccordionContent>
-						</AccordionItem>
-					</Accordion>
+											<div class="flex items-center justify-end space-x-1">
+												<DrawerTrigger
+													as={Button<'button'>}
+													variant="default"
+													size="sm"
+													onClick={() => {
+														setHomeTeam(match.home_team.name)
+														setAwayTeam(match.away_team.name)
+													}}
+												>
+													Прогноз
+												</DrawerTrigger>
+											</div>
+										</div>
+									</div>
+								)}
+							</For>
+						</CollapsibleContent>
+					</Collapsible>
 					<DrawerContent>
 						<div class="mx-auto w-full max-w-sm">
 							<FootballScoreboard
@@ -193,7 +166,7 @@ interface UserCardProps {
 
 function UserLeaderboardCard(props: UserCardProps) {
 	return (
-		<div class="p-3 flex flex-col bg-background w-full">
+		<div class="p-3 flex flex-col bg-secondary w-full">
 			<div class="flex flex-row items-center justify-between">
 				<div class="flex flex-row items-center justify-center space-x-2">
 					<img src={props.image} alt="" class="size-6 rounded-full object-cover" />

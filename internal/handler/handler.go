@@ -42,6 +42,7 @@ func (h *Handler) AuthTelegram(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.TelegramAuth(query)
 	if err != nil {
 		errrender.RenderError(w, r, err)
+		return
 	}
 
 	render.JSON(w, r, user)
