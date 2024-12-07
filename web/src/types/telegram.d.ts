@@ -104,6 +104,10 @@ interface WebApp {
 	enableClosingConfirmation(): void
 
 	disableClosingConfirmation(): void
+
+	disableVerticalSwipes(): void
+
+	enableVerticalSwipes(): void
 }
 
 interface BackButton {

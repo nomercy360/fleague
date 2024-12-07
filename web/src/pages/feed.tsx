@@ -26,6 +26,7 @@ export default function FeedPage() {
 
 	onMount(() => {
 		window.Telegram.WebApp.disableClosingConfirmation()
+		window.Telegram.WebApp.disableVerticalSwipes()
 		// window.Telegram.WebApp.CloudStorage.removeItem('profilePopup')
 		// window.Telegram.WebApp.CloudStorage.removeItem('communityPopup')
 		// window.Telegram.WebApp.CloudStorage.removeItem('rewardsPopup')
