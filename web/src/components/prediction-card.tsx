@@ -104,7 +104,7 @@ const PredictionCard = () => {
 							</div>
 							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
 						</div>
-						<Button variant="secondary" class="gap-1 bg-blue-200" size="sm">
+						<Button variant="secondary" class="gap-1 bg-primary text-primary-foreground" size="sm">
 							<span class="text-xs font-semibold">3:0</span>
 							<IconRefresh />
 						</Button>

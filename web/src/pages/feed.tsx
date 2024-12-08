@@ -72,7 +72,7 @@ export default function FeedPage() {
 
 	return (
 		<div class="bg-background text-foreground pb-24">
-			<div class="w-full bg-purple-100 rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
+			<div class="w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<img
 					src={window.Telegram.WebApp.initDataUnsafe.user.photo_url}
 					alt=""
@@ -87,15 +87,15 @@ export default function FeedPage() {
 					</p>
 				</Link>
 				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">10</span>
 						<span class="text-xs">Correct predictions</span>
 					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">#123</span>
 						<span class="text-xs">Global ranking</span>
 					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-primary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">300</span>
 						<span class="text-xs">Points earned</span>
 					</div>

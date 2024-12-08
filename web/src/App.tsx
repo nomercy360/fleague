@@ -5,6 +5,7 @@ import { NavigationProvider } from './lib/useNavigation'
 import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
+import { ColorModeProvider, ColorModeScript } from '@kobalte/core'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -58,8 +59,8 @@ export default function App(props: any) {
 			setIsLoading(false)
 		}
 	})
-
 	return (
+
 		<NavigationProvider>
 			<QueryClientProvider client={queryClient}>
 				<Switch>
