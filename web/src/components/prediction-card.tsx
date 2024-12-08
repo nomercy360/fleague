@@ -43,6 +43,17 @@ const upcomingMatches = [
 		awayTeam: 'Liverpool FC',
 		matchDate: '2024-12-11 17:45',
 		predictedWinner: 'Liverpool FC',
+		prediction: '2:0',
+		isEditable: true,
+	},
+	{
+		tournament: 'UEFA Champions League',
+		homeTeam: 'FC Internazionale Milano',
+		awayTeam: 'FC Red Bull Salzburg',
+		matchDate: '2024-12-11 17:45',
+		predictedWinner: 'FC Internazionale Milano',
+		prediction: '3:0',
+		isEditable: false,
 	},
 ]
 
@@ -104,9 +115,18 @@ const PredictionCard = () => {
 							</div>
 							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
 						</div>
-						<Button variant="secondary" class="gap-1 bg-primary text-primary-foreground" size="sm">
-							<span class="text-xs font-semibold">3:0</span>
-							<IconRefresh />
+						<Button variant="secondary"
+										class={cn('gap-1', {
+											'bg-primary text-primary-foreground': match.isEditable,
+											'bg-secondary text-secondary-foreground cursor-not-allowed': !match.isEditable,
+										})}
+										disabled={!match.isEditable}
+										size="sm">
+							<span class="text-xs font-semibold">
+								{match.prediction}
+							</span>
+							{match.isEditable && <IconRefresh class="w-4 h-4" />}
+							{!match.isEditable && <span class="text-xs font-semibold">Predicted</span>}
 						</Button>
 					</div>
 				))}
