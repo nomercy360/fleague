@@ -87,17 +87,17 @@ export default function FeedPage() {
 					</p>
 				</Link>
 				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">10</span>
-						<span class="text-xs">Correct predictions</span>
+						<span class="text-xs text-muted-foreground">Correct predictions</span>
 					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">#123</span>
-						<span class="text-xs">Global ranking</span>
+						<span class="text-xs text-muted-foreground">Global ranking</span>
 					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-white w-[100px] self-stretch">
+					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
 						<span class="text-2xl font-semibold">300</span>
-						<span class="text-xs">Points earned</span>
+						<span class="text-xs text-muted-foreground">Points earned</span>
 					</div>
 				</div>
 			</div>
