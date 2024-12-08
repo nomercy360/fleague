@@ -108,6 +108,10 @@ interface WebApp {
 	disableVerticalSwipes(): void
 
 	enableVerticalSwipes(): void
+
+	setBottomBarColor(color: string): void
+
+	setHeaderColor(color: string): void
 }
 
 interface BackButton {

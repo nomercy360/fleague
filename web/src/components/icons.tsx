@@ -74,12 +74,13 @@ export function IconChevronRight(props: IconProps) {
 	)
 }
 
-export function IconPencil(props: IconProps) {
+export function IconRefresh(props: IconProps) {
 	return (
 		<Icon {...props}>
-			<path
-				d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-			<path d="m15 5 4 4" />
+			<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+			<path d="M3 3v5h5" />
+			<path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+			<path d="M16 16h5v5" />
 		</Icon>
 	)
 }

@@ -43,6 +43,8 @@ export default function App(props: any) {
 
 			window.Telegram.WebApp.ready()
 			window.Telegram.WebApp.expand()
+			window.Telegram.WebApp.setBottomBarColor('#fdfcfc')
+			window.Telegram.WebApp.setHeaderColor('#fdfcfc')
 
 			setIsAuthenticated(true)
 			setIsLoading(false)

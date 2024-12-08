@@ -1,7 +1,7 @@
 // Пример данных. Замените на реальные данные из API.
 import { cn, formatDate } from '~/lib/utils'
 import { Button } from '~/components/ui/button'
-import { IconChevronDown, IconChevronRight, IconPencil } from '~/components/icons'
+import { IconRefresh } from '~/components/icons'
 
 const completedMatches = [
 	{
@@ -55,7 +55,10 @@ const PredictionCard = () => {
 			<div class="space-y-2">
 				{completedMatches.map((match) => (
 					<div
-						class="h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card">
+						class={cn('h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card', {
+							'border-l-4 border-green-500': match.resultStatus === 'correct',
+							'border-l-4 border-red-500': match.resultStatus === 'incorrect',
+						})}>
 						<div
 							class={cn('h-6 rounded-b-xl w-12 flex items-center justify-center text-white text-xs font-semibold absolute top-0 left-1/2 -translate-x-1/2 transform', {
 								'bg-green-500': match.resultStatus === 'correct',
@@ -85,7 +88,8 @@ const PredictionCard = () => {
 			</p>
 			<div class="space-y-2">
 				{upcomingMatches.map((match) => (
-					<div class="h-[140px] rounded-2xl p-3 bg-card flex flex-row items-start justify-between">
+					<div
+						class="h-[140px] border-l-4 border-blue-500 rounded-2xl p-3 bg-card flex flex-row items-start justify-between">
 						<div class="space-y-2">
 							<p class="text-xs text-muted-foreground">UEFA Champions League</p>
 							<div class="grid gap-0.5">
@@ -100,10 +104,9 @@ const PredictionCard = () => {
 							</div>
 							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
 						</div>
-						<Button variant="secondary" class="gap-1" size="sm">
-							<span class="text-muted-foreground text-xs font-normal">{match.predictedWinner}</span>
+						<Button variant="secondary" class="gap-1 bg-blue-200" size="sm">
 							<span class="text-xs font-semibold">3:0</span>
-							<IconChevronRight />
+							<IconRefresh />
 						</Button>
 					</div>
 				))}
