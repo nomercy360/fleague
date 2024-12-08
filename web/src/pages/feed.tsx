@@ -1,6 +1,6 @@
 import {
-	createSignal, For,
-	onMount, Show,
+	createSignal,
+	onMount,
 } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchMatches } from '~/lib/api'
@@ -14,7 +14,9 @@ import { Button } from '~/components/ui/button'
 
 import PredictionCard from '~/components/prediction-card'
 import { Link } from '~/components/link'
-import { Badge } from '~/components/ui/badge'
+import { useMainButton } from '~/lib/useMainButton'
+import { cn } from '~/lib/utils'
+import { useLocation } from '@solidjs/router'
 
 
 export default function FeedPage() {
@@ -23,12 +25,11 @@ export default function FeedPage() {
 		queryFn: () => fetchMatches(),
 	}))
 
+	const mainButton = useMainButton()
+
 	onMount(() => {
 		window.Telegram.WebApp.disableClosingConfirmation()
 		window.Telegram.WebApp.disableVerticalSwipes()
-		// window.Telegram.WebApp.CloudStorage.removeItem('profilePopup')
-		// window.Telegram.WebApp.CloudStorage.removeItem('communityPopup')
-		// window.Telegram.WebApp.CloudStorage.removeItem('rewardsPopup')
 	})
 
 	const dummyUsers = [
@@ -67,9 +68,11 @@ export default function FeedPage() {
 	const [homeTeam, setHomeTeam] = createSignal('')
 	const [awayTeam, setAwayTeam] = createSignal('')
 
+	const location = useLocation()
+
 	return (
 		<div class="bg-background text-foreground pb-24">
-			<div class="w-full bg-purple-100 rounded-b-[10%] p-4 mb-10 flex flex-col items-center">
+			<div class="w-full bg-purple-100 rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<img
 					src={window.Telegram.WebApp.initDataUnsafe.user.photo_url}
 					alt=""
@@ -98,27 +101,44 @@ export default function FeedPage() {
 					</div>
 				</div>
 			</div>
+			<div class="px-4 mb-6">
+				<Link class="flex flex-row h-14 justify-between items-center rounded-2xl p-3 bg-secondary"
+							href="/leaderboard">
+					<p class="text-sm font-semibold">
+						Make a prediction{' '}
+						<span class="text-muted-foreground font-normal">12 matches available</span>
+					</p>
+					<IconChevronRight class="size-6" />
+				</Link>
+			</div>
+
 			<PredictionCard />
 			<div
 				class="flex flex-row items-center space-x-4 border-t px-2.5 h-20 fixed bottom-0 left-0 right-0 bg-background z-50">
 				<div class="grid grid-cols-3 w-full">
 					<Link
 						href="/"
-						class="flex items-center flex-col h-full text-sm gap-1"
+						class={cn('flex items-center flex-col h-full text-sm gap-1', {
+							'text-primary': location.pathname === '/',
+						})}
 					>
 						<IconActivity class="size-6" />
 						Activity
 					</Link>
 					<Link
 						href="/"
-						class="flex items-center flex-col h-full text-sm gap-1"
+						class={cn('flex items-center flex-col h-full text-sm gap-1', {
+							'text-primary': location.pathname === '/matches',
+						})}
 					>
 						<IconCalendar class="size-6" />
 						Matches
 					</Link>
 					<Link
 						href="/"
-						class="flex items-center flex-col h-full text-sm gap-1"
+						class={cn('flex items-center flex-col h-full text-sm gap-1', {
+							'text-primary': location.pathname === '/friends',
+						})}
 					>
 						<IconUsers class="size-6" />
 						Friends
