@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateString: string) {
+export function formatDate(dateString: string, dateTime = false) {
 	const daysOfWeek = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
 	const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
@@ -15,17 +15,27 @@ export function formatDate(dateString: string) {
 	const isToday = now.toDateString() === date.toDateString()
 	const isTomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString() === date.toDateString()
 
-	const timeOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+	const timeOptions = { hour: '2-digit', minute: '2-digit' }
 	const time = date.toLocaleTimeString('ru-RU', timeOptions as any)
 
+	let result: string
+
 	if (isToday) {
-		return `Сегодня ${time}`
+		result = `Сегодня`
 	} else if (isTomorrow) {
-		return `Завтра ${time}`
+		result = `Завтра`
 	} else {
 		const dayOfWeek = daysOfWeek[date.getDay()]
 		const day = date.getDate()
 		const month = months[date.getMonth()]
-		return `${dayOfWeek}, ${day} ${month} ${time}`
+		result = `${dayOfWeek}, ${day} ${month}`
 	}
+
+	return dateTime ? `${result}, ${time}` : result
+}
+
+export function timeToLocaleString(dateString: string) {
+	const date = new Date(dateString)
+	const timeOptions = { hour: '2-digit', minute: '2-digit'}
+	return date.toLocaleTimeString('ru-RU', timeOptions as any)
 }

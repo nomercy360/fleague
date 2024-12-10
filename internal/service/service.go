@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"sort"
@@ -12,11 +13,24 @@ type storager interface {
 	Health() (db.HealthStats, error)
 	GetLeaderboard(ctx context.Context, leagueID int) ([]db.LeaderboardEntry, error)
 	AddPrediction(ctx context.Context, prediction db.Prediction) error
-	GetActiveMatches(ctx context.Context, leagueID *int) ([]db.Match, error)
-	AddUserToLeague(ctx context.Context, leagueID int, userID string) error
+	GetActiveMatches(ctx context.Context) ([]db.Match, error)
 	GetUserByChatID(chatID int64) (*db.User, error)
 	CreateUser(user db.User) error
 	GetTeamByID(ctx context.Context, teamID int) (db.Team, error)
+	GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*db.Prediction, error)
+	SavePrediction(ctx context.Context, prediction db.Prediction) error
+	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
+}
+
+const userIDContextKey = "user_id"
+
+func GetUserIDFromContext(ctx context.Context) int {
+	uid, ok := ctx.Value(userIDContextKey).(int)
+	if !ok {
+		return 0
+	}
+
+	return uid
 }
 
 // Service struct for handling business logic
@@ -49,12 +63,14 @@ func (s Service) AddPrediction(ctx context.Context, prediction db.Prediction) er
 }
 
 // GetActiveMatches fetches active matches for a league or all matches
-func (s Service) GetActiveMatches(ctx context.Context, leagueID *int) ([]contract.MatchResponse, error) {
-	res, err := s.storage.GetActiveMatches(ctx, leagueID)
+func (s Service) GetActiveMatches(ctx context.Context) ([]contract.MatchResponse, error) {
+	res, err := s.storage.GetActiveMatches(ctx)
 
 	if err != nil {
 		return nil, err
 	}
+
+	uid := GetUserIDFromContext(ctx)
 
 	var matches []contract.MatchResponse
 	for _, match := range res {
@@ -65,6 +81,11 @@ func (s Service) GetActiveMatches(ctx context.Context, leagueID *int) ([]contrac
 
 		awayTeam, err := s.storage.GetTeamByID(ctx, match.AwayTeamID)
 		if err != nil {
+			return nil, err
+		}
+
+		prediction, err := s.storage.GetUserPredictionByMatchID(ctx, uid, match.ID)
+		if err != nil && !errors.Is(err, db.ErrNotFound) {
 			return nil, err
 		}
 
@@ -89,6 +110,9 @@ func (s Service) GetActiveMatches(ctx context.Context, leagueID *int) ([]contrac
 				Country:      awayTeam.Country,
 				Abbreviation: awayTeam.Abbreviation,
 			},
+			HomeScore:  match.HomeScore,
+			AwayScore:  match.AwayScore,
+			Prediction: prediction,
 		})
 	}
 
@@ -108,9 +132,4 @@ func (s Service) GetUserProfile(ctx context.Context, userID string) (db.User, er
 	}
 
 	return *user, nil
-}
-
-// AddUserToLeague adds a user to a specific league
-func (s Service) AddUserToLeague(ctx context.Context, leagueID int, userID string) error {
-	return s.storage.AddUserToLeague(ctx, leagueID, userID)
 }

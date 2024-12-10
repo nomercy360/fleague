@@ -7,9 +7,9 @@ import (
 )
 
 func (h *Handler) ListMatches(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.service.GetActiveMatches(r.Context(), nil)
+	resp, err := h.service.GetActiveMatches(r.Context())
 	if err != nil {
-		errrender.RenderError(w, r, err)
+		errrender.RenderError(w, r, err, "failed to get active matches")
 		return
 	}
 

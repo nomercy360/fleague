@@ -11,9 +11,10 @@ import (
 
 // servicer interface for database operations
 type servicer interface {
-	GetActiveMatches(ctx context.Context, leagueID *int) ([]contract.MatchResponse, error)
+	GetActiveMatches(ctx context.Context) ([]contract.MatchResponse, error)
 	Health() (db.HealthStats, error)
 	TelegramAuth(query string) (*contract.UserAuthResponse, error)
+	SavePrediction(ctx context.Context, prediction contract.PredictionRequest) error
 }
 
 // Handler struct for handling business logic
@@ -31,7 +32,7 @@ func New(service servicer) *Handler {
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.service.Health()
 	if err != nil {
-		errrender.RenderError(w, r, err)
+		errrender.RenderError(w, r, err, "failed to get health stats")
 	}
 
 	render.JSON(w, r, stats)
@@ -41,7 +42,7 @@ func (h *Handler) AuthTelegram(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.RawQuery
 	user, err := h.service.TelegramAuth(query)
 	if err != nil {
-		errrender.RenderError(w, r, err)
+		errrender.RenderError(w, r, err, "failed to authenticate user")
 		return
 	}
 

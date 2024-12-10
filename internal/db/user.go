@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/mattn/go-sqlite3"
 	"time"
 )
 
@@ -22,21 +23,28 @@ func IsNoRowsError(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 
-func (s *storage) AddUserToLeague(ctx context.Context, leagueID int, userID string) error {
-	query := `
-        INSERT INTO league_members (league_id, user_id, joined_at)
-        VALUES (?, ?, ?)`
+func IsUniqueViolationError(err error) bool {
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique)
+	}
+	return false
+}
 
-	_, err := s.db.ExecContext(ctx, query, leagueID, userID, time.Now())
-	return err
+func IsForeignKeyViolationError(err error) bool {
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintForeignKey)
+	}
+	return false
 }
 
 func (s *storage) CreateUser(user User) error {
 	query := `
-		INSERT INTO users (id, first_name, last_name, username, language_code, chat_id, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		INSERT INTO users (first_name, last_name, username, language_code, chat_id, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.Exec(query, user.ID, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, time.Now())
+	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, time.Now())
 	return err
 }
 

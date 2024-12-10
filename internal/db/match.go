@@ -28,35 +28,19 @@ func (s *storage) SaveMatch(ctx context.Context, match Match) error {
 	return err
 }
 
-func (s *storage) GetActiveMatches(ctx context.Context, leagueID *int) ([]Match, error) {
+func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	var query string
 	var args []interface{}
 
-	if leagueID != nil {
-		query = `
-            SELECT
-                m.id,
-                m.tournament,
-                m.home_team_id,
-                m.away_team_id,
-                m.match_date,
-                m.status
-            FROM matches m
-            INNER JOIN league_matches lm ON lm.match_id = m.id
-            WHERE lm.league_id = ? AND m.status = 'scheduled'`
-		args = append(args, *leagueID)
-	} else {
-		query = `
-            SELECT
-                id,
-                tournament,
-                home_team_id,
-                away_team_id,
-                match_date,
-                status
-            FROM matches
-            WHERE status = 'scheduled'`
-	}
+	query = `
+		SELECT
+			m.id,
+			m.tournament,
+			m.home_team_id,
+			m.away_team_id,
+			m.match_date,
+			m.status
+		FROM matches m WHERE m.status = 'scheduled'`
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -78,4 +62,38 @@ func (s *storage) GetActiveMatches(ctx context.Context, leagueID *int) ([]Match,
 	}
 
 	return matches, nil
+}
+
+func (s *storage) GetMatchByID(ctx context.Context, id int) (Match, error) {
+	query := `
+		SELECT
+			m.id,
+			m.tournament,
+			m.home_team_id,
+			m.away_team_id,
+			m.match_date,
+			m.status,
+			m.home_score,
+			m.away_score
+		FROM matches m WHERE m.id = ?`
+
+	var match Match
+	row := s.db.QueryRowContext(ctx, query, id)
+
+	if err := row.Scan(
+		&match.ID,
+		&match.Tournament,
+		&match.HomeTeamID,
+		&match.AwayTeamID,
+		&match.MatchDate,
+		&match.Status,
+		&match.HomeScore,
+		&match.AwayScore,
+	); err != nil && IsNoRowsError(err) {
+		return Match{}, ErrNotFound
+	} else if err != nil {
+		return Match{}, err
+	}
+
+	return match, nil
 }

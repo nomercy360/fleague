@@ -113,7 +113,7 @@ const PredictionCard = () => {
 									<p class="text-sm font-bold">{match.awayTeam}</p>
 								</div>
 							</div>
-							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
+							<p class="text-xs text-muted-foreground">{formatDate(match.matchDate, true)}</p>
 						</div>
 						<Button variant="secondary"
 										class={cn('gap-1', {

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/handler"
+	authmw "github.com/user/project/internal/middleware"
 	"github.com/user/project/internal/service"
 	"github.com/user/project/internal/syncer"
 	"gopkg.in/yaml.v3"
@@ -166,5 +167,7 @@ func main() {
 }
 
 func setupAPIEndpoints(r chi.Router, h *handler.Handler) {
+	r.Use(authmw.AuthMiddleware("secret"))
 	r.Get("/matches", h.ListMatches)
+	r.Post("/predictions", h.SavePrediction)
 }

@@ -4,12 +4,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 export const CDN_URL = 'https://assets.peatch.io'
 
 export const apiFetch = async ({
-	endpoint,
-	method = 'GET',
-	body = null,
-	showProgress = true,
-	responseContentType = 'json' as 'json' | 'blob',
-}: {
+																 endpoint,
+																 method = 'GET',
+																 body = null,
+																 showProgress = true,
+																 responseContentType = 'json' as 'json' | 'blob',
+															 }: {
 	endpoint: string
 	method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
 	body?: any
@@ -47,9 +47,16 @@ export const apiFetch = async ({
 }
 
 export const fetchMatches = async () => {
-	return await apiFetch({
+	const resp = await apiFetch({
 		endpoint: '/matches',
 	})
+
+	return resp.reduce((acc: any, match: any) => {
+		const date = new Date(match.match_date).toLocaleDateString()
+		if (!acc[date]) acc[date] = []
+		acc[date].push(match)
+		return acc
+	}, {})
 }
 
 export const uploadToS3 = (
@@ -83,4 +90,19 @@ export const fetchPresignedUrl = async (file: string) => {
 	})
 
 	return { path, url }
+}
+
+export type Prediction = {
+	match_id: number
+	predicted_home_score: number | null
+	predicted_away_score: number | null
+	predicted_outcome: string | null
+}
+
+export const saveMatchPrediction = async (prediction: Prediction) => {
+	await apiFetch({
+		endpoint: `/predictions`,
+		method: 'POST',
+		body: prediction,
+	})
 }

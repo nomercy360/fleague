@@ -6,6 +6,7 @@ import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
 import { ColorModeProvider, ColorModeScript } from '@kobalte/core'
+import NavigationTabs from '~/components/navigation-tabs'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -44,6 +45,8 @@ export default function App(props: any) {
 
 			window.Telegram.WebApp.ready()
 			window.Telegram.WebApp.expand()
+			window.Telegram.WebApp.disableClosingConfirmation()
+			window.Telegram.WebApp.disableVerticalSwipes()
 
 			setIsAuthenticated(true)
 			setIsLoading(false)
@@ -63,7 +66,10 @@ export default function App(props: any) {
 			<QueryClientProvider client={queryClient}>
 				<Switch>
 					<Match when={isAuthenticated()}>
-						<div>{props.children}</div>
+						<div>
+							{props.children}
+							<NavigationTabs />
+						</div>
 					</Match>
 					<Match when={!isAuthenticated() && isLoading()}>
 						<div class="min-h-screen w-full flex-col items-start justify-center bg-main" />
