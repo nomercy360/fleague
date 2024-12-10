@@ -47,7 +47,8 @@ const PredictionCard = () => {
 								class={cn('h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card', {
 									'border-l-4 border-green-500': prediction.points_awarded > 0,
 									'border-l-4 border-red-500': prediction.points_awarded == 0 && prediction.completed_at,
-									'border-l-4 border-gray-500': prediction.points_awarded == 0 && !prediction.completed_at,
+									'border-l-4 border-gray-500': prediction.points_awarded == 0 && !prediction.completed_at && prediction.match.status == 'ongoing',
+									'border-l-4 border-primary': prediction.points_awarded == 0 && !prediction.completed_at && prediction.match.status == 'scheduled',
 								})}>
 								<div
 									class={cn('h-6 rounded-b-xl w-12 flex items-center justify-center text-white text-xs font-semibold absolute top-0 left-1/2 -translate-x-1/2 transform', {

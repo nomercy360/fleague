@@ -75,6 +75,21 @@ CREATE TABLE leaderboards
     FOREIGN KEY (season_id) REFERENCES seasons (id) ON DELETE CASCADE
 );
 
+CREATE TRIGGER update_leaderboard
+    AFTER UPDATE OF points_awarded
+    ON predictions
+    WHEN NEW.points_awarded > 0 AND NEW.completed_at IS NOT NULL
+BEGIN
+    -- Check if the user already has an entry in the leaderboard for the current season
+    INSERT INTO leaderboards (user_id, season_id, points)
+    VALUES (NEW.user_id,
+            (SELECT id FROM seasons WHERE is_active = 1),
+            NEW.points_awarded)
+    ON CONFLICT(user_id, season_id)
+        DO UPDATE SET points = points + NEW.points_awarded;
+END;
+
+
 INSERT INTO teams (name, short_name, abbreviation, country, crest_url)
 VALUES ('Bayer 04 Leverkusen', 'Leverkusen', 'B04', 'DE', ''),
        ('Borussia Dortmund', 'Dortmund', 'BVB', 'DE', ''),

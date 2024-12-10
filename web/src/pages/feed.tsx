@@ -1,57 +1,11 @@
 import {
-	createSignal,
-	onMount,
-} from 'solid-js'
-import {
-	IconUsers,
-	IconActivity, IconCalendar, IconChevronRight,
+	IconChevronRight,
 } from '~/components/icons'
 
 import PredictionCard from '~/components/prediction-card'
 import { Link } from '~/components/link'
-import { cn } from '~/lib/utils'
-import { useLocation } from '@solidjs/router'
-
 
 export default function FeedPage() {
-	const dummyUsers = [
-		{
-			title: 'Сергей бестов',
-			subtitle: 'Спортивный аналитик',
-			image: '/avatars/sergey.png',
-			score: 300,
-		},
-		{
-			title: 'Гор Е',
-			subtitle: 'Болельщик Челси',
-			image: '/avatars/gor.jpg',
-			score: 100,
-		},
-		{
-			title: 'Максим К',
-			subtitle: 'Болельщик ЦСКА',
-			image: '/avatars/maksim.jpg',
-			score: 50,
-		},
-		{
-			title: 'John Doe',
-			subtitle: 'Football fan',
-			image: '/avatars/user.svg',
-			score: 10,
-		},
-		{
-			title: 'Максим К',
-			subtitle: 'Болельщик ЦСКА',
-			image: '/avatars/maksim.jpg',
-			score: 50,
-		},
-	]
-
-	const [homeTeam, setHomeTeam] = createSignal('')
-	const [awayTeam, setAwayTeam] = createSignal('')
-
-	const location = useLocation()
-
 	return (
 		<div class="bg-background text-foreground pb-24">
 			<div class="w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
