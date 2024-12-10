@@ -6,15 +6,22 @@ import (
 )
 
 type Prediction struct {
-	ID                 int       `json:"id" db:"id"`
-	UserID             int       `json:"user_id" db:"user_id"`
-	MatchID            int       `json:"match_id" db:"match_id"`
-	PredictedOutcome   *string   `json:"predicted_outcome" db:"predicted_outcome"`
-	PredictedHomeScore *int      `json:"predicted_home_score" db:"predicted_home_score"`
-	PredictedAwayScore *int      `json:"predicted_away_score" db:"predicted_away_score"`
-	PointsAwarded      int       `json:"points_awarded" db:"points_awarded"`
-	CreatedAt          time.Time `json:"created_at" db:"created_at"`
+	ID                 int        `json:"id" db:"id"`
+	UserID             int        `json:"user_id" db:"user_id"`
+	MatchID            int        `json:"match_id" db:"match_id"`
+	PredictedOutcome   *string    `json:"predicted_outcome" db:"predicted_outcome"`
+	PredictedHomeScore *int       `json:"predicted_home_score" db:"predicted_home_score"`
+	PredictedAwayScore *int       `json:"predicted_away_score" db:"predicted_away_score"`
+	PointsAwarded      int        `json:"points_awarded" db:"points_awarded"`
+	CompletedAt        *time.Time `json:"completed_at" db:"completed_at"`
+	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
 }
+
+const (
+	MatchOutcomeHome = "home"
+	MatchOutcomeAway = "away"
+	MatchOutcomeDraw = "draw"
+)
 
 func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) error {
 	query := `
@@ -46,7 +53,8 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 			predicted_home_score,
 			predicted_away_score,
 			points_awarded,
-			created_at
+			created_at,
+			completed_at
 		FROM predictions
 		WHERE user_id = ? AND match_id = ?`
 
@@ -60,6 +68,7 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 		&prediction.PredictedAwayScore,
 		&prediction.PointsAwarded,
 		&prediction.CreatedAt,
+		&prediction.CompletedAt,
 	)
 
 	if err != nil && IsNoRowsError(err) {
@@ -69,4 +78,104 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 	}
 
 	return &prediction, nil
+}
+
+func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Prediction, error) {
+	query := `
+		SELECT
+			id,
+			user_id,
+			match_id,
+			predicted_outcome,
+			predicted_home_score,
+			predicted_away_score,
+			points_awarded,
+			created_at,
+			completed_at
+		FROM predictions
+		WHERE user_id = ?`
+
+	rows, err := s.db.QueryContext(ctx, query, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var predictions []Prediction
+	for rows.Next() {
+		var prediction Prediction
+		err := rows.Scan(
+			&prediction.ID,
+			&prediction.UserID,
+			&prediction.MatchID,
+			&prediction.PredictedOutcome,
+			&prediction.PredictedHomeScore,
+			&prediction.PredictedAwayScore,
+			&prediction.PointsAwarded,
+			&prediction.CreatedAt,
+			&prediction.CompletedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		predictions = append(predictions, prediction)
+	}
+
+	return predictions, nil
+}
+
+func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Prediction, error) {
+	query := `
+		SELECT
+			id,
+			user_id,
+			match_id,
+			predicted_outcome,
+			predicted_home_score,
+			predicted_away_score,
+			points_awarded,
+			created_at,
+			completed_at
+		FROM predictions
+		WHERE match_id = ?`
+
+	rows, err := s.db.QueryContext(ctx, query, matchID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var predictions []Prediction
+	for rows.Next() {
+		var prediction Prediction
+		err := rows.Scan(
+			&prediction.ID,
+			&prediction.UserID,
+			&prediction.MatchID,
+			&prediction.PredictedOutcome,
+			&prediction.PredictedHomeScore,
+			&prediction.PredictedAwayScore,
+			&prediction.PointsAwarded,
+			&prediction.CreatedAt,
+			&prediction.CompletedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		predictions = append(predictions, prediction)
+	}
+
+	return predictions, nil
+}
+
+func (s *storage) UpdatePredictionResult(ctx context.Context, predictionID, points int) error {
+	query := `
+		UPDATE predictions
+		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP
+		WHERE id = ?`
+	_, err := s.db.ExecContext(ctx, query, points, predictionID)
+
+	return err
 }

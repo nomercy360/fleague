@@ -39,6 +39,7 @@ type PredictionResponse struct {
 	PredictedAwayScore *int          `json:"predicted_away_score"`
 	PointsAwarded      int           `json:"points_awarded"`
 	CreatedAt          time.Time     `json:"created_at"`
+	CompletedAt        *time.Time    `json:"completed_at"`
 	Match              MatchResponse `json:"match"`
 }
 
@@ -56,8 +57,8 @@ func (p PredictionRequest) Validate() error {
 	if p.PredictedOutcome != nil && (p.PredictedHomeScore != nil || p.PredictedAwayScore != nil) {
 		return fmt.Errorf("predicted outcome cannot be set with predicted score")
 	}
-	if p.PredictedOutcome != nil && (*p.PredictedOutcome != "away" && *p.PredictedOutcome != "home" && *p.PredictedOutcome != "draw") {
-		return fmt.Errorf("predicted outcome must be one of 'home', 'away', 'draw'")
+	if p.PredictedOutcome != nil && (*p.PredictedOutcome != db.MatchOutcomeHome && *p.PredictedOutcome != db.MatchOutcomeAway && *p.PredictedOutcome != db.MatchOutcomeDraw) {
+		return fmt.Errorf("predicted outcome must be one of home, away, or draw")
 	}
 	if p.PredictedHomeScore != nil && *p.PredictedHomeScore < 0 {
 		return fmt.Errorf("predicted home score must be a positive number")

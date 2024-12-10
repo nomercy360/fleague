@@ -20,6 +20,7 @@ type storager interface {
 	GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*db.Prediction, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
+	GetPredictionsByUserID(ctx context.Context, uid int) ([]db.Prediction, error)
 }
 
 const userIDContextKey = "user_id"
@@ -62,6 +63,33 @@ func (s Service) AddPrediction(ctx context.Context, prediction db.Prediction) er
 	return s.storage.AddPrediction(ctx, prediction)
 }
 
+func toMatchResponse(match db.Match, homeTeam db.Team, awayTeam db.Team) contract.MatchResponse {
+	return contract.MatchResponse{
+		ID:         match.ID,
+		Tournament: match.Tournament,
+		MatchDate:  match.MatchDate,
+		Status:     match.Status,
+		HomeTeam: contract.TeamResponse{
+			ID:           match.HomeTeamID,
+			Name:         homeTeam.Name,
+			ShortName:    homeTeam.ShortName,
+			CrestURL:     homeTeam.CrestURL,
+			Country:      homeTeam.Country,
+			Abbreviation: homeTeam.Abbreviation,
+		},
+		AwayTeam: contract.TeamResponse{
+			ID:           match.AwayTeamID,
+			Name:         awayTeam.Name,
+			ShortName:    awayTeam.ShortName,
+			CrestURL:     awayTeam.CrestURL,
+			Country:      awayTeam.Country,
+			Abbreviation: awayTeam.Abbreviation,
+		},
+		HomeScore: match.HomeScore,
+		AwayScore: match.AwayScore,
+	}
+}
+
 // GetActiveMatches fetches active matches for a league or all matches
 func (s Service) GetActiveMatches(ctx context.Context) ([]contract.MatchResponse, error) {
 	res, err := s.storage.GetActiveMatches(ctx)
@@ -89,31 +117,13 @@ func (s Service) GetActiveMatches(ctx context.Context) ([]contract.MatchResponse
 			return nil, err
 		}
 
-		matches = append(matches, contract.MatchResponse{
-			ID:         match.ID,
-			Tournament: match.Tournament,
-			MatchDate:  match.MatchDate,
-			Status:     match.Status,
-			HomeTeam: contract.TeamResponse{
-				ID:           homeTeam.ID,
-				Name:         homeTeam.Name,
-				ShortName:    homeTeam.ShortName,
-				CrestURL:     homeTeam.CrestURL,
-				Country:      homeTeam.Country,
-				Abbreviation: homeTeam.Abbreviation,
-			},
-			AwayTeam: contract.TeamResponse{
-				ID:           awayTeam.ID,
-				Name:         awayTeam.Name,
-				ShortName:    awayTeam.ShortName,
-				CrestURL:     awayTeam.CrestURL,
-				Country:      awayTeam.Country,
-				Abbreviation: awayTeam.Abbreviation,
-			},
-			HomeScore:  match.HomeScore,
-			AwayScore:  match.AwayScore,
-			Prediction: prediction,
-		})
+		resp := toMatchResponse(match, homeTeam, awayTeam)
+
+		if prediction != nil {
+			resp.Prediction = prediction
+		}
+
+		matches = append(matches, resp)
 	}
 
 	// sort matches by date

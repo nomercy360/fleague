@@ -14,6 +14,9 @@ import (
 type storager interface {
 	SaveMatch(ctx context.Context, match db.Match) error
 	GetTeamByName(ctx context.Context, name string) (db.Team, error)
+	GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]db.Match, error)
+	GetPredictionsForMatch(ctx context.Context, matchID int) ([]db.Prediction, error)
+	UpdatePredictionResult(ctx context.Context, predictionID, points int) error
 }
 
 type Syncer struct {
@@ -181,4 +184,61 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Syncer) ProcessPredictions(ctx context.Context) error {
+	matches, err := s.storage.GetCompletedMatchesWithoutCompletedPredictions(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get completed matches: %w", err)
+	}
+
+	for _, match := range matches {
+		predictions, err := s.storage.GetPredictionsForMatch(ctx, match.ID)
+		if err != nil {
+			log.Printf("Failed to fetch predictions for match %d: %v", match.ID, err)
+			continue
+		}
+
+		for _, prediction := range predictions {
+			points := calculatePoints(match, prediction)
+			if err := s.storage.UpdatePredictionResult(ctx, prediction.ID, points); err != nil {
+				log.Printf("Failed to update prediction %d: %v", prediction.ID, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func calculatePoints(match db.Match, prediction db.Prediction) int {
+	// If match is not completed
+	awayScore := *match.AwayScore
+	homeScore := *match.HomeScore
+
+	// If prediction was by exact score
+	if prediction.PredictedHomeScore != nil && prediction.PredictedAwayScore != nil {
+		predictedHomeScore := *prediction.PredictedHomeScore
+		predictedAwayScore := *prediction.PredictedAwayScore
+
+		if homeScore == predictedHomeScore && awayScore == predictedAwayScore {
+			return 5
+		}
+	}
+
+	// If prediction was by outcome
+	if prediction.PredictedOutcome != nil {
+		outcome := *prediction.PredictedOutcome
+
+		if outcome == db.MatchOutcomeDraw && homeScore == awayScore {
+			return 3
+		}
+		if outcome == db.MatchOutcomeHome && homeScore > awayScore {
+			return 3
+		}
+		if outcome == db.MatchOutcomeAway && awayScore > homeScore {
+			return 3
+		}
+	}
+
+	return 0
 }

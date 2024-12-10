@@ -29,3 +29,13 @@ func (h *Handler) SavePrediction(w http.ResponseWriter, r *http.Request) {
 
 	render.NoContent(w, r)
 }
+
+func (h *Handler) GetUserPredictions(w http.ResponseWriter, r *http.Request) {
+	resp, err := h.service.GetUserPredictions(r.Context())
+	if err != nil {
+		errrender.RenderError(w, r, err, "failed to get user predictions")
+		return
+	}
+
+	render.JSON(w, r, resp)
+}

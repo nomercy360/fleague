@@ -15,6 +15,7 @@ type servicer interface {
 	Health() (db.HealthStats, error)
 	TelegramAuth(query string) (*contract.UserAuthResponse, error)
 	SavePrediction(ctx context.Context, prediction contract.PredictionRequest) error
+	GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error)
 }
 
 // Handler struct for handling business logic

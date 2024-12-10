@@ -75,10 +75,13 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func startSyncer(ctx context.Context, sync *syncer.Syncer) {
-	// Run the syncer immediately on startup
 	log.Println("Starting initial sync process...")
 	if err := sync.SyncMatches(ctx); err != nil {
 		log.Printf("Initial sync failed: %v", err)
+	}
+
+	if err := sync.ProcessPredictions(ctx); err != nil {
+		log.Printf("Initial prediction processing failed: %v", err)
 	}
 
 	ticker := time.NewTicker(1 * time.Hour)
@@ -90,6 +93,10 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 			log.Println("Starting sync process...")
 			if err := sync.SyncMatches(ctx); err != nil {
 				log.Printf("Failed to sync matches: %v", err)
+			}
+
+			if err := sync.ProcessPredictions(ctx); err != nil {
+				log.Printf("Failed to process predictions: %v", err)
 			}
 		case <-ctx.Done():
 			log.Println("Stopping syncer...")
@@ -170,4 +177,5 @@ func setupAPIEndpoints(r chi.Router, h *handler.Handler) {
 	r.Use(authmw.AuthMiddleware("secret"))
 	r.Get("/matches", h.ListMatches)
 	r.Post("/predictions", h.SavePrediction)
+	r.Get("/predictions", h.GetUserPredictions)
 }

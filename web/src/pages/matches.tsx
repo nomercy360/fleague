@@ -1,12 +1,13 @@
 import { createEffect, createSignal, For, onMount, Show } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchMatches, Prediction, saveMatchPrediction } from '~/lib/api'
+import { fetchMatches, Match, Prediction, saveMatchPrediction } from '~/lib/api'
 import { IconMinus, IconPlus, IconStar } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from '~/components/ui/drawer'
 import { cn, formatDate, timeToLocaleString } from '~/lib/utils'
 import { Switch, SwitchControl, SwitchLabel, SwitchThumb } from '~/components/ui/switch'
+import { queryClient } from '~/App'
 
 
 export default function MatchesPage() {
@@ -17,12 +18,10 @@ export default function MatchesPage() {
 		queryFn: () => fetchMatches(),
 	}))
 
-	createEffect(() => {
-		if (query.data) {
-			console.log('MatchesPage mounted')
-			console.log(query.data)
-		}
-	})
+	const onPredictionUpdate = () => {
+		query.refetch()
+		queryClient.invalidateQueries({ queryKey: ['predictions'] })
+	}
 
 	return (
 		<div class="p-3 space-y-2">
@@ -68,36 +67,10 @@ export default function MatchesPage() {
 						</>
 					))}
 				</Show>
-				<FootballScoreboard match={selectedMatch()} onUpdate={query.refetch} />
+				<FootballScoreboard match={selectedMatch()} onUpdate={onPredictionUpdate} />
 			</Drawer>
 		</div>
 	)
-}
-
-export type Match = {
-	id: number
-	tournament: string
-	home_team: {
-		id: number
-		name: string
-		short_name: string
-		crest_url: string
-		country: string
-		abbreviation: string
-	}
-	away_team: {
-		id: number
-		name: string
-		short_name: string
-		crest_url: string
-		country: string
-		abbreviation: string
-	}
-	match_date: string
-	status: string
-	away_score: any
-	home_score: any
-	prediction: any
 }
 
 

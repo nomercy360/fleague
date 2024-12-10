@@ -97,3 +97,29 @@ func (s *storage) GetMatchByID(ctx context.Context, id int) (Match, error) {
 
 	return match, nil
 }
+
+func (s *storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]Match, error) {
+	query := `
+		SELECT m.id, m.home_score, m.away_score
+		FROM matches m
+		JOIN predictions p ON m.id = p.match_id
+		WHERE m.status = 'completed' AND p.completed_at IS NULL;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matches []Match
+	for rows.Next() {
+		var match Match
+		if err := rows.Scan(&match.ID, &match.HomeScore, &match.AwayScore); err != nil {
+			return nil, err
+		}
+		matches = append(matches, match)
+	}
+
+	return matches, nil
+}
