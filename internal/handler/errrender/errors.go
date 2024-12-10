@@ -8,35 +8,35 @@ import (
 	"net/http"
 )
 
-func RenderError(w http.ResponseWriter, r *http.Request, err error) {
+func RenderError(w http.ResponseWriter, r *http.Request, err error, msg string) {
 	if errors.Is(err, contract.ErrDecodeJSON) {
-		RenderJSON(w, r, http.StatusBadRequest, err, contract.FailedDecodeJSON)
-		return
-	}
-
-	if errors.Is(err, contract.ErrInvalidSessionToken) {
-		RenderJSON(w, r, http.StatusBadRequest, err, contract.InvalidSessionToken)
+		RenderJSON(w, r, http.StatusBadRequest, err, msg)
 		return
 	}
 
 	if errors.Is(err, contract.ErrInvalidRequest) {
-		RenderJSON(w, r, http.StatusBadRequest, err, contract.InvalidRequest)
+		RenderJSON(w, r, http.StatusBadRequest, err, msg)
 		return
 	}
 
-	if errors.Is(err, contract.ErrUnauthorized) {
-		RenderJSON(w, r, http.StatusUnauthorized, err, contract.Unauthorized)
+	if errors.Is(err, contract.ErrMatchNotFound) {
+		RenderJSON(w, r, http.StatusNotFound, err, msg)
 		return
 	}
 
-	RenderJSON(w, r, http.StatusInternalServerError, err, "internal error")
+	if errors.Is(err, contract.MatchStatusInvalid) {
+		RenderJSON(w, r, http.StatusConflict, err, msg)
+		return
+	}
+
+	RenderJSON(w, r, http.StatusInternalServerError, err, msg)
 }
 
 func RenderJSON(w http.ResponseWriter, r *http.Request, status int, err error, msg string) {
 	if err != nil {
-		log.Println(err)
+		log.Printf("error: %s: %v", msg, err)
 	}
 
 	render.Status(r, status)
-	render.JSON(w, r, contract.Error{Message: msg})
+	render.JSON(w, r, contract.Error{Message: err.Error()})
 }
