@@ -61,7 +61,6 @@ func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionR
 		}
 
 		res = append(res, contract.PredictionResponse{
-			ID:                 prediction.ID,
 			MatchID:            prediction.MatchID,
 			PredictedOutcome:   prediction.PredictedOutcome,
 			PredictedHomeScore: prediction.PredictedHomeScore,

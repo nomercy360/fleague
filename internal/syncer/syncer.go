@@ -16,7 +16,7 @@ type storager interface {
 	GetTeamByName(ctx context.Context, name string) (db.Team, error)
 	GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]db.Match, error)
 	GetPredictionsForMatch(ctx context.Context, matchID int) ([]db.Prediction, error)
-	UpdatePredictionResult(ctx context.Context, predictionID, points int) error
+	UpdatePredictionResult(ctx context.Context, matchID, userID, points int) error
 }
 
 type Syncer struct {
@@ -201,8 +201,8 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 
 		for _, prediction := range predictions {
 			points := calculatePoints(match, prediction)
-			if err := s.storage.UpdatePredictionResult(ctx, prediction.ID, points); err != nil {
-				log.Printf("Failed to update prediction %d: %v", prediction.ID, err)
+			if err := s.storage.UpdatePredictionResult(ctx, prediction.MatchID, prediction.UserID, points); err != nil {
+				log.Printf("Failed to update prediction result for match %d, user %d: %v", prediction.MatchID, prediction.UserID, err)
 			}
 		}
 	}

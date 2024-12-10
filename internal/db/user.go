@@ -11,11 +11,13 @@ import (
 // User represents a user in the system
 type User struct {
 	ID           int       `db:"id"`
-	FirstName    *string   `db:"first_name"` // Optional field
-	LastName     *string   `db:"last_name"`  // Optional field
+	FirstName    *string   `db:"first_name"`
+	LastName     *string   `db:"last_name"`
 	Username     string    `db:"username"`
-	LanguageCode *string   `db:"language_code"` // Optional field
+	LanguageCode *string   `db:"language_code"`
 	ChatID       int64     `db:"chat_id"`
+	ReferralCode string    `db:"referral_code"`
+	ReferredBy   *int      `db:"referred_by"`
 	CreatedAt    time.Time `db:"created_at"`
 }
 

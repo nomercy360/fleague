@@ -7,8 +7,20 @@ import (
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"math/rand"
 	"time"
 )
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func GenerateReferralCode(length int) string {
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	code := make([]byte, length)
+	for i := range code {
+		code[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(code)
+}
 
 func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) {
 	expIn := 24 * time.Hour
@@ -42,10 +54,12 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 		}
 
 		create := db.User{
-			FirstName: firstName,
-			LastName:  lastName,
-			Username:  username,
-			ChatID:    data.User.ID,
+			FirstName:    firstName,
+			LastName:     lastName,
+			Username:     username,
+			ChatID:       data.User.ID,
+			ReferralCode: GenerateReferralCode(6),
+			ReferredBy:   nil,
 		}
 
 		lang := "ru"

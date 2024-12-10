@@ -22,15 +22,6 @@ type LeaderboardEntry struct {
 	Points   int    `db:"points"`
 }
 
-// Referral represents a referral made by a user
-type Referral struct {
-	ID          int       `db:"id"`
-	ReferrerID  string    `db:"referrer_id"`
-	ReferredID  string    `db:"referred_id"`
-	CreatedAt   time.Time `db:"created_at"`
-	RewardGiven bool      `db:"reward_given"`
-}
-
 // Season represents a season in the competition
 type Season struct {
 	ID        int       `db:"id"`

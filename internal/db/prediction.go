@@ -6,7 +6,6 @@ import (
 )
 
 type Prediction struct {
-	ID                 int        `json:"id" db:"id"`
 	UserID             int        `json:"user_id" db:"user_id"`
 	MatchID            int        `json:"match_id" db:"match_id"`
 	PredictedOutcome   *string    `json:"predicted_outcome" db:"predicted_outcome"`
@@ -46,7 +45,6 @@ func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) err
 func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*Prediction, error) {
 	query := `
 		SELECT
-			id,
 			user_id,
 			match_id,
 			predicted_outcome,
@@ -60,7 +58,6 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 
 	var prediction Prediction
 	err := s.db.QueryRowContext(ctx, query, uid, matchID).Scan(
-		&prediction.ID,
 		&prediction.UserID,
 		&prediction.MatchID,
 		&prediction.PredictedOutcome,
@@ -83,7 +80,6 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Prediction, error) {
 	query := `
 		SELECT
-			id,
 			user_id,
 			match_id,
 			predicted_outcome,
@@ -105,7 +101,6 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Predic
 	for rows.Next() {
 		var prediction Prediction
 		err := rows.Scan(
-			&prediction.ID,
 			&prediction.UserID,
 			&prediction.MatchID,
 			&prediction.PredictedOutcome,
@@ -128,7 +123,6 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Predic
 func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Prediction, error) {
 	query := `
 		SELECT
-			id,
 			user_id,
 			match_id,
 			predicted_outcome,
@@ -150,7 +144,6 @@ func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Pr
 	for rows.Next() {
 		var prediction Prediction
 		err := rows.Scan(
-			&prediction.ID,
 			&prediction.UserID,
 			&prediction.MatchID,
 			&prediction.PredictedOutcome,
@@ -170,12 +163,12 @@ func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Pr
 	return predictions, nil
 }
 
-func (s *storage) UpdatePredictionResult(ctx context.Context, predictionID, points int) error {
+func (s *storage) UpdatePredictionResult(ctx context.Context, matchID, userID, points int) error {
 	query := `
 		UPDATE predictions
 		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP
-		WHERE id = ?`
-	_, err := s.db.ExecContext(ctx, query, points, predictionID)
+		WHERE match_id = ? AND user_id = ?`
+	_, err := s.db.ExecContext(ctx, query, points, matchID, userID)
 
 	return err
 }

@@ -9,7 +9,20 @@ CREATE TABLE users
     username      TEXT,
     language_code TEXT,
     chat_id       INTEGER UNIQUE, -- ID чата в телеграме
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+    referral_code TEXT UNIQUE,
+    referred_by   INTEGER,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (referred_by) REFERENCES users (id) ON DELETE SET NULL
+);
+
+CREATE TABLE user_friends
+(
+    user_id    INTEGER NOT NULL,
+    friend_id  INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, friend_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 -- Таблица команд
@@ -41,18 +54,17 @@ CREATE TABLE matches
 -- Таблица прогнозов
 CREATE TABLE predictions
 (
-    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id              INTEGER NOT NULL,
     match_id             INTEGER NOT NULL,
-    predicted_outcome    TEXT CHECK (predicted_outcome IN ('home', 'draw', 'away')),
+    predicted_outcome    TEXT CHECK (predicted_outcome IN ('home', 'away', 'draw')),
     predicted_home_score INTEGER,
     predicted_away_score INTEGER,
-    points_awarded       INTEGER  DEFAULT 0, -- Очки за прогноз
+    points_awarded       INTEGER  DEFAULT 0,
     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at         DATETIME,           -- Дата когда матч завершился и прогноз был подсчитан
+    completed_at         DATETIME, -- Дата когда матч завершился и прогноз был подсчитан
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
-    UNIQUE (user_id, match_id)
+    PRIMARY KEY (user_id, match_id)
 );
 
 CREATE TABLE seasons
@@ -67,12 +79,12 @@ CREATE TABLE seasons
 -- Таблица лидербордов
 CREATE TABLE leaderboards
 (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id   INTEGER NOT NULL,
     points    INTEGER DEFAULT 0,
     season_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (season_id) REFERENCES seasons (id) ON DELETE CASCADE
+    FOREIGN KEY (season_id) REFERENCES seasons (id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, season_id)
 );
 
 CREATE TRIGGER update_leaderboard
@@ -127,3 +139,6 @@ VALUES ('Bayer 04 Leverkusen', 'Leverkusen', 'B04', 'DE', ''),
        ('SK Sturm Graz', 'Sturm Graz', 'STU', 'AT', ''),
        ('FK Crvena Zvezda', 'Crvena Zvedza', 'CRV', 'RS', ''),
        ('ŠK Slovan Bratislava', 'Sl. Bratislava', 'SBA', 'SK', '');
+
+INSERT INTO seasons (name, start_date, end_date)
+VALUES ('2024/25', '2024-08-01', '2025-05-31');
