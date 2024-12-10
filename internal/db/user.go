@@ -10,15 +10,18 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID           int       `db:"id"`
-	FirstName    *string   `db:"first_name"`
-	LastName     *string   `db:"last_name"`
-	Username     string    `db:"username"`
-	LanguageCode *string   `db:"language_code"`
-	ChatID       int64     `db:"chat_id"`
-	ReferralCode string    `db:"referral_code"`
-	ReferredBy   *int      `db:"referred_by"`
-	CreatedAt    time.Time `db:"created_at"`
+	ID                 int       `db:"id"`
+	FirstName          *string   `db:"first_name"`
+	LastName           *string   `db:"last_name"`
+	Username           string    `db:"username"`
+	LanguageCode       *string   `db:"language_code"`
+	ChatID             int64     `db:"chat_id"`
+	ReferralCode       string    `db:"referral_code"`
+	ReferredBy         *int      `db:"referred_by"`
+	CreatedAt          time.Time `db:"created_at"`
+	TotalPoints        int       `db:"total_points"`
+	TotalPredictions   int       `db:"total_predictions"`
+	CorrectPredictions int       `db:"correct_predictions"`
 }
 
 func IsNoRowsError(err error) bool {
@@ -52,18 +55,29 @@ func (s *storage) CreateUser(user User) error {
 
 func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions
 		FROM users
 		WHERE chat_id = ?`
 
 	var user User
 	row := s.db.QueryRowContext(context.Background(), query, chatID)
 
-	err := row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username, &user.LanguageCode, &user.ChatID, &user.CreatedAt)
-
-	if err != nil && IsNoRowsError(err) {
+	if err := row.Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Username,
+		&user.LanguageCode,
+		&user.ChatID,
+		&user.CreatedAt,
+		&user.TotalPoints,
+		&user.TotalPredictions,
+		&user.CorrectPredictions,
+	); err != nil && IsNoRowsError(err) {
 		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, err
 	}
 
-	return &user, err
+	return &user, nil
 }

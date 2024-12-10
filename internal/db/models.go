@@ -2,18 +2,6 @@ package db
 
 import "time"
 
-// Match represents a sports match
-type Match struct {
-	ID         int       `db:"id"`
-	Tournament string    `db:"tournament"`
-	HomeTeamID int       `db:"home_team_id"`
-	AwayTeamID int       `db:"away_team_id"`
-	MatchDate  time.Time `db:"match_date"`
-	Status     string    `db:"status"`
-	HomeScore  *int      `db:"home_score"` // Nullable, set after match completion
-	AwayScore  *int      `db:"away_score"` // Nullable, set after match completion
-}
-
 // LeaderboardEntry represents an entry in the leaderboard
 type LeaderboardEntry struct {
 	ID       int    `db:"id"`

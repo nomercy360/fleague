@@ -89,14 +89,17 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 	}
 
 	return &contract.UserAuthResponse{
-		ID:           user.ID,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		Username:     user.Username,
-		LanguageCode: user.LanguageCode,
-		ChatID:       user.ChatID,
-		CreatedAt:    user.CreatedAt,
-		Token:        token,
+		ID:                 user.ID,
+		FirstName:          user.FirstName,
+		LastName:           user.LastName,
+		Username:           user.Username,
+		LanguageCode:       user.LanguageCode,
+		ChatID:             user.ChatID,
+		CreatedAt:          user.CreatedAt,
+		Token:              token,
+		TotalPoints:        user.TotalPoints,
+		TotalPredictions:   user.TotalPredictions,
+		CorrectPredictions: user.CorrectPredictions,
 	}, nil
 }
 

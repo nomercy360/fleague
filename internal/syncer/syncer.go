@@ -109,11 +109,11 @@ func statusMapper(status string) string {
 	// in db, we have only scheduled, ongoing, completed
 	switch status {
 	case "SCHEDULED", "TIMED":
-		return "scheduled"
+		return db.MatchStatusScheduled
 	case "IN_PLAY", "PAUSED":
-		return "ongoing"
+		return db.MatchStatusOngoing
 	case "FINISHED":
-		return "completed"
+		return db.MatchStatusCompleted
 	default:
 		return "unknown"
 	}

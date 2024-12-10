@@ -2,8 +2,9 @@ import {
 	IconChevronRight,
 } from '~/components/icons'
 
-import PredictionCard from '~/components/prediction-card'
+import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
+import { store } from '~/store'
 
 export default function FeedPage() {
 	return (
@@ -24,7 +25,7 @@ export default function FeedPage() {
 				</Link>
 				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
 					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">10</span>
+						<span class="text-2xl font-semibold">{store.user?.correct_predictions}</span>
 						<span class="text-xs text-muted-foreground">Correct predictions</span>
 					</div>
 					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
@@ -32,7 +33,7 @@ export default function FeedPage() {
 						<span class="text-xs text-muted-foreground">Global ranking</span>
 					</div>
 					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">300</span>
+						<span class="text-2xl font-semibold">{store.user?.total_points}{' '}DPS</span>
 						<span class="text-xs text-muted-foreground">Points earned</span>
 					</div>
 				</div>
@@ -48,7 +49,7 @@ export default function FeedPage() {
 				</Link>
 			</div>
 
-			<PredictionCard />
+			<UserActivity />
 		</div>
 	)
 }

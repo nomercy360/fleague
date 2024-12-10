@@ -38,10 +38,10 @@ export default function App(props: any) {
 				method: 'POST',
 			})
 
-			const { user, token } = await resp.json()
+			const user = await resp.json()
 
 			setUser(user)
-			setToken(token)
+			setToken(user.token)
 
 			window.Telegram.WebApp.ready()
 			window.Telegram.WebApp.expand()

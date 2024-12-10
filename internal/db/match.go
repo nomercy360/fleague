@@ -1,6 +1,27 @@
 package db
 
-import "context"
+import (
+	"context"
+	"time"
+)
+
+// Match represents a sports match
+type Match struct {
+	ID         int       `db:"id"`
+	Tournament string    `db:"tournament"`
+	HomeTeamID int       `db:"home_team_id"`
+	AwayTeamID int       `db:"away_team_id"`
+	MatchDate  time.Time `db:"match_date"`
+	Status     string    `db:"status"`
+	HomeScore  *int      `db:"home_score"` // Nullable, set after match completion
+	AwayScore  *int      `db:"away_score"` // Nullable, set after match completion
+}
+
+const (
+	MatchStatusScheduled = "scheduled"
+	MatchStatusCompleted = "completed"
+	MatchStatusOngoing   = "ongoing"
+)
 
 func (s *storage) SaveMatch(ctx context.Context, match Match) error {
 	query := `
@@ -32,6 +53,7 @@ func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	var query string
 	var args []interface{}
 
+	// next two weeks max, sqlite
 	query = `
 		SELECT
 			m.id,
@@ -40,7 +62,7 @@ func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 			m.away_team_id,
 			m.match_date,
 			m.status
-		FROM matches m WHERE m.status = 'scheduled'`
+		FROM matches m WHERE m.status = 'scheduled' AND m.match_date <= DATETIME('now', '+14 days')`
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {

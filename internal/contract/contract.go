@@ -11,14 +11,17 @@ type Error struct {
 }
 
 type UserAuthResponse struct {
-	ID           int       `json:"id"`
-	FirstName    *string   `json:"first_name"`
-	LastName     *string   `json:"last_name"`
-	Username     string    `json:"username"`
-	ChatID       int64     `json:"chat_id"`
-	LanguageCode *string   `json:"language_code"`
-	CreatedAt    time.Time `json:"created_at"`
-	Token        string    `json:"token"`
+	ID                 int       `json:"id"`
+	FirstName          *string   `json:"first_name"`
+	LastName           *string   `json:"last_name"`
+	Username           string    `json:"username"`
+	ChatID             int64     `json:"chat_id"`
+	LanguageCode       *string   `json:"language_code"`
+	CreatedAt          time.Time `json:"created_at"`
+	Token              string    `json:"token"`
+	TotalPoints        int       `json:"total_points"`
+	TotalPredictions   int       `json:"total_predictions"`
+	CorrectPredictions int       `json:"correct_predictions"`
 }
 
 type TeamResponse struct {

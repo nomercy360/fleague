@@ -1,8 +1,23 @@
 import { createStore } from 'solid-js/store'
 import { createSignal } from 'solid-js'
 
+
+type User = {
+	id: number
+	first_name: string
+	last_name: string
+	username: string
+	chat_id: number
+	language_code: string
+	created_at: string
+	token: string
+	total_points: number
+	total_predictions: number
+	correct_predictions: number
+}
+
 export const [store, setStore] = createStore<{
-	user: any
+	user: User | null
 	token: string
 	following: number[]
 }>({

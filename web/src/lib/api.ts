@@ -1,5 +1,4 @@
 import { store } from '~/store'
-import { Match } from '~/pages/matches'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 export const CDN_URL = 'https://assets.peatch.io'
@@ -93,7 +92,7 @@ export const fetchPresignedUrl = async (file: string) => {
 	return { path, url }
 }
 
-export type Prediction = {
+export type PredictionRequest = {
 	match_id: number
 	predicted_home_score: number | null
 	predicted_away_score: number | null
@@ -101,7 +100,7 @@ export type Prediction = {
 }
 
 
-export type Match = {
+export type MatchResponse = {
 	id: number
 	tournament: string
 	home_team: {
@@ -137,11 +136,11 @@ export type PredictionResponse = {
 	points_awarded: number
 	created_at: string
 	completed_at: string
-	match: Match
+	match: MatchResponse
 }
 
 
-export const saveMatchPrediction = async (prediction: Prediction) => {
+export const saveMatchPrediction = async (prediction: PredictionRequest) => {
 	await apiFetch({
 		endpoint: `/predictions`,
 		method: 'POST',

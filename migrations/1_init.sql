@@ -3,15 +3,18 @@ PRAGMA foreign_keys = ON;
 -- Таблица пользователей
 CREATE TABLE users
 (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name    TEXT,
-    last_name     TEXT,
-    username      TEXT,
-    language_code TEXT,
-    chat_id       INTEGER UNIQUE, -- ID чата в телеграме
-    referral_code TEXT UNIQUE,
-    referred_by   INTEGER,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name          TEXT,
+    last_name           TEXT,
+    username            TEXT,
+    language_code       TEXT,
+    chat_id             INTEGER UNIQUE, -- ID чата в телеграме
+    referral_code       TEXT UNIQUE,
+    referred_by         INTEGER,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_points        INTEGER  DEFAULT 0,
+    total_predictions   INTEGER  DEFAULT 0,
+    correct_predictions INTEGER  DEFAULT 0,
     FOREIGN KEY (referred_by) REFERENCES users (id) ON DELETE SET NULL
 );
 
@@ -99,6 +102,36 @@ BEGIN
             NEW.points_awarded)
     ON CONFLICT(user_id, season_id)
         DO UPDATE SET points = points + NEW.points_awarded;
+END;
+
+CREATE TRIGGER update_user_total_predictions
+    AFTER INSERT
+    ON predictions
+BEGIN
+    UPDATE users
+    SET total_predictions = total_predictions + 1
+    WHERE id = NEW.user_id;
+END;
+
+
+CREATE TRIGGER update_user_statistics
+    AFTER UPDATE
+    ON predictions
+BEGIN
+    -- Update total points
+    UPDATE users
+    SET total_points = (SELECT SUM(points_awarded)
+                        FROM predictions
+                        WHERE user_id = NEW.user_id)
+    WHERE id = NEW.user_id;
+
+-- Update correct predictions
+    UPDATE users
+    SET correct_predictions = (SELECT COUNT(*)
+                               FROM predictions
+                               WHERE user_id = NEW.user_id
+                                 AND (points_awarded > 0))
+    WHERE id = NEW.user_id;
 END;
 
 
