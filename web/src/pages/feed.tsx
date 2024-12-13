@@ -12,7 +12,7 @@ export default function FeedPage() {
 		const url =
 			'https://t.me/share/url?' +
 			new URLSearchParams({
-				url: 'https://t.me/peatch_bot/app?startapp=u_' + store.user?.username,
+				url: 'https://t.me/footbon_bot/app?startapp=u_' + store.user?.username,
 			}).toString() +
 			`&text=Check out ${store.user?.first_name}'s profile`
 
