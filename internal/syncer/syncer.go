@@ -145,6 +145,7 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 	}
 
 	for _, match := range apiResp.Matches {
+		continue
 		if match.HomeTeam.Name == nil || match.AwayTeam.Name == nil {
 			log.Printf("Skipping match with missing team names")
 			continue

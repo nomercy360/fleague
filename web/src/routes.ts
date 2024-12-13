@@ -14,6 +14,10 @@ export const routes: RouteDefinition[] = [
 		component: MatchesPage,
 	},
 	{
+		'path': '/users/:username',
+		'component': lazy(() => import('./pages/user')),
+	},
+	{
 		path: '**',
 		component: lazy(() => import('./pages/404')),
 	},

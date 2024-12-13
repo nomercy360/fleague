@@ -1,18 +1,39 @@
 import {
-	IconChevronRight,
+	IconChevronRight, IconShare,
 } from '~/components/icons'
 
 import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
+import { Button } from '~/components/ui/button'
 
 export default function FeedPage() {
+	function shareProfileURL() {
+		const url =
+			'https://t.me/share/url?' +
+			new URLSearchParams({
+				url: 'https://t.me/peatch_bot/app?startapp=u_' + store.user?.username,
+			}).toString() +
+			`&text=Check out ${store.user?.first_name}'s profile`
+
+		window.Telegram.WebApp.openTelegramLink(url)
+	}
+
 	return (
 		<div class="bg-background text-foreground pb-24">
-			<div class="w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
+			<div class="relativew-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
+				<Button
+					class="absolute top-6 left-6"
+					onClick={shareProfileURL}
+					size="sm"
+					variant="secondary"
+				>
+					<IconShare class="size-6" />
+					Share
+				</Button>
 				<img
-					src={window.Telegram.WebApp.initDataUnsafe.user.photo_url}
-					alt=""
+					src={store.user?.avatar_url}
+					alt="User avatar"
 					class="size-24 rounded-full object-cover"
 				/>
 				<p class="text-lg font-semibold mt-2">
@@ -38,7 +59,7 @@ export default function FeedPage() {
 					</div>
 				</div>
 			</div>
-			<div class="px-4 mb-6">
+			<div class="px-3 mb-6">
 				<Link class="flex flex-row h-14 justify-between items-center rounded-2xl p-3 bg-secondary"
 							href="/matches">
 					<p class="text-sm font-semibold">

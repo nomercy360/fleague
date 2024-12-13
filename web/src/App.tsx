@@ -5,7 +5,6 @@ import { NavigationProvider } from './lib/useNavigation'
 import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
-import { ColorModeProvider, ColorModeScript } from '@kobalte/core'
 import NavigationTabs from '~/components/navigation-tabs'
 
 export const queryClient = new QueryClient({
@@ -21,6 +20,18 @@ export const queryClient = new QueryClient({
 	},
 })
 
+function transformStartParam(startParam?: string): string | null {
+	if (!startParam) return null
+
+	// Check if the parameter starts with "redirect-to-"
+	if (startParam.startsWith('u_')) {
+		const path = startParam.slice('u_'.length)
+
+		return '/users' + path.replace(/-/g, '/')
+	} else {
+		return null
+	}
+}
 
 export default function App(props: any) {
 	const [isAuthenticated, setIsAuthenticated] = createSignal(false)
@@ -51,9 +62,14 @@ export default function App(props: any) {
 			setIsAuthenticated(true)
 			setIsLoading(false)
 
-			// if there is a redirect url, redirect to it
-			// ?startapp=redirect-to=/users/
+			const startapp = window.Telegram.WebApp.initDataUnsafe.start_param
 
+			const redirectUrl = transformStartParam(startapp)
+
+			if (redirectUrl) {
+				navigate(redirectUrl)
+				return
+			}
 		} catch (e) {
 			console.error('Failed to authenticate user:', e)
 			setIsAuthenticated(false)
@@ -66,10 +82,8 @@ export default function App(props: any) {
 			<QueryClientProvider client={queryClient}>
 				<Switch>
 					<Match when={isAuthenticated()}>
-						<div>
-							{props.children}
-							<NavigationTabs />
-						</div>
+						{props.children}
+						<NavigationTabs />
 					</Match>
 					<Match when={!isAuthenticated() && isLoading()}>
 						<div class="min-h-screen w-full flex-col items-start justify-center bg-main" />

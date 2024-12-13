@@ -33,9 +33,7 @@ func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequ
 	return s.storage.SavePrediction(ctx, prediction)
 }
 
-func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error) {
-	uid := GetUserIDFromContext(ctx)
-
+func (s Service) predictionsByUserID(ctx context.Context, uid int) ([]contract.PredictionResponse, error) {
 	predictions, err := s.storage.GetPredictionsByUserID(ctx, uid)
 	if err != nil {
 		return nil, err
@@ -78,4 +76,10 @@ func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionR
 	})
 
 	return res, nil
+}
+
+func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error) {
+	uid := GetUserIDFromContext(ctx)
+
+	return s.predictionsByUserID(ctx, uid)
 }

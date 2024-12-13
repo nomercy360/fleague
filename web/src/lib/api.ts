@@ -52,11 +52,23 @@ export const fetchMatches = async () => {
 	})
 
 	return resp.reduce((acc: any, match: any) => {
-		const date = new Date(match.match_date).toLocaleDateString()
+		const date = new Date(match.match_date).toDateString()
 		if (!acc[date]) acc[date] = []
 		acc[date].push(match)
 		return acc
 	}, {})
+}
+
+export const fetchLeaderboard = async () => {
+	return await apiFetch({
+		endpoint: '/leaderboard',
+	})
+}
+
+export const fetchUserInfo = async (username: string) => {
+	return await apiFetch({
+		endpoint: '/users/' + username,
+	})
 }
 
 export const uploadToS3 = (

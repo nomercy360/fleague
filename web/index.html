@@ -21,12 +21,12 @@
 	const colorScheme = getComputedStyle(root).getPropertyValue('--tg-color-scheme').trim()
 
 	if (colorScheme === 'dark') {
-		document.documentElement.classList.add('dark');
+		document.documentElement.classList.add('dark')
 	} else {
-		document.documentElement.classList.remove('dark');
+		document.documentElement.classList.remove('dark')
 	}
 </script>
-<div id="root" style="min-height: 100vh; padding: 0">
+<div id="root" style="overflow: hidden; padding: 0">
 
 </div>
 

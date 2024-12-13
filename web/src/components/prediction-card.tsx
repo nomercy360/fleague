@@ -8,6 +8,7 @@ import { createSignal, For, Match, Show, Switch } from 'solid-js'
 import MatchCard from '~/components/match-card'
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import FootballScoreboard from '~/components/score-board'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 
 
 const upcomingMatches = [
@@ -44,7 +45,7 @@ const UserActivity = () => {
 	const [selectedPrediction, setSelectedPrediction] = createSignal<PredictionResponse>({} as any)
 
 	return (
-		<div class="px-4">
+		<div class="px-3">
 			<p class="mb-1 px-2 text-lg font-semibold">
 				My Predictions
 			</p>

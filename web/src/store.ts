@@ -7,6 +7,7 @@ type User = {
 	first_name: string
 	last_name: string
 	username: string
+	avatar_url: string
 	chat_id: number
 	language_code: string
 	created_at: string

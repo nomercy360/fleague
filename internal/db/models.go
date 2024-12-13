@@ -4,10 +4,9 @@ import "time"
 
 // LeaderboardEntry represents an entry in the leaderboard
 type LeaderboardEntry struct {
-	ID       int    `db:"id"`
-	LeagueID int    `db:"league_id"`
-	UserID   string `db:"user_id"`
-	Points   int    `db:"points"`
+	UserID   int `db:"user_id"`
+	Points   int `db:"points"`
+	SeasonID int `db:"season_id"`
 }
 
 // Season represents a season in the competition

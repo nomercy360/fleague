@@ -15,8 +15,12 @@ CREATE TABLE users
     total_points        INTEGER  DEFAULT 0,
     total_predictions   INTEGER  DEFAULT 0,
     correct_predictions INTEGER  DEFAULT 0,
+    avatar_url          TEXT,
     FOREIGN KEY (referred_by) REFERENCES users (id) ON DELETE SET NULL
 );
+
+CREATE INDEX idx_users_chat_id ON users (chat_id);
+CREATE INDEX idx_users_username ON users (username);
 
 CREATE TABLE user_friends
 (

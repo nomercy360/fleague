@@ -11,6 +11,7 @@ import (
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/handler"
 	authmw "github.com/user/project/internal/middleware"
+	"github.com/user/project/internal/s3"
 	"github.com/user/project/internal/service"
 	"github.com/user/project/internal/syncer"
 	"gopkg.in/yaml.v3"
@@ -28,6 +29,13 @@ type Config struct {
 	DBPath           string `yaml:"db_path"`
 	TelegramBotToken string `yaml:"telegram_bot_token"`
 	FootballAPIKey   string `yaml:"football_api_key"`
+	S3               struct {
+		AccessKey string `yaml:"access_key_id"`
+		SecretKey string `yaml:"secret_access_key"`
+		Region    string `yaml:"region"`
+		Bucket    string `yaml:"bucket"`
+		EndPoint  string `yaml:"endpoint"`
+	} `yaml:"s3"`
 }
 
 var (
@@ -135,7 +143,14 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	svc := service.New(storage, cfg.TelegramBotToken)
+	s3Client, err := s3.NewS3Client(
+		cfg.S3.AccessKey, cfg.S3.SecretKey, cfg.S3.EndPoint, cfg.S3.Bucket)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize S3 client: %v", err)
+	}
+
+	svc := service.New(storage, s3Client, cfg.TelegramBotToken)
 
 	h := handler.New(svc)
 
@@ -178,4 +193,6 @@ func setupAPIEndpoints(r chi.Router, h *handler.Handler) {
 	r.Get("/matches", h.ListMatches)
 	r.Post("/predictions", h.SavePrediction)
 	r.Get("/predictions", h.GetUserPredictions)
+	r.Get("/leaderboard", h.GetLeaderboard)
+	r.Get("/users/{username}", h.GetUserInfo)
 }

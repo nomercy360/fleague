@@ -25,6 +25,7 @@ export function formatDate(dateString: string, dateTime = false) {
 	} else if (isTomorrow) {
 		result = `Завтра`
 	} else {
+		console.log('Date:', dateString)
 		const dayOfWeek = daysOfWeek[date.getDay()]
 		const day = date.getDate()
 		const month = months[date.getMonth()]

@@ -14,6 +14,7 @@ type User struct {
 	FirstName          *string   `db:"first_name"`
 	LastName           *string   `db:"last_name"`
 	Username           string    `db:"username"`
+	AvatarURL          *string   `db:"avatar_url"`
 	LanguageCode       *string   `db:"language_code"`
 	ChatID             int64     `db:"chat_id"`
 	ReferralCode       string    `db:"referral_code"`
@@ -46,21 +47,16 @@ func IsForeignKeyViolationError(err error) bool {
 
 func (s *storage) CreateUser(user User) error {
 	query := `
-		INSERT INTO users (first_name, last_name, username, language_code, chat_id, created_at)
+		INSERT INTO users (first_name, last_name, username, language_code, chat_id, avatar_url)
 		VALUES (?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, time.Now())
+	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL)
 	return err
 }
 
-func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
-	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions
-		FROM users
-		WHERE chat_id = ?`
-
+func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 	var user User
-	row := s.db.QueryRowContext(context.Background(), query, chatID)
+	row := s.db.QueryRowContext(context.Background(), query, args...)
 
 	if err := row.Scan(
 		&user.ID,
@@ -73,6 +69,7 @@ func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 		&user.TotalPoints,
 		&user.TotalPredictions,
 		&user.CorrectPredictions,
+		&user.AvatarURL,
 	); err != nil && IsNoRowsError(err) {
 		return nil, ErrNotFound
 	} else if err != nil {
@@ -80,4 +77,31 @@ func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
+		FROM users
+		WHERE chat_id = ?`
+
+	return s.getUserBy(query, chatID)
+}
+
+func (s *storage) GetUserByID(id int) (*User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
+		FROM users
+		WHERE id = ?`
+
+	return s.getUserBy(query, id)
+}
+
+func (s *storage) GetUserByUsername(uname string) (*User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
+		FROM users
+		WHERE username = ?`
+
+	return s.getUserBy(query, uname)
 }

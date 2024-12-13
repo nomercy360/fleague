@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/s3"
 	"sort"
 )
 
@@ -15,12 +16,15 @@ type storager interface {
 	AddPrediction(ctx context.Context, prediction db.Prediction) error
 	GetActiveMatches(ctx context.Context) ([]db.Match, error)
 	GetUserByChatID(chatID int64) (*db.User, error)
+	GetUserByID(id int) (*db.User, error)
+	GetUserByUsername(uname string) (*db.User, error)
 	CreateUser(user db.User) error
 	GetTeamByID(ctx context.Context, teamID int) (db.Team, error)
 	GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*db.Prediction, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
 	GetPredictionsByUserID(ctx context.Context, uid int) ([]db.Prediction, error)
+	GetActiveSeason(ctx context.Context) (db.Season, error)
 }
 
 const userIDContextKey = "user_id"
@@ -38,13 +42,15 @@ func GetUserIDFromContext(ctx context.Context) int {
 type Service struct {
 	storage  storager
 	botToken string
+	s3Client *s3.Client
 }
 
 // New creates a new Service instance
-func New(storage storager, botToken string) *Service {
+func New(storage storager, s3Client *s3.Client, botToken string) *Service {
 	return &Service{
 		storage:  storage,
 		botToken: botToken,
+		s3Client: s3Client,
 	}
 }
 
@@ -54,8 +60,49 @@ func (s Service) Health() (db.HealthStats, error) {
 }
 
 // GetLeaderboard fetches the leaderboard for a specific league
-func (s Service) GetLeaderboard(ctx context.Context, leagueID int) ([]db.LeaderboardEntry, error) {
-	return s.storage.GetLeaderboard(ctx, leagueID)
+func (s Service) GetLeaderboard(ctx context.Context) ([]contract.LeaderboardEntry, error) {
+	season, err := s.storage.GetActiveSeason(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := s.storage.GetLeaderboard(ctx, season.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var leaderboard []contract.LeaderboardEntry
+	for _, entry := range res {
+		user, err := s.storage.GetUserByID(entry.UserID)
+		if err != nil && !errors.Is(err, db.ErrNotFound) {
+			return nil, err
+		} else if err != nil {
+			continue
+		}
+
+		userProfile := contract.UserProfile{
+			ID:        user.ID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Username:  user.Username,
+			AvatarURL: user.AvatarURL,
+		}
+
+		leaderboard = append(leaderboard, contract.LeaderboardEntry{
+			User:     userProfile,
+			UserID:   entry.UserID,
+			Points:   entry.Points,
+			SeasonID: entry.SeasonID,
+		})
+	}
+
+	// sort leaderboard by points
+	sort.Slice(leaderboard, func(i, j int) bool {
+		return leaderboard[i].Points > leaderboard[j].Points
+	})
+
+	return leaderboard, nil
 }
 
 // AddPrediction adds a prediction for a user

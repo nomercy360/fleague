@@ -29,6 +29,11 @@ func RenderError(w http.ResponseWriter, r *http.Request, err error, msg string) 
 		return
 	}
 
+	if errors.Is(err, contract.ErrUserNotFound) {
+		RenderJSON(w, r, http.StatusNotFound, err, msg)
+		return
+	}
+
 	RenderJSON(w, r, http.StatusInternalServerError, err, msg)
 }
 

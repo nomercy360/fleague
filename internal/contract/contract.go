@@ -22,6 +22,7 @@ type UserAuthResponse struct {
 	TotalPoints        int       `json:"total_points"`
 	TotalPredictions   int       `json:"total_predictions"`
 	CorrectPredictions int       `json:"correct_predictions"`
+	AvatarURL          *string   `json:"avatar_url"`
 }
 
 type TeamResponse struct {
@@ -82,4 +83,27 @@ type MatchResponse struct {
 	AwayScore  *int           `json:"away_score"`
 	HomeScore  *int           `json:"home_score"`
 	Prediction *db.Prediction `json:"prediction"`
+}
+
+type UserProfile struct {
+	ID                 int     `json:"id"`
+	FirstName          *string `json:"first_name"`
+	LastName           *string `json:"last_name"`
+	Username           string  `json:"username"`
+	AvatarURL          *string `json:"avatar_url"`
+	TotalPoints        int     `json:"total_points"`
+	TotalPredictions   int     `json:"total_predictions"`
+	CorrectPredictions int     `json:"correct_predictions"`
+}
+
+type LeaderboardEntry struct {
+	UserID   int         `json:"user_id"`
+	Points   int         `json:"points"`
+	SeasonID int         `json:"season_id"`
+	User     UserProfile `json:"user"`
+}
+
+type UserInfoResponse struct {
+	User        UserProfile          `json:"user"`
+	Predictions []PredictionResponse `json:"predictions"`
 }

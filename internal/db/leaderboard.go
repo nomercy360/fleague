@@ -2,18 +2,17 @@ package db
 
 import "context"
 
-func (s *storage) GetLeaderboard(ctx context.Context, leagueID int) ([]LeaderboardEntry, error) {
+func (s *storage) GetLeaderboard(ctx context.Context, seasonID int) ([]LeaderboardEntry, error) {
 	query := `
         SELECT
-            id,
-            league_id,
+            season_id,
             user_id,
             points
         FROM leaderboards
-        WHERE league_id = ?
-        ORDER BY points DESC`
+        WHERE season_id = ?
+        ORDER BY points DESC LIMIT 30`
 
-	rows, err := s.db.QueryContext(ctx, query, leagueID)
+	rows, err := s.db.QueryContext(ctx, query, seasonID)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +21,7 @@ func (s *storage) GetLeaderboard(ctx context.Context, leagueID int) ([]Leaderboa
 	var leaderboard []LeaderboardEntry
 	for rows.Next() {
 		var entry LeaderboardEntry
-		if err := rows.Scan(&entry.ID, &entry.LeagueID, &entry.UserID, &entry.Points); err != nil {
+		if err := rows.Scan(&entry.SeasonID, &entry.UserID, &entry.Points); err != nil {
 			return nil, err
 		}
 		leaderboard = append(leaderboard, entry)
@@ -33,4 +32,23 @@ func (s *storage) GetLeaderboard(ctx context.Context, leagueID int) ([]Leaderboa
 	}
 
 	return leaderboard, nil
+}
+
+func (s *storage) GetActiveSeason(ctx context.Context) (Season, error) {
+	query := `
+		SELECT
+			id,
+			name,
+			start_date,
+			end_date,
+			is_active
+		FROM seasons
+		WHERE is_active = 1`
+
+	var season Season
+	if err := s.db.QueryRowContext(ctx, query).Scan(&season.ID, &season.Name, &season.StartDate, &season.EndDate, &season.IsActive); err != nil {
+		return Season{}, err
+	}
+
+	return season, nil
 }

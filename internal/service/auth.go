@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"io"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
@@ -53,11 +56,25 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 			username = "user_" + fmt.Sprintf("%d", data.User.ID)
 		}
 
+		var cdnPath string
+
+		if data.User.PhotoURL == "" {
+			imgFile := fmt.Sprintf("fb/users/%s.jpg", gonanoid.Must(8))
+			cdnPath = fmt.Sprintf("https://assets.peatch.io/%s", imgFile)
+			if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
+				return nil, err
+			}
+		} else {
+			// get random one of 30 avatars
+			cdnPath = fmt.Sprintf("https://assets.peatch.io/avatars/%d.svg", rand.Intn(30)+1)
+		}
+
 		create := db.User{
 			FirstName:    firstName,
 			LastName:     lastName,
 			Username:     username,
 			ChatID:       data.User.ID,
+			AvatarURL:    &cdnPath,
 			ReferralCode: GenerateReferralCode(6),
 			ReferredBy:   nil,
 		}
@@ -100,6 +117,7 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 		TotalPoints:        user.TotalPoints,
 		TotalPredictions:   user.TotalPredictions,
 		CorrectPredictions: user.CorrectPredictions,
+		AvatarURL:          user.AvatarURL,
 	}, nil
 }
 
@@ -126,4 +144,27 @@ func generateJWT(id int, chatID int64) (string, error) {
 	}
 
 	return t, nil
+}
+
+func (s Service) uploadImageToS3(imgURL string, fileName string) error {
+	resp, err := http.Get(imgURL)
+
+	if err != nil {
+		return fmt.Errorf("failed to download file: %v", err)
+
+	}
+
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	if _, err = s.s3Client.UploadFile(data, fileName); err != nil {
+		return fmt.Errorf("failed to upload user avatar to S3: %v", err)
+	}
+
+	return nil
 }

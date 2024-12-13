@@ -8,6 +8,7 @@ var (
 	ErrUnauthorized    = errors.New("unauthorized")
 	ErrMatchNotFound   = errors.New("match not found")
 	MatchStatusInvalid = errors.New("match status invalid")
+	ErrUserNotFound    = errors.New("user not found")
 )
 
 const (
@@ -16,4 +17,5 @@ const (
 	Unauthorized          = "Unauthorized"
 	MatchNotFound         = "Match not found"
 	MatchStatusInvalidMsg = "Match status is not scheduled"
+	UserNotFoundMsg       = "User not found"
 )
