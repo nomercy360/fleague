@@ -82,14 +82,26 @@ export default function MatchCard(props: MatchCardProps) {
 				<img src={`/logos/${props.match.home_team.name}.png`} alt="" class="w-10" />
 				<p class="max-w-20 text-xs text-foreground">{props.match.home_team.name}</p>
 			</div>
-			<div class="flex flex-col items-center text-center justify-end self-stretch">
-				<span class="text-lg font-bold text-center">
+			<Show when={props.match.status == 'scheduled'}>
+				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">
+				<span class="text-2xl font-bold text-center">
 					{timeToLocaleString(props.match.match_date)}
 				</span>
-				<p class="text-xs text-muted-foreground text-center">
-					{props.match.tournament}
-				</p>
-			</div>
+					<p class="text-xs text-muted-foreground text-center">
+						{props.match.tournament}
+					</p>
+				</div>
+			</Show>
+			<Show when={props.match.status == 'completed'}>
+				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">
+					<span class="text-2xl font-bold text-center">
+						{props.match.home_score} - {props.match.away_score}
+					</span>
+					<p class="text-xs text-muted-foreground text-center">
+						{props.match.tournament}
+					</p>
+				</div>
+			</Show>
 			<div class="flex flex-col items-center space-y-2 text-center">
 				<img src={`/logos/${props.match.away_team.name}.png`} alt="" class="w-10" />
 				<p class="text-xs text-foreground">{props.match.away_team.short_name}</p>

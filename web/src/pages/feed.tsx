@@ -69,7 +69,6 @@ export default function FeedPage() {
 					<IconChevronRight class="size-6" />
 				</Link>
 			</div>
-
 			<UserActivity />
 		</div>
 	)

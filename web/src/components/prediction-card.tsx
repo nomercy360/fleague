@@ -54,7 +54,7 @@ const UserActivity = () => {
 					<Drawer>
 						<For each={query.data}>
 							{(prediction: PredictionResponse) => (
-								<DrawerTrigger onClick={() => {
+								<DrawerTrigger class="w-full" onClick={() => {
 									setSelectedPrediction(prediction)
 								}}>
 									<MatchCard match={prediction.match} prediction={prediction} />
