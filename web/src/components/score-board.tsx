@@ -31,8 +31,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setOutcome(null)
 	}
 
-	const updateOutcome = (outcome: 'home' | 'draw' | 'away') => {
-		setOutcome(outcome)
+	const updateOutcome = (newValue: 'home' | 'draw' | 'away') => {
+		if (outcome() === newValue) {
+			setOutcome(null)
+			return
+		}
+		setOutcome(newValue)
 		setTeam1Score(null)
 		setTeam2Score(null)
 	}
@@ -76,13 +80,22 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setIsExactScore(!!props.prediction?.predicted_home_score)
 	})
 
+	const updateSwitch = (value: boolean) => {
+		setIsExactScore(value)
+		if (!value) {
+			setTeam1Score(null)
+			setTeam2Score(null)
+			setOutcome(null)
+		}
+	}
+
 	return (
 		<DrawerContent>
 			<div class="mx-auto w-full px-4">
 				<div class="flex flex-col items-center gap-4">
 					<Switch class="rounded-2xl my-2 flex w-full items-center justify-between space-x-6"
 									checked={isExactScore()}
-									onChange={setIsExactScore}>
+									onChange={updateSwitch}>
 						<SwitchLabel class="text-sm text-muted-foreground font-normal">
 							Exact score
 						</SwitchLabel>
@@ -94,8 +107,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row items-center space-x-2">
 								<img src={`/logos/${props.match.home_team.name}.png`} alt="" class="w-6" />
-								<p class="mt-2 text-xs text-muted-foreground mb-2">
-									{props.match.home_team.name}
+								<p class="mt-2 text-base mb-2">
+									{props.match.home_team.short_name}
 								</p>
 							</div>
 							<Show when={isExactScore()}>
@@ -126,8 +139,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row items-center space-x-2">
 								<img src={`/logos/${props.match.away_team.name}.png`} alt="" class="w-6" />
-								<p class="mt-2 text-xs text-muted-foreground mb-2">
-									{props.match.away_team.name}
+								<p class="mt-2 text-base mb-2">
+									{props.match.away_team.short_name}
 								</p>
 							</div>
 							<Show when={isExactScore()}>
@@ -196,6 +209,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 					<Button
 						size="default"
 						class="w-full"
+						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
 						onClick={onPredictionSave}
 					>
 						Сохранить

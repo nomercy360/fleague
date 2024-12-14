@@ -45,7 +45,7 @@ export default function MatchesPage() {
 	onMount(() => {
 		// disable scroll on body when drawer is open
 		document.body.style.overflow = 'hidden'
-		setHeight(window.Telegram.WebApp.viewportStableHeight - 140 - 56)
+		setHeight(window.Telegram.WebApp.viewportHeight - 140 - 56)
 	})
 
 	onCleanup(() => {

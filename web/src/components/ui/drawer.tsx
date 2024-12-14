@@ -74,7 +74,7 @@ const DrawerHeader: Component<ComponentProps<"div">> = (props) => {
 
 const DrawerFooter: Component<ComponentProps<"div">> = (props) => {
   const [, rest] = splitProps(props, ["class"])
-  return <div class={cn("t-auto flex flex-col gap-2 p-4", props.class)} {...rest} />
+  return <div class={cn("t-auto flex flex-col gap-2 px-4 pb-6", props.class)} {...rest} />
 }
 
 type DrawerTitleProps<T extends ValidComponent = "div"> = LabelProps<T> & { class?: string }
