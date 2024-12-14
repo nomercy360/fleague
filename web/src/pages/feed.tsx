@@ -6,6 +6,7 @@ import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
+import { onCleanup, onMount } from 'solid-js'
 
 export default function FeedPage() {
 	function shareProfileURL() {
@@ -19,9 +20,19 @@ export default function FeedPage() {
 		window.Telegram.WebApp.openTelegramLink(url)
 	}
 
+	onMount(() => {
+		// disable scroll on body when drawer is open
+		document.body.style.overflow = 'hidden'
+	})
+
+	onCleanup(() => {
+		// enable scroll on body when drawer is closed
+		document.body.style.overflow = 'auto'
+	})
+
 	return (
-		<div class="bg-background text-foreground pb-24">
-			<div class="relativew-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
+		<div class="h-screen overflow-y-scroll bg-background text-foreground pb-24">
+			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<Button
 					class="absolute top-6 left-6"
 					onClick={shareProfileURL}

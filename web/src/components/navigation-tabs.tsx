@@ -8,7 +8,7 @@ export default function NavigationTabs() {
 
 	return (
 		<div
-			class="flex flex-row items-center space-x-4 border-t px-2.5 h-20 fixed bottom-0 left-0 right-0 bg-background z-50">
+			class="flex flex-row items-center space-x-4 border shadow-sm px-2.5 h-14 rounded-[28px] fixed bottom-4 w-[240px] bg-background z-50 transform -translate-x-1/2 left-1/2">
 			<div class="grid grid-cols-3 w-full">
 				<Link
 					href="/"
@@ -17,7 +17,6 @@ export default function NavigationTabs() {
 					})}
 				>
 					<IconActivity class="size-6" />
-					Activity
 				</Link>
 				<Link
 					href="/matches"
@@ -26,7 +25,6 @@ export default function NavigationTabs() {
 					})}
 				>
 					<IconCalendar class="size-6" />
-					Matches
 				</Link>
 				<Link
 					href="/"
@@ -35,7 +33,6 @@ export default function NavigationTabs() {
 					})}
 				>
 					<IconUsers class="size-6" />
-					Friends
 				</Link>
 			</div>
 		</div>

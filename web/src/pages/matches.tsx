@@ -66,32 +66,32 @@ export default function MatchesPage() {
 		return `${days}d ${hours}h ${minutes}m`
 	}
 
+	const height = window.Telegram.WebApp.safeAreaInset - 140 - 56
+
 	return (
 		<div>
-			<div class="px-5 pt-6">
+			<div class="px-5 h-[140px] flex-col flex items-center justify-center">
 				<Show when={seasonQuery.data} fallback={<div class="w-full h-20 rounded-2xl bg-secondary" />}>
 					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
 										text={`Ends in ${calculateDuration(seasonQuery.data.end_date)}`} />
 				</Show>
 			</div>
-			<Tabs defaultValue="preview" class="mt-6 relative mr-auto w-full">
-				<div class="flex items-center justify-between">
-					<TabsList class="w-full justify-start rounded-none border-b bg-transparent p-0 h-14">
-						<TabsTrigger
-							value="matches"
-							class="relative h-14 rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
-						>
-							Matches
-						</TabsTrigger>
-						<TabsTrigger
-							value="leaderboard"
-							class="relative h-14 rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
-						>
-							Leaderboard
-						</TabsTrigger>
-					</TabsList>
-				</div>
-				<TabsContent value="matches" class="pb-12 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[400px]">
+			<Tabs defaultValue="preview" class="relative mr-auto w-full">
+				<TabsList class="w-full justify-start rounded-none border-b bg-transparent p-0 h-[56px]">
+					<TabsTrigger
+						value="matches"
+						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
+					>
+						Matches
+					</TabsTrigger>
+					<TabsTrigger
+						value="leaderboard"
+						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
+					>
+						Leaderboard
+					</TabsTrigger>
+				</TabsList>
+				<TabsContent value="matches" class={`pb-20 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[${height}px]`}>
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (
@@ -118,7 +118,7 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class="pb-12 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[400px]">
+				<TabsContent value="leaderboard" class={`pb-20 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[${height}px]`}>
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
 							{(entry) => (
