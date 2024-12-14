@@ -195,4 +195,5 @@ func setupAPIEndpoints(r chi.Router, h *handler.Handler) {
 	r.Get("/predictions", h.GetUserPredictions)
 	r.Get("/leaderboard", h.GetLeaderboard)
 	r.Get("/users/{username}", h.GetUserInfo)
+	r.Get("/seasons/active", h.GetActiveSeason)
 }

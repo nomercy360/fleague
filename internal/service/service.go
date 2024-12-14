@@ -191,3 +191,19 @@ func (s Service) GetUserProfile(ctx context.Context, userID string) (db.User, er
 
 	return *user, nil
 }
+
+// GetActiveSeason fetches the active season
+func (s Service) GetActiveSeason(ctx context.Context) (contract.SeasonResponse, error) {
+	season, err := s.storage.GetActiveSeason(ctx)
+	if err != nil {
+		return contract.SeasonResponse{}, err
+	}
+
+	return contract.SeasonResponse{
+		ID:        season.ID,
+		Name:      season.Name,
+		IsActive:  season.IsActive,
+		StartDate: season.StartDate,
+		EndDate:   season.EndDate,
+	}, nil
+}

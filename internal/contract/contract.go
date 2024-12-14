@@ -109,3 +109,11 @@ type UserInfoResponse struct {
 	User        UserProfile          `json:"user"`
 	Predictions []PredictionResponse `json:"predictions"`
 }
+
+type SeasonResponse struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	StartDate time.Time `json:"start_date"`
+	EndDate   time.Time `json:"end_date"`
+	IsActive  bool      `json:"is_active"`
+}

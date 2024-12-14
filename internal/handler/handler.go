@@ -18,6 +18,7 @@ type servicer interface {
 	GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error)
 	GetLeaderboard(ctx context.Context) ([]contract.LeaderboardEntry, error)
 	GetUserInfo(ctx context.Context, username string) (*contract.UserInfoResponse, error)
+	GetActiveSeason(ctx context.Context) (contract.SeasonResponse, error)
 }
 
 // Handler struct for handling business logic
@@ -50,4 +51,14 @@ func (h *Handler) AuthTelegram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.JSON(w, r, user)
+}
+
+func (h *Handler) GetActiveSeason(w http.ResponseWriter, r *http.Request) {
+	resp, err := h.service.GetActiveSeason(r.Context())
+	if err != nil {
+		errrender.RenderError(w, r, err, "failed to get active season")
+		return
+	}
+
+	render.JSON(w, r, resp)
 }

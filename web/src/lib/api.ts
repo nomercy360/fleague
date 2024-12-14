@@ -65,6 +65,12 @@ export const fetchLeaderboard = async () => {
 	})
 }
 
+export const fetchActiveSeason = async () => {
+	return await apiFetch({
+		endpoint: '/seasons/active',
+	})
+}
+
 export const fetchUserInfo = async (username: string) => {
 	return await apiFetch({
 		endpoint: '/users/' + username,

@@ -64,7 +64,7 @@ export default function FeedPage() {
 							<span class="text-xs text-muted-foreground">Global ranking</span>
 						</div>
 						<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-							<span class="text-2xl font-semibold">{userInfoQuery.data.user.total_points}{' '}DPS</span>
+							<span class="text-2xl font-semibold">{userInfoQuery.data.user.total_points}</span>
 							<span class="text-xs text-muted-foreground">Points earned</span>
 						</div>
 					</div>

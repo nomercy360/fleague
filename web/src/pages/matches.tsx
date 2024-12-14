@@ -1,6 +1,6 @@
 import { createSignal, For, onCleanup, onMount, Show, Suspense } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchLeaderboard, fetchMatches } from '~/lib/api'
+import { fetchActiveSeason, fetchLeaderboard, fetchMatches } from '~/lib/api'
 
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import { formatDate } from '~/lib/utils'
@@ -21,6 +21,11 @@ export default function MatchesPage() {
 	const leaderboardQuery = createQuery(() => ({
 		queryKey: ['leaderboard'],
 		queryFn: () => fetchLeaderboard(),
+	}))
+
+	const seasonQuery = createQuery(() => ({
+		queryKey: ['season'],
+		queryFn: () => fetchActiveSeason(),
 	}))
 
 	const onPredictionUpdate = () => {
@@ -47,17 +52,27 @@ export default function MatchesPage() {
 		document.body.style.overflow = 'auto'
 	})
 
+	function calculateDuration(date: string) {
+		// until that date from now
+		// format: 2d 3h 4m
+		const now = new Date()
+		const endDate = new Date(date)
+		const diff = endDate.getTime() - now.getTime()
+
+		const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+		const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+		return `${days}d ${hours}h ${minutes}m`
+	}
+
 	return (
 		<div>
 			<div class="px-5 pt-6">
-				<div class="rounded-2xl bg-secondary w-full p-4">
-					<p class="text-base font-semibold text-card-foreground uppercase tracking-widest">
-						Upcoming Matches
-					</p>
-					<p class="mt-1 text-sm text-muted-foreground">
-						Make predictions to earn points and appear on the leaderboard
-					</p>
-				</div>
+				<Show when={seasonQuery.data} fallback={<div class="w-full h-20 rounded-2xl bg-secondary" />}>
+					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
+										text={`Ends in ${calculateDuration(seasonQuery.data.end_date)}`} />
+				</Show>
 			</div>
 			<Tabs defaultValue="preview" class="mt-6 relative mr-auto w-full">
 				<div class="flex items-center justify-between">
@@ -111,11 +126,11 @@ export default function MatchesPage() {
 											href={`/users/${entry.user.username}`}>
 									<div class="flex items-center">
 										<span
-											class="w-4 text-base font-semibold text-secondary-foreground">{getUserPosition(entry.user_id)}</span>
+											class="w-4 text-center text-base font-semibold text-secondary-foreground">{getUserPosition(entry.user_id)}</span>
 										<img
 											src={entry.user.avatar_url}
 											alt="User avatar"
-											class="ml-3 size-6 rounded-full object-cover"
+											class="ml-4 size-6 rounded-full object-cover"
 										/>
 										<p class="text-base font-semibold ml-2">
 											{entry.user?.first_name}{' '}{entry.user?.last_name}
@@ -130,6 +145,20 @@ export default function MatchesPage() {
 					</Show>
 				</TabsContent>
 			</Tabs>
+		</div>
+	)
+}
+
+function InfoCard({ title, text }: { title: string; text: string }) {
+	return (
+
+		<div class="rounded-2xl bg-secondary w-full p-4 h-20">
+			<p class="text-base font-semibold text-card-foreground uppercase tracking-widest">
+				{title}
+			</p>
+			<p class="mt-1 text-sm text-muted-foreground">
+				{text}
+			</p>
 		</div>
 	)
 }
