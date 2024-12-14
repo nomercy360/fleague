@@ -12,7 +12,7 @@ import { Link } from '~/components/link'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
-
+	const [height, setHeight] = createSignal(0)
 	const query = createQuery(() => ({
 		queryKey: ['matches'],
 		queryFn: () => fetchMatches(),
@@ -45,6 +45,7 @@ export default function MatchesPage() {
 	onMount(() => {
 		// disable scroll on body when drawer is open
 		document.body.style.overflow = 'hidden'
+		setHeight(window.Telegram.WebApp.viewportStableHeight - 140 - 56)
 	})
 
 	onCleanup(() => {
@@ -66,7 +67,8 @@ export default function MatchesPage() {
 		return `${days}d ${hours}h ${minutes}m`
 	}
 
-	const height = window.Telegram.WebApp.safeAreaInset - 140 - 56
+
+	console.log('height', height)
 
 	return (
 		<div>
@@ -91,12 +93,13 @@ export default function MatchesPage() {
 						Leaderboard
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="matches" class={`pb-20 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[${height}px]`}>
+				<TabsContent value="matches" class="pb-20 pt-4 px-3 space-y-2 w-full overflow-y-scroll"
+										 style={{ height: `${height()}px` }}>
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (
 								<>
-									<p class="mb-1 mt-5 px-2 text-base font-semibold">
+									<p class="px-2 text-base font-semibold">
 										{formatDate(date)}
 									</p>
 									<For each={matches as any}>
@@ -118,7 +121,8 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class={`pb-20 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[${height}px]`}>
+				<TabsContent value="leaderboard" class="pb-20 pt-5 px-3 space-y-2 w-full overflow-y-scroll"
+										 style={{ height: `${height()}px` }}>
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
 							{(entry) => (
