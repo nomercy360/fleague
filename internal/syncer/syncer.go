@@ -3,6 +3,7 @@ package syncer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +18,9 @@ type storager interface {
 	GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]db.Match, error)
 	GetPredictionsForMatch(ctx context.Context, matchID int) ([]db.Prediction, error)
 	UpdatePredictionResult(ctx context.Context, matchID, userID, points int) error
+	GetActiveSeason(ctx context.Context) (db.Season, error)
+	UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID, points int) error
+	UpdateUserPoints(ctx context.Context, userID, points int) error
 }
 
 type Syncer struct {
@@ -193,6 +197,13 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 		return fmt.Errorf("failed to get completed matches: %w", err)
 	}
 
+	season, err := s.storage.GetActiveSeason(ctx)
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		return fmt.Errorf("failed to get active season: %w", err)
+	} else if errors.Is(err, db.ErrNotFound) {
+		return fmt.Errorf("no active season found")
+	}
+
 	for _, match := range matches {
 		predictions, err := s.storage.GetPredictionsForMatch(ctx, match.ID)
 		if err != nil {
@@ -201,9 +212,24 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 		}
 
 		for _, prediction := range predictions {
+			if match.AwayScore == nil || match.HomeScore == nil {
+				log.Printf("Skipping prediction for match %d with missing scores", match.ID)
+				continue
+			}
+
 			points := calculatePoints(match, prediction)
 			if err := s.storage.UpdatePredictionResult(ctx, prediction.MatchID, prediction.UserID, points); err != nil {
 				log.Printf("Failed to update prediction result for match %d, user %d: %v", prediction.MatchID, prediction.UserID, err)
+			}
+
+			// update user points in leaderboard for current season
+			if err := s.storage.UpdateUserLeaderboardPoints(ctx, prediction.UserID, season.ID, points); err != nil {
+				log.Printf("Failed to update leaderboard for user %d: %v", prediction.UserID, err)
+			}
+
+			// update user stats
+			if err := s.storage.UpdateUserPoints(ctx, prediction.UserID, points); err != nil {
+				log.Printf("Failed to update user points for user %d: %v", prediction.UserID, err)
 			}
 		}
 	}
@@ -212,7 +238,6 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 }
 
 func calculatePoints(match db.Match, prediction db.Prediction) int {
-	// If match is not completed
 	awayScore := *match.AwayScore
 	homeScore := *match.HomeScore
 

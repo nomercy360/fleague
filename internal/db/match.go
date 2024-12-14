@@ -124,8 +124,7 @@ func (s *storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Con
 	query := `
 		SELECT m.id, m.home_score, m.away_score
 		FROM matches m
-		JOIN predictions p ON m.id = p.match_id
-		WHERE m.status = 'completed' AND p.completed_at IS NULL;
+		WHERE m.status = 'completed' AND (SELECT COUNT(*) FROM predictions p WHERE p.match_id = m.id AND p.completed_at IS NOT NULL) = 0
 	`
 
 	rows, err := s.db.QueryContext(ctx, query)

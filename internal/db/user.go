@@ -23,6 +23,7 @@ type User struct {
 	TotalPoints        int       `db:"total_points"`
 	TotalPredictions   int       `db:"total_predictions"`
 	CorrectPredictions int       `db:"correct_predictions"`
+	GlobalRank         int       `db:"global_rank"`
 }
 
 func IsNoRowsError(err error) bool {
@@ -70,6 +71,7 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 		&user.TotalPredictions,
 		&user.CorrectPredictions,
 		&user.AvatarURL,
+		&user.GlobalRank,
 	); err != nil && IsNoRowsError(err) {
 		return nil, ErrNotFound
 	} else if err != nil {
@@ -81,8 +83,12 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 
 func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
-		FROM users
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		FROM (
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
+		         FROM users
+		     ) ranked_users
 		WHERE chat_id = ?`
 
 	return s.getUserBy(query, chatID)
@@ -90,8 +96,12 @@ func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 
 func (s *storage) GetUserByID(id int) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
-		FROM users
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		FROM (
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
+		         FROM users
+		     ) ranked_users
 		WHERE id = ?`
 
 	return s.getUserBy(query, id)
@@ -99,9 +109,34 @@ func (s *storage) GetUserByID(id int) (*User, error) {
 
 func (s *storage) GetUserByUsername(uname string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url
-		FROM users
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		FROM (
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
+		         FROM users
+		     ) ranked_users
 		WHERE username = ?`
 
 	return s.getUserBy(query, uname)
+}
+
+func (s *storage) UpdateUserPoints(ctx context.Context, userID, points int) error {
+	query := `
+		UPDATE users
+		SET total_points = total_points + ?,
+		    correct_predictions = correct_predictions + 1
+		WHERE id = ?`
+
+	_, err := s.db.ExecContext(ctx, query, points, userID)
+	return err
+}
+
+func (s *storage) UpdateUserPredictionCount(ctx context.Context, userID int) error {
+	query := `
+		UPDATE users
+		SET total_predictions = total_predictions + 1
+		WHERE id = ?`
+
+	_, err := s.db.ExecContext(ctx, query, userID)
+	return err
 }

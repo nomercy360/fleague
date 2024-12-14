@@ -32,6 +32,7 @@ func (s Service) GetUserInfo(ctx context.Context, username string) (*contract.Us
 			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
+			GlobalRank:         user.GlobalRank,
 		},
 		Predictions: userPredictions,
 	}, nil

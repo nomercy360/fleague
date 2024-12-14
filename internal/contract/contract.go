@@ -23,6 +23,7 @@ type UserAuthResponse struct {
 	TotalPredictions   int       `json:"total_predictions"`
 	CorrectPredictions int       `json:"correct_predictions"`
 	AvatarURL          *string   `json:"avatar_url"`
+	GlobalRank         int       `json:"global_rank"`
 }
 
 type TeamResponse struct {
@@ -94,6 +95,7 @@ type UserProfile struct {
 	TotalPoints        int     `json:"total_points"`
 	TotalPredictions   int     `json:"total_predictions"`
 	CorrectPredictions int     `json:"correct_predictions"`
+	GlobalRank         int     `json:"global_rank"`
 }
 
 type LeaderboardEntry struct {

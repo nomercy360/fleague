@@ -118,6 +118,7 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 		TotalPredictions:   user.TotalPredictions,
 		CorrectPredictions: user.CorrectPredictions,
 		AvatarURL:          user.AvatarURL,
+		GlobalRank:         user.GlobalRank,
 	}, nil
 }
 

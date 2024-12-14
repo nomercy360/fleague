@@ -15,6 +15,7 @@ type User = {
 	total_points: number
 	total_predictions: number
 	correct_predictions: number
+	global_rank: number
 }
 
 export const [store, setStore] = createStore<{

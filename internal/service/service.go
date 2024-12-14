@@ -25,6 +25,7 @@ type storager interface {
 	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
 	GetPredictionsByUserID(ctx context.Context, uid int) ([]db.Prediction, error)
 	GetActiveSeason(ctx context.Context) (db.Season, error)
+	UpdateUserPredictionCount(ctx context.Context, userID int) error
 }
 
 const userIDContextKey = "user_id"

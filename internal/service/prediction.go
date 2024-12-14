@@ -18,7 +18,7 @@ func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequ
 		return err
 	}
 
-	if match.Status != "scheduled" {
+	if match.Status != db.MatchStatusScheduled {
 		return contract.MatchStatusInvalid
 	}
 
@@ -30,7 +30,15 @@ func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequ
 		PredictedAwayScore: req.PredictedAwayScore,
 	}
 
-	return s.storage.SavePrediction(ctx, prediction)
+	if err := s.storage.SavePrediction(ctx, prediction); err != nil {
+		return err
+	}
+
+	if err := s.storage.UpdateUserPredictionCount(ctx, uid); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s Service) predictionsByUserID(ctx context.Context, uid int) ([]contract.PredictionResponse, error) {
@@ -70,9 +78,9 @@ func (s Service) predictionsByUserID(ctx context.Context, uid int) ([]contract.P
 		})
 	}
 
-	// sort predictions by creation date
+	// sort predictions by match date
 	sort.Slice(res, func(i, j int) bool {
-		return res[i].CreatedAt.After(res[j].CreatedAt)
+		return res[i].Match.MatchDate.After(res[j].Match.MatchDate)
 	})
 
 	return res, nil

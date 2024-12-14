@@ -37,11 +37,11 @@ export default function FeedPage() {
 					class="size-24 rounded-full object-cover"
 				/>
 				<p class="text-lg font-semibold mt-2">
-					{window.Telegram.WebApp.initDataUnsafe.user.first_name}
+					{store.user?.first_name}
 				</p>
 				<Link href="/" class="text-muted-foreground flex flex-row items-center">
 					<p class="text-sm">
-						@{window.Telegram.WebApp.initDataUnsafe.user.username}
+						@{store.user?.username}
 					</p>
 				</Link>
 				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
@@ -50,11 +50,13 @@ export default function FeedPage() {
 						<span class="text-xs text-muted-foreground">Correct predictions</span>
 					</div>
 					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">#123</span>
+						<span class="text-2xl font-semibold">
+							#{store.user?.global_rank}
+						</span>
 						<span class="text-xs text-muted-foreground">Global ranking</span>
 					</div>
 					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">{store.user?.total_points}{' '}DPS</span>
+						<span class="text-2xl font-semibold">{store.user?.total_points}</span>
 						<span class="text-xs text-muted-foreground">Points earned</span>
 					</div>
 				</div>

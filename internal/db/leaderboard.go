@@ -52,3 +52,14 @@ func (s *storage) GetActiveSeason(ctx context.Context) (Season, error) {
 
 	return season, nil
 }
+
+func (s *storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID, points int) error {
+	query := `
+		INSERT INTO leaderboards (season_id, user_id, points)
+		VALUES (?, ?, ?)
+		ON CONFLICT (season_id, user_id)
+		DO UPDATE SET points = points + ?`
+
+	_, err := s.db.ExecContext(ctx, query, seasonID, userID, points, points)
+	return err
+}

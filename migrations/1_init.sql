@@ -22,14 +22,14 @@ CREATE TABLE users
 CREATE INDEX idx_users_chat_id ON users (chat_id);
 CREATE INDEX idx_users_username ON users (username);
 
-CREATE TABLE user_friends
+CREATE TABLE user_followers
 (
-    user_id    INTEGER NOT NULL,
-    friend_id  INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (friend_id) REFERENCES users (id) ON DELETE CASCADE
+    follower_id  INTEGER NOT NULL,
+    following_id INTEGER NOT NULL,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, following_id),
+    FOREIGN KEY (follower_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 -- Таблица команд
@@ -93,51 +93,6 @@ CREATE TABLE leaderboards
     FOREIGN KEY (season_id) REFERENCES seasons (id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, season_id)
 );
-
-CREATE TRIGGER update_leaderboard
-    AFTER UPDATE OF points_awarded
-    ON predictions
-    WHEN NEW.points_awarded > 0 AND NEW.completed_at IS NOT NULL
-BEGIN
-    -- Check if the user already has an entry in the leaderboard for the current season
-    INSERT INTO leaderboards (user_id, season_id, points)
-    VALUES (NEW.user_id,
-            (SELECT id FROM seasons WHERE is_active = 1),
-            NEW.points_awarded)
-    ON CONFLICT(user_id, season_id)
-        DO UPDATE SET points = points + NEW.points_awarded;
-END;
-
-CREATE TRIGGER update_user_total_predictions
-    AFTER INSERT
-    ON predictions
-BEGIN
-    UPDATE users
-    SET total_predictions = total_predictions + 1
-    WHERE id = NEW.user_id;
-END;
-
-
-CREATE TRIGGER update_user_statistics
-    AFTER UPDATE
-    ON predictions
-BEGIN
-    -- Update total points
-    UPDATE users
-    SET total_points = (SELECT SUM(points_awarded)
-                        FROM predictions
-                        WHERE user_id = NEW.user_id)
-    WHERE id = NEW.user_id;
-
--- Update correct predictions
-    UPDATE users
-    SET correct_predictions = (SELECT COUNT(*)
-                               FROM predictions
-                               WHERE user_id = NEW.user_id
-                                 AND (points_awarded > 0))
-    WHERE id = NEW.user_id;
-END;
-
 
 INSERT INTO teams (name, short_name, abbreviation, country, crest_url)
 VALUES ('Bayer 04 Leverkusen', 'Leverkusen', 'B04', 'DE', ''),

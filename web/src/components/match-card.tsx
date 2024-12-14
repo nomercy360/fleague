@@ -80,7 +80,7 @@ export default function MatchCard(props: MatchCardProps) {
 			</Show>
 			<div class="z-10 flex flex-col items-center space-y-2 text-center">
 				<img src={`/logos/${props.match.home_team.name}.png`} alt="" class="w-10" />
-				<p class="max-w-20 text-xs text-foreground">{props.match.home_team.name}</p>
+				<p class="max-w-20 text-xs text-foreground">{props.match.home_team.short_name}</p>
 			</div>
 			<Show when={props.match.status == 'scheduled'}>
 				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">

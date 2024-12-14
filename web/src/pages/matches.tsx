@@ -1,4 +1,4 @@
-import { createSignal, For, Show, Suspense } from 'solid-js'
+import { createSignal, For, onCleanup, onMount, Show, Suspense } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchLeaderboard, fetchMatches } from '~/lib/api'
 
@@ -28,14 +28,24 @@ export default function MatchesPage() {
 		queryClient.invalidateQueries({ queryKey: ['predictions'] })
 	}
 
-	const getUserPosition = (user: any) => {
-		const idx = leaderboardQuery.data.findIndex((u: any) => u.id === user.id)
+	const getUserPosition = (id: number) => {
+		const idx = leaderboardQuery.data.findIndex((u: any) => u.user_id === id)
 
 		if (idx === 0) return '🥇'
 		if (idx === 1) return '🥈'
 		if (idx === 2) return '🥉'
 		return idx + 1
 	}
+
+	onMount(() => {
+		// disable scroll on body when drawer is open
+		document.body.style.overflow = 'hidden'
+	})
+
+	onCleanup(() => {
+		// enable scroll on body when drawer is closed
+		document.body.style.overflow = 'auto'
+	})
 
 	return (
 		<div>
@@ -50,7 +60,7 @@ export default function MatchesPage() {
 				</div>
 			</div>
 			<Tabs defaultValue="preview" class="mt-6 relative mr-auto w-full">
-				<div class="flex items-center justify-between pb-3">
+				<div class="flex items-center justify-between">
 					<TabsList class="w-full justify-start rounded-none border-b bg-transparent p-0 h-14">
 						<TabsTrigger
 							value="matches"
@@ -66,12 +76,12 @@ export default function MatchesPage() {
 						</TabsTrigger>
 					</TabsList>
 				</div>
-				<TabsContent value="matches" class="px-3 space-y-2 w-full">
+				<TabsContent value="matches" class="pb-12 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[400px]">
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (
 								<>
-									<p class="px-2 text-lg font-semibold">
+									<p class="mb-1 mt-5 px-2 text-base font-semibold">
 										{formatDate(date)}
 									</p>
 									<For each={matches as any}>
@@ -93,23 +103,26 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class="p-3 space-y-2 w-full">
+				<TabsContent value="leaderboard" class="pb-12 pt-2 px-3 space-y-2 w-full overflow-y-scroll h-[400px]">
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
 							{(entry) => (
 								<Link class="flex items-center justify-between h-12 px-3 bg-card rounded-2xl"
 											href={`/users/${entry.user.username}`}>
 									<div class="flex items-center">
+										<span
+											class="w-4 text-base font-semibold text-secondary-foreground">{getUserPosition(entry.user_id)}</span>
 										<img
 											src={entry.user.avatar_url}
 											alt="User avatar"
-											class="size-6 rounded-full object-cover"
+											class="ml-3 size-6 rounded-full object-cover"
 										/>
-										<p class="text-base font-semibold ml-2">{entry.user.first_name}</p>
+										<p class="text-base font-semibold ml-2">
+											{entry.user?.first_name}{' '}{entry.user?.last_name}
+										</p>
 									</div>
 									<div class="flex items-center">
 										<p class="text-base font-semibold mr-2">{entry.points} DPS</p>
-										<span class="text-lg font-semibold">{getUserPosition(entry)}</span>
 									</div>
 								</Link>
 							)}
