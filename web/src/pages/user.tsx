@@ -8,7 +8,8 @@ import { store } from '~/store'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchLeaderboard, fetchUserInfo } from '~/lib/api'
 import { useParams } from '@solidjs/router'
-import { Show } from 'solid-js'
+import { For, Show } from 'solid-js'
+import MatchCard from '~/components/match-card'
 
 export default function FeedPage() {
 	const params = useParams()
@@ -68,6 +69,13 @@ export default function FeedPage() {
 							<span class="text-xs text-muted-foreground">Points earned</span>
 						</div>
 					</div>
+				</div>
+				<div class="px-3 space-y-2">
+					<For each={userInfoQuery.data.predictions}>
+						{(prediction) => (
+							<MatchCard match={prediction.match} prediction={prediction} />
+						)}
+					</For>
 				</div>
 			</Show>
 		</div>

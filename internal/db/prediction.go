@@ -77,7 +77,8 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 	return &prediction, nil
 }
 
-func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Prediction, error) {
+func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]Prediction, error) {
+	// Base query
 	query := `
 		SELECT
 			user_id,
@@ -89,7 +90,12 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Predic
 			created_at,
 			completed_at
 		FROM predictions
-		WHERE user_id = ?`
+		WHERE user_id = ?
+	`
+
+	if onlyCompleted {
+		query += " AND completed_at IS NOT NULL"
+	}
 
 	rows, err := s.db.QueryContext(ctx, query, uid)
 	if err != nil {
@@ -100,7 +106,7 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Predic
 	var predictions []Prediction
 	for rows.Next() {
 		var prediction Prediction
-		err := rows.Scan(
+		if err := rows.Scan(
 			&prediction.UserID,
 			&prediction.MatchID,
 			&prediction.PredictedOutcome,
@@ -109,15 +115,14 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int) ([]Predic
 			&prediction.PointsAwarded,
 			&prediction.CreatedAt,
 			&prediction.CompletedAt,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
 		predictions = append(predictions, prediction)
 	}
 
-	return predictions, nil
+	return predictions, rows.Err()
 }
 
 func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Prediction, error) {

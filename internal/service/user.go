@@ -16,7 +16,7 @@ func (s Service) GetUserInfo(ctx context.Context, username string) (*contract.Us
 
 	}
 
-	userPredictions, err := s.predictionsByUserID(ctx, user.ID)
+	userPredictions, err := s.predictionsByUserID(ctx, user.ID, true)
 
 	if err != nil {
 		return nil, err

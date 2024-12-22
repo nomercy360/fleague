@@ -27,7 +27,7 @@ function transformStartParam(startParam?: string): string | null {
 	if (startParam.startsWith('u_')) {
 		const path = startParam.slice('u_'.length)
 
-		return '/users' + path.replace(/-/g, '/')
+		return '/users/' + path.replace(/-/g, '/')
 	} else {
 		return null
 	}

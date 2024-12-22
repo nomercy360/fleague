@@ -41,8 +41,8 @@ func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequ
 	return nil
 }
 
-func (s Service) predictionsByUserID(ctx context.Context, uid int) ([]contract.PredictionResponse, error) {
-	predictions, err := s.storage.GetPredictionsByUserID(ctx, uid)
+func (s Service) predictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]contract.PredictionResponse, error) {
+	predictions, err := s.storage.GetPredictionsByUserID(ctx, uid, onlyCompleted)
 	if err != nil {
 		return nil, err
 	}
@@ -89,5 +89,5 @@ func (s Service) predictionsByUserID(ctx context.Context, uid int) ([]contract.P
 func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error) {
 	uid := GetUserIDFromContext(ctx)
 
-	return s.predictionsByUserID(ctx, uid)
+	return s.predictionsByUserID(ctx, uid, false)
 }

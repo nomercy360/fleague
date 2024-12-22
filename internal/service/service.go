@@ -23,7 +23,7 @@ type storager interface {
 	GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*db.Prediction, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
-	GetPredictionsByUserID(ctx context.Context, uid int) ([]db.Prediction, error)
+	GetPredictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]db.Prediction, error)
 	GetActiveSeason(ctx context.Context) (db.Season, error)
 	UpdateUserPredictionCount(ctx context.Context, userID int) error
 }

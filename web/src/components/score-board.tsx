@@ -97,7 +97,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									checked={isExactScore()}
 									onChange={updateSwitch}>
 						<SwitchLabel class="text-sm text-muted-foreground font-normal">
-							Exact score
+							Score
 						</SwitchLabel>
 						<SwitchControl>
 							<SwitchThumb />
