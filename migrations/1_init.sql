@@ -48,8 +48,8 @@ CREATE TABLE matches
 (
     id           TEXT PRIMARY KEY,
     tournament   TEXT     NOT NULL,        -- Турнир, к которому относится матч
-    home_team_id TEXT,        -- ID домашней команды
-    away_team_id TEXT,        -- ID гостевой команды
+    home_team_id TEXT,                     -- ID домашней команды
+    away_team_id TEXT,                     -- ID гостевой команды
     match_date   DATETIME NOT NULL,
     status       TEXT DEFAULT 'scheduled', -- Статусы: scheduled, ongoing, completed
     home_score   INTEGER,                  -- Заполняется после завершения
@@ -94,43 +94,5 @@ CREATE TABLE leaderboards
     PRIMARY KEY (user_id, season_id)
 );
 
-INSERT INTO teams (id, name, short_name, abbreviation, country, crest_url)
-VALUES ('1', 'Bayer 04 Leverkusen', 'Leverkusen', 'B04', 'DE', ''),
-       ('2', 'Borussia Dortmund', 'Dortmund', 'BVB', 'DE', ''),
-       ('3', 'FC Bayern München', 'Bayern', 'FCB', 'DE', ''),
-       ('4', 'VfB Stuttgart', 'Stuttgart', 'VFB', 'DE', ''),
-       ('5', 'Arsenal FC', 'Arsenal', 'ARS', 'EN', ''),
-       ('6', 'Aston Villa FC', 'Aston Villa', 'AVL', 'EN', ''),
-       ('7', 'Liverpool FC', 'Liverpool', 'LIV', 'EN', ''),
-       ('8', 'Manchester City FC', 'Man City', 'MCI', 'EN', ''),
-       ('9', 'Club Atlético de Madrid', 'Atleti', 'ATL', 'ES', ''),
-       ('10', 'FC Barcelona', 'Barça', 'FCB', 'ES', ''),
-       ('11', 'Real Madrid CF', 'Real Madrid', 'RMA', 'ES', ''),
-       ('12', 'AC Milan', 'Milan', 'MIL', 'IT', ''),
-       ('13', 'Atalanta BC', 'Atalanta', 'ATA', 'IT', ''),
-       ('14', 'Bologna FC 1909', 'Bologna', 'BOL', 'IT', ''),
-       ('15', 'FC Internazionale Milano', 'Inter', 'INT', 'IT', ''),
-       ('16', 'Juventus FC', 'Juventus', 'JUV', 'IT', ''),
-       ('17', 'Girona FC', 'Girona', 'GIR', 'ES', ''),
-       ('18', 'Sporting Clube de Portugal', 'Sporting CP', 'SPO', 'PT', ''),
-       ('19', 'Stade Brestois 29', 'Brest', 'BRE', 'FR', ''),
-       ('20', 'Lille OSC', 'Lille', 'LIL', 'FR', ''),
-       ('21', 'Paris Saint-Germain FC', 'PSG', 'PSG', 'FR', ''),
-       ('22', 'AS Monaco FC', 'Monaco', 'ASM', 'MC', ''),
-       ('23', 'PSV', 'PSV', 'PSV', 'NL', ''),
-       ('24', 'Feyenoord Rotterdam', 'Feyenoord', 'FEY', 'NL', ''),
-       ('25', 'RB Leipzig', 'RB Leipzig', 'RBL', 'DE', ''),
-       ('26', 'Celtic FC', 'Celtic', 'CEL', 'SC', ''),
-       ('27', 'GNK Dinamo Zagreb', 'Dinamo Zagreb', 'DIN', 'HR', ''),
-       ('28', 'Club Brugge KV', 'Club Brugge', 'CLU', 'BE', ''),
-       ('29', 'AC Sparta Praha', 'Sparta Praha', 'SPP', 'CZ', ''),
-       ('30', 'BSC Young Boys', 'Young Boys', 'YOB', 'CH', ''),
-       ('31', 'FC Red Bull Salzburg', 'RB Salzburg', 'RBS', 'AT', ''),
-       ('32', 'FK Shakhtar Donetsk', 'Shaktar', 'SHD', 'UA', ''),
-       ('33', 'Sport Lisboa e Benfica', 'SL Benfica', 'BEN', 'PT', ''),
-       ('34', 'SK Sturm Graz', 'Sturm Graz', 'STU', 'AT', ''),
-       ('35', 'FK Crvena Zvezda', 'Crvena Zvedza', 'CRV', 'RS', ''),
-       ('36', 'ŠK Slovan Bratislava', 'Sl. Bratislava', 'SBA', 'SK', '');
-
 INSERT INTO seasons (id, name, start_date, end_date)
-VALUES ('1', '2024/25', '2024-08-01', '2025-05-31');
+VALUES ('s1', '2024/25', '2024-08-01', '2025-05-31');

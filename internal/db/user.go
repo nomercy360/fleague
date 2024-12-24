@@ -49,7 +49,7 @@ func IsForeignKeyViolationError(err error) bool {
 func (s *storage) CreateUser(user User) error {
 	query := `
 		INSERT INTO users (first_name, last_name, username, language_code, chat_id, avatar_url, referral_code)
-		VALUES (?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL, user.ReferralCode)
 	return err
