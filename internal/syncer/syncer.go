@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/user/project/internal/db"
@@ -151,8 +150,9 @@ func executeWithRateLimit(ctx context.Context, client *http.Client, req *http.Re
 
 			resetTime := time.Now().Add(10 * time.Second) // Default retry delay
 			if val := resp.Header.Get("X-RequestCounter-Reset"); val != "" {
-				if resetUnix, err := strconv.ParseInt(val, 10, 64); err == nil {
-					resetTime = time.Unix(resetUnix, 0)
+				// value is a number of seconds to wait
+				if waitDuration, err := time.ParseDuration(val + "s"); err == nil {
+					resetTime = time.Now().Add(waitDuration)
 				}
 			}
 
