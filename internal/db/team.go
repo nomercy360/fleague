@@ -33,7 +33,7 @@ func (s *storage) GetTeamByName(ctx context.Context, name string) (Team, error) 
 	return team, nil
 }
 
-func (s *storage) GetTeamByID(ctx context.Context, id int) (Team, error) {
+func (s *storage) GetTeamByID(ctx context.Context, id string) (Team, error) {
 	query := `
 		SELECT
 			id,
@@ -62,4 +62,28 @@ func (s *storage) GetTeamByID(ctx context.Context, id int) (Team, error) {
 	}
 
 	return team, nil
+}
+
+func (s *storage) SaveTeam(ctx context.Context, team Team) error {
+	query := `
+		INSERT INTO teams (id, name, short_name, crest_url, country, abbreviation)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT (id) DO UPDATE SET
+		name = excluded.name,
+		short_name = excluded.short_name,
+		crest_url = excluded.crest_url,
+		country = excluded.country,
+		abbreviation = excluded.abbreviation
+	`
+
+	_, err := s.db.ExecContext(ctx, query,
+		team.ID,
+		team.Name,
+		team.ShortName,
+		team.CrestURL,
+		team.Country,
+		team.Abbreviation,
+	)
+
+	return err
 }

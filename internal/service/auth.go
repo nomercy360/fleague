@@ -4,79 +4,47 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
-	gonanoid "github.com/matoous/go-nanoid/v2"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/nanoid"
+	"github.com/user/project/internal/terrors"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func GenerateReferralCode(length int) string {
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	code := make([]byte, length)
-	for i := range code {
-		code[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(code)
-}
-
 func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) {
 	expIn := 24 * time.Hour
-	botToken := s.botToken
+	botToken := s.cfg.BotToken
 
 	if err := initdata.Validate(query, botToken, expIn); err != nil {
-		return nil, contract.ErrUnauthorized
+		return nil, terrors.Unauthorized(err, "invalid init data from telegram")
 	}
 
 	data, err := initdata.Parse(query)
 
 	if err != nil {
-		return nil, contract.ErrUnauthorized
+		return nil, terrors.Unauthorized(err, "cannot parse init data from telegram")
 	}
 
 	user, err := s.storage.GetUserByChatID(data.User.ID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		var firstName, lastName *string
-
-		if data.User.FirstName != "" {
-			firstName = &data.User.FirstName
-		}
-
-		if data.User.LastName != "" {
-			lastName = &data.User.LastName
-		}
-
 		username := data.User.Username
 		if username == "" {
 			username = "user_" + fmt.Sprintf("%d", data.User.ID)
 		}
 
-		var cdnPath string
+		var first, last *string
 
-		if data.User.PhotoURL == "" {
-			imgFile := fmt.Sprintf("fb/users/%s.jpg", gonanoid.Must(8))
-			cdnPath = fmt.Sprintf("https://assets.peatch.io/%s", imgFile)
-			if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
-				return nil, err
-			}
-		} else {
-			// get random one of 30 avatars
-			cdnPath = fmt.Sprintf("https://assets.peatch.io/avatars/%d.svg", rand.Intn(30)+1)
+		if data.User.FirstName != "" {
+			first = &data.User.FirstName
 		}
 
-		create := db.User{
-			FirstName:    firstName,
-			LastName:     lastName,
-			Username:     username,
-			ChatID:       data.User.ID,
-			AvatarURL:    &cdnPath,
-			ReferralCode: GenerateReferralCode(6),
-			ReferredBy:   nil,
+		if data.User.LastName != "" {
+			last = &data.User.LastName
 		}
 
 		lang := "ru"
@@ -85,27 +53,48 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 			lang = "en"
 		}
 
-		create.LanguageCode = &lang
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", s.cfg.AssetsURL, rand.Intn(30)+1)
+
+		if data.User.PhotoURL != "" {
+			imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
+			imgUrl = fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
+			go func() {
+				if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
+					log.Printf("failed to upload user avatar to S3: %v", err)
+				}
+			}()
+		}
+
+		create := db.User{
+			ID:           nanoid.Must(),
+			Username:     username,
+			ChatID:       data.User.ID,
+			ReferralCode: nanoid.Must(),
+			FirstName:    first,
+			LastName:     last,
+			LanguageCode: &lang,
+			AvatarURL:    &imgUrl,
+		}
 
 		if err = s.storage.CreateUser(create); err != nil {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to create user")
 		}
 
 		user, err = s.storage.GetUserByChatID(data.User.ID)
 		if err != nil {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to get user")
 		}
 	} else if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "failed to get user")
 	}
 
-	token, err := generateJWT(user.ID, user.ChatID)
+	token, err := generateJWT(user.ID, user.ChatID, s.cfg.JWTSecret)
 
 	if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "jwt library error")
 	}
 
-	return &contract.UserAuthResponse{
+	uresp := contract.UserResponse{
 		ID:                 user.ID,
 		FirstName:          user.FirstName,
 		LastName:           user.LastName,
@@ -113,33 +102,33 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 		LanguageCode:       user.LanguageCode,
 		ChatID:             user.ChatID,
 		CreatedAt:          user.CreatedAt,
-		Token:              token,
 		TotalPoints:        user.TotalPoints,
 		TotalPredictions:   user.TotalPredictions,
 		CorrectPredictions: user.CorrectPredictions,
 		AvatarURL:          user.AvatarURL,
+		ReferredBy:         user.ReferredBy,
+		ReferralCode:       user.ReferralCode,
 		GlobalRank:         user.GlobalRank,
+	}
+
+	return &contract.UserAuthResponse{
+		Token: token,
+		User:  uresp,
 	}, nil
 }
 
-type JWTClaims struct {
-	jwt.RegisteredClaims
-	UID    int   `json:"uid"`
-	ChatID int64 `json:"chat_id"`
-}
-
-func generateJWT(id int, chatID int64) (string, error) {
-	claims := &JWTClaims{
+func generateJWT(userID string, chatID int64, secretKey string) (string, error) {
+	claims := &contract.JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
-		UID:    id,
+		UID:    userID,
 		ChatID: chatID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	t, err := token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}

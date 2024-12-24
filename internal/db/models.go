@@ -4,14 +4,14 @@ import "time"
 
 // LeaderboardEntry represents an entry in the leaderboard
 type LeaderboardEntry struct {
-	UserID   int `db:"user_id"`
-	Points   int `db:"points"`
-	SeasonID int `db:"season_id"`
+	UserID   string `db:"user_id"`
+	Points   int    `db:"points"`
+	SeasonID string `db:"season_id"`
 }
 
 // Season represents a season in the competition
 type Season struct {
-	ID        int       `db:"id"`
+	ID        string    `db:"id"`
 	Name      string    `db:"name"`
 	StartDate time.Time `db:"start_date"`
 	EndDate   time.Time `db:"end_date"`
@@ -20,7 +20,7 @@ type Season struct {
 
 // Team represents a sports team
 type Team struct {
-	ID           int    `db:"id"`
+	ID           string `db:"id"`
 	Name         string `db:"name"`
 	ShortName    string `db:"short_name"`
 	Abbreviation string `db:"abbreviation"`

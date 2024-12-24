@@ -6,8 +6,8 @@ import (
 )
 
 type Prediction struct {
-	UserID             int        `json:"user_id" db:"user_id"`
-	MatchID            int        `json:"match_id" db:"match_id"`
+	UserID             string     `json:"user_id" db:"user_id"`
+	MatchID            string     `json:"match_id" db:"match_id"`
 	PredictedOutcome   *string    `json:"predicted_outcome" db:"predicted_outcome"`
 	PredictedHomeScore *int       `json:"predicted_home_score" db:"predicted_home_score"`
 	PredictedAwayScore *int       `json:"predicted_away_score" db:"predicted_away_score"`
@@ -42,7 +42,7 @@ func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) err
 	return err
 }
 
-func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*Prediction, error) {
+func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (*Prediction, error) {
 	query := `
 		SELECT
 			user_id,
@@ -77,7 +77,7 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID i
 	return &prediction, nil
 }
 
-func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]Prediction, error) {
+func (s *storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]Prediction, error) {
 	// Base query
 	query := `
 		SELECT
@@ -125,7 +125,7 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid int, onlyCompl
 	return predictions, rows.Err()
 }
 
-func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Prediction, error) {
+func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([]Prediction, error) {
 	query := `
 		SELECT
 			user_id,
@@ -168,7 +168,7 @@ func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID int) ([]Pr
 	return predictions, nil
 }
 
-func (s *storage) UpdatePredictionResult(ctx context.Context, matchID, userID, points int) error {
+func (s *storage) UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error {
 	query := `
 		UPDATE predictions
 		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP

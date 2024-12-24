@@ -2,7 +2,7 @@ package db
 
 import "context"
 
-func (s *storage) GetLeaderboard(ctx context.Context, seasonID int) ([]LeaderboardEntry, error) {
+func (s *storage) GetLeaderboard(ctx context.Context, seasonID string) ([]LeaderboardEntry, error) {
 	query := `
         SELECT
             season_id,
@@ -53,7 +53,7 @@ func (s *storage) GetActiveSeason(ctx context.Context) (Season, error) {
 	return season, nil
 }
 
-func (s *storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID, points int) error {
+func (s *storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID string, points int) error {
 	query := `
 		INSERT INTO leaderboards (season_id, user_id, points)
 		VALUES (?, ?, ?)

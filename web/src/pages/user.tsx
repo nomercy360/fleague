@@ -1,12 +1,7 @@
-import {
-	IconChevronRight,
-} from '~/components/icons'
-
-import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchLeaderboard, fetchUserInfo } from '~/lib/api'
+import { fetchUserInfo } from '~/lib/api'
 import { useParams } from '@solidjs/router'
 import { For, Show } from 'solid-js'
 import MatchCard from '~/components/match-card'
@@ -60,7 +55,7 @@ export default function FeedPage() {
 						</div>
 						<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
 							<span class="text-2xl font-semibold">
-								#123
+								#{userInfoQuery.data.user.global_rank}
 							</span>
 							<span class="text-xs text-muted-foreground">Global ranking</span>
 						</div>

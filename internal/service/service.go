@@ -3,54 +3,52 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/s3"
+	"github.com/user/project/internal/terrors"
 	"sort"
 )
 
 // storager interface for database operations
 type storager interface {
 	Health() (db.HealthStats, error)
-	GetLeaderboard(ctx context.Context, leagueID int) ([]db.LeaderboardEntry, error)
+	GetLeaderboard(ctx context.Context, seasonID string) ([]db.LeaderboardEntry, error)
 	AddPrediction(ctx context.Context, prediction db.Prediction) error
 	GetActiveMatches(ctx context.Context) ([]db.Match, error)
 	GetUserByChatID(chatID int64) (*db.User, error)
-	GetUserByID(id int) (*db.User, error)
+	GetUserByID(id string) (*db.User, error)
 	GetUserByUsername(uname string) (*db.User, error)
 	CreateUser(user db.User) error
-	GetTeamByID(ctx context.Context, teamID int) (db.Team, error)
-	GetUserPredictionByMatchID(ctx context.Context, uid, matchID int) (*db.Prediction, error)
+	GetTeamByID(ctx context.Context, teamID string) (db.Team, error)
+	GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (*db.Prediction, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
-	GetMatchByID(ctx context.Context, matchID int) (db.Match, error)
-	GetPredictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]db.Prediction, error)
+	GetMatchByID(ctx context.Context, matchID string) (db.Match, error)
+	GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]db.Prediction, error)
 	GetActiveSeason(ctx context.Context) (db.Season, error)
-	UpdateUserPredictionCount(ctx context.Context, userID int) error
-}
-
-const userIDContextKey = "user_id"
-
-func GetUserIDFromContext(ctx context.Context) int {
-	uid, ok := ctx.Value(userIDContextKey).(int)
-	if !ok {
-		return 0
-	}
-
-	return uid
+	UpdateUserPredictionCount(ctx context.Context, userID string) error
+	ListUserReferrals(ctx context.Context, userID string) ([]db.User, error)
 }
 
 // Service struct for handling business logic
 type Service struct {
 	storage  storager
-	botToken string
+	cfg      Config
 	s3Client *s3.Client
 }
 
+type Config struct {
+	JWTSecret string
+	BotToken  string
+	AssetsURL string
+}
+
 // New creates a new Service instance
-func New(storage storager, s3Client *s3.Client, botToken string) *Service {
+func New(storage storager, cfg Config, s3Client *s3.Client) *Service {
 	return &Service{
 		storage:  storage,
-		botToken: botToken,
+		cfg:      cfg,
 		s3Client: s3Client,
 	}
 }
@@ -139,25 +137,27 @@ func toMatchResponse(match db.Match, homeTeam db.Team, awayTeam db.Team) contrac
 }
 
 // GetActiveMatches fetches active matches for a league or all matches
-func (s Service) GetActiveMatches(ctx context.Context) ([]contract.MatchResponse, error) {
+func (s Service) GetActiveMatches(ctx context.Context, uid string) ([]contract.MatchResponse, error) {
 	res, err := s.storage.GetActiveMatches(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	uid := GetUserIDFromContext(ctx)
-
 	var matches []contract.MatchResponse
 	for _, match := range res {
 		homeTeam, err := s.storage.GetTeamByID(ctx, match.HomeTeamID)
-		if err != nil {
-			return nil, err
+		if err != nil && errors.Is(err, db.ErrNotFound) {
+			return nil, terrors.NotFound(err, fmt.Sprintf("team with id %s not found", match.HomeTeamID))
+		} else if err != nil {
+			return nil, terrors.InternalServer(err, "failed to get home team")
 		}
 
 		awayTeam, err := s.storage.GetTeamByID(ctx, match.AwayTeamID)
-		if err != nil {
-			return nil, err
+		if err != nil && errors.Is(err, db.ErrNotFound) {
+			return nil, terrors.NotFound(err, fmt.Sprintf("team with id %s not found", match.AwayTeamID))
+		} else if err != nil {
+			return nil, terrors.InternalServer(err, "failed to get away team")
 		}
 
 		prediction, err := s.storage.GetUserPredictionByMatchID(ctx, uid, match.ID)

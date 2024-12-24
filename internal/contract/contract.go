@@ -2,6 +2,7 @@ package contract
 
 import (
 	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/user/project/internal/db"
 	"time"
 )
@@ -11,23 +12,29 @@ type Error struct {
 }
 
 type UserAuthResponse struct {
-	ID                 int       `json:"id"`
+	Token string       `json:"token"`
+	User  UserResponse `json:"user"`
+}
+
+type UserResponse struct {
+	ID                 string    `json:"id"`
 	FirstName          *string   `json:"first_name"`
 	LastName           *string   `json:"last_name"`
 	Username           string    `json:"username"`
 	ChatID             int64     `json:"chat_id"`
 	LanguageCode       *string   `json:"language_code"`
 	CreatedAt          time.Time `json:"created_at"`
-	Token              string    `json:"token"`
 	TotalPoints        int       `json:"total_points"`
 	TotalPredictions   int       `json:"total_predictions"`
 	CorrectPredictions int       `json:"correct_predictions"`
 	AvatarURL          *string   `json:"avatar_url"`
+	ReferredBy         *int      `json:"referred_by"`
+	ReferralCode       string    `json:"referral_code"`
 	GlobalRank         int       `json:"global_rank"`
 }
 
 type TeamResponse struct {
-	ID           int    `json:"id"`
+	ID           string `json:"id"`
 	Name         string `json:"name"`
 	ShortName    string `json:"short_name"`
 	CrestURL     string `json:"crest_url"`
@@ -36,9 +43,9 @@ type TeamResponse struct {
 }
 
 type PredictionResponse struct {
-	ID                 int           `json:"id"`
-	UserID             int           `json:"user_id"`
-	MatchID            int           `json:"match_id"`
+	ID                 string        `json:"id"`
+	UserID             string        `json:"user_id"`
+	MatchID            string        `json:"match_id"`
 	PredictedOutcome   *string       `json:"predicted_outcome"`
 	PredictedHomeScore *int          `json:"predicted_home_score"`
 	PredictedAwayScore *int          `json:"predicted_away_score"`
@@ -49,7 +56,7 @@ type PredictionResponse struct {
 }
 
 type PredictionRequest struct {
-	MatchID            int     `json:"match_id"`
+	MatchID            string  `json:"match_id"`
 	PredictedOutcome   *string `json:"predicted_outcome"`
 	PredictedHomeScore *int    `json:"predicted_home_score"`
 	PredictedAwayScore *int    `json:"predicted_away_score"`
@@ -75,7 +82,7 @@ func (p PredictionRequest) Validate() error {
 }
 
 type MatchResponse struct {
-	ID         int            `json:"id"`
+	ID         string         `json:"id"`
 	Tournament string         `json:"tournament"`
 	HomeTeam   TeamResponse   `json:"home_team"`
 	AwayTeam   TeamResponse   `json:"away_team"`
@@ -87,7 +94,7 @@ type MatchResponse struct {
 }
 
 type UserProfile struct {
-	ID                 int     `json:"id"`
+	ID                 string  `json:"id"`
 	FirstName          *string `json:"first_name"`
 	LastName           *string `json:"last_name"`
 	Username           string  `json:"username"`
@@ -99,9 +106,9 @@ type UserProfile struct {
 }
 
 type LeaderboardEntry struct {
-	UserID   int         `json:"user_id"`
+	UserID   string      `json:"user_id"`
 	Points   int         `json:"points"`
-	SeasonID int         `json:"season_id"`
+	SeasonID string      `json:"season_id"`
 	User     UserProfile `json:"user"`
 }
 
@@ -111,9 +118,15 @@ type UserInfoResponse struct {
 }
 
 type SeasonResponse struct {
-	ID        int       `json:"id"`
+	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	IsActive  bool      `json:"is_active"`
+}
+
+type JWTClaims struct {
+	jwt.RegisteredClaims
+	UID    string `json:"uid"`
+	ChatID int64  `json:"chat_id"`
 }

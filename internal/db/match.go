@@ -7,10 +7,10 @@ import (
 
 // Match represents a sports match
 type Match struct {
-	ID         int       `db:"id"`
+	ID         string    `db:"id"`
 	Tournament string    `db:"tournament"`
-	HomeTeamID int       `db:"home_team_id"`
-	AwayTeamID int       `db:"away_team_id"`
+	HomeTeamID string    `db:"home_team_id"`
+	AwayTeamID string    `db:"away_team_id"`
 	MatchDate  time.Time `db:"match_date"`
 	Status     string    `db:"status"`
 	HomeScore  *int      `db:"home_score"` // Nullable, set after match completion
@@ -62,7 +62,8 @@ func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 			m.away_team_id,
 			m.match_date,
 			m.status
-		FROM matches m WHERE m.status = 'scheduled' AND m.match_date <= DATETIME('now', '+14 days')`
+		FROM matches m WHERE m.status = 'scheduled' AND m.match_date BETWEEN datetime('now') AND datetime('now', '+14 days')
+		ORDER BY m.match_date ASC`
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -86,7 +87,7 @@ func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	return matches, nil
 }
 
-func (s *storage) GetMatchByID(ctx context.Context, id int) (Match, error) {
+func (s *storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 	query := `
 		SELECT
 			m.id,

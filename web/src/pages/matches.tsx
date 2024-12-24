@@ -71,7 +71,7 @@ export default function MatchesPage() {
 	console.log('height', height)
 
 	return (
-		<div>
+		<>
 			<div class="px-5 h-[140px] flex-col flex items-center justify-center">
 				<Show when={seasonQuery.data} fallback={<div class="w-full h-20 rounded-2xl bg-secondary" />}>
 					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
@@ -93,7 +93,7 @@ export default function MatchesPage() {
 						Leaderboard
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="matches" class="pb-20 pt-4 px-3 space-y-2 w-full overflow-y-scroll"
+				<TabsContent value="matches" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll"
 										 style={{ height: `${height()}px` }}>
 					<Drawer>
 						<Show when={!query.isLoading}>
@@ -121,7 +121,7 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class="pb-20 pt-5 px-3 space-y-2 w-full overflow-y-scroll"
+				<TabsContent value="leaderboard" class="pt-5 px-3 space-y-2 w-full overflow-y-scroll"
 										 style={{ height: `${height()}px` }}>
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
@@ -149,7 +149,7 @@ export default function MatchesPage() {
 					</Show>
 				</TabsContent>
 			</Tabs>
-		</div>
+		</>
 	)
 }
 

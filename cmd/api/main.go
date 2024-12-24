@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/handler"
-	authmw "github.com/user/project/internal/middleware"
 	"github.com/user/project/internal/s3"
 	"github.com/user/project/internal/service"
 	"github.com/user/project/internal/syncer"
+	"github.com/user/project/internal/terrors"
 	"gopkg.in/yaml.v3"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,19 +31,20 @@ type Config struct {
 	Port             int    `yaml:"port"`
 	DBPath           string `yaml:"db_path"`
 	TelegramBotToken string `yaml:"telegram_bot_token"`
-	FootballAPIKey   string `yaml:"football_api_key"`
-	S3               struct {
-		AccessKey string `yaml:"access_key_id"`
-		SecretKey string `yaml:"secret_access_key"`
-		Region    string `yaml:"region"`
-		Bucket    string `yaml:"bucket"`
-		EndPoint  string `yaml:"endpoint"`
-	} `yaml:"s3"`
+	JWTSecret        string `yaml:"jwt_secret"`
+	MetaFetchURL     string `yaml:"meta_fetch_url"`
+	AWS              struct {
+		AccessKeyID     string `yaml:"access_key_id"`
+		SecretAccessKey string `yaml:"secret_access_key"`
+		Endpoint        string `yaml:"endpoint"`
+		Bucket          string `yaml:"bucket"`
+	} `yaml:"aws"`
+	AssetsURL   string `yaml:"assets_url"`
+	FootballAPI struct {
+		APIKey  string `yaml:"api_key"`
+		BaseURL string `yaml:"base_url"`
+	} `yaml:"football_api"`
 }
-
-var (
-	footballAPIBaseURL = "https://api.football-data.org/v4"
-)
 
 func ReadConfig(filePath string) (*Config, error) {
 	file, err := os.Open(filePath)
@@ -63,7 +67,112 @@ func ValidateConfig(cfg *Config) error {
 	return validate.Struct(cfg)
 }
 
-func gracefulShutdown(apiServer *http.Server, done chan bool) {
+func getLoggerMiddleware(logger *slog.Logger) middleware.RequestLoggerConfig {
+	return middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error == nil {
+				logger.LogAttrs(context.Background(), slog.LevelInfo, "REQUEST",
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+				)
+			} else {
+				logger.LogAttrs(context.Background(), slog.LevelError, "REQUEST_ERROR",
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+					slog.String("err", v.Error.Error()),
+				)
+			}
+			return nil
+		},
+	}
+}
+
+func getServerErrorHandler(e *echo.Echo) func(err error, context2 echo.Context) {
+	return func(err error, c echo.Context) {
+		var (
+			code = http.StatusInternalServerError
+			msg  interface{}
+		)
+
+		var he *echo.HTTPError
+		var terror *terrors.Error
+		switch {
+		case errors.As(err, &he):
+			code = he.Code
+			msg = he.Message
+		case errors.As(err, &terror):
+			code = terror.Code
+			msg = terror.Message
+		default:
+			msg = err.Error()
+		}
+
+		if _, ok := msg.(string); ok {
+			msg = map[string]interface{}{"error": msg}
+		}
+
+		if !c.Response().Committed {
+			if c.Request().Method == http.MethodHead {
+				err = c.NoContent(code)
+			} else {
+				err = c.JSON(code, msg)
+			}
+
+			if err != nil {
+				e.Logger.Error(err)
+			}
+		}
+	}
+}
+
+type customValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *customValidator) Validate(i interface{}) error {
+	if err := cv.validator.Struct(i); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
+
+func getAuthConfig(secret string) echojwt.Config {
+	return echojwt.Config{
+		NewClaimsFunc: func(_ echo.Context) jwt.Claims {
+			return new(contract.JWTClaims)
+		},
+		SigningKey:             []byte(secret),
+		ContinueOnIgnoredError: true,
+		ErrorHandler: func(c echo.Context, err error) error {
+			var extErr *echojwt.TokenExtractionError
+			if !errors.As(err, &extErr) {
+				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
+			}
+
+			claims := &contract.JWTClaims{
+				RegisteredClaims: jwt.RegisteredClaims{
+					ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour * 30)),
+				},
+			}
+
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+			c.Set("user", token)
+
+			if claims.UID == "" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
+			}
+
+			return nil
+		},
+	}
+}
+
+func gracefulShutdown(e *echo.Echo, done chan<- bool) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -73,7 +182,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := apiServer.Shutdown(ctx); err != nil {
+	if err := e.Shutdown(ctx); err != nil {
 		log.Printf("Server forced to shutdown with error: %v", err)
 	}
 
@@ -92,7 +201,7 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 		log.Printf("Initial prediction processing failed: %v", err)
 	}
 
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(3 * time.Minute)
 	defer ticker.Stop()
 
 	for {
@@ -131,69 +240,81 @@ func main() {
 
 	storage, err := db.ConnectDB(cfg.DBPath)
 
-	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
-
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
-
-	s3Client, err := s3.NewS3Client(
-		cfg.S3.AccessKey, cfg.S3.SecretKey, cfg.S3.EndPoint, cfg.S3.Bucket)
-
 	if err != nil {
-		log.Fatalf("Failed to initialize S3 client: %v", err)
+		log.Fatalf("failed to create storage: %v", err)
 	}
 
-	svc := service.New(storage, s3Client, cfg.TelegramBotToken)
+	e := echo.New()
+	e.Use(middleware.Recover())
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	e.Use(middleware.RequestLoggerWithConfig(getLoggerMiddleware(logger)))
+
+	e.HTTPErrorHandler = getServerErrorHandler(e)
+
+	e.Validator = &customValidator{validator: validator.New()}
+
+	apiCfg := service.Config{
+		BotToken:  cfg.TelegramBotToken,
+		JWTSecret: cfg.JWTSecret,
+		AssetsURL: cfg.AssetsURL,
+	}
+
+	s3Client, err := s3.NewS3Client(
+		cfg.AWS.AccessKeyID, cfg.AWS.SecretAccessKey, cfg.AWS.Endpoint, cfg.AWS.Bucket)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize AWS S3 client: %v\n", err)
+	}
+
+	svc := service.New(storage, apiCfg, s3Client)
 
 	h := handler.New(svc)
 
-	r.Get("/health", h.Health)
-	r.Post("/auth/telegram", h.AuthTelegram)
-
-	r.Route("/v1", func(r chi.Router) {
-		setupAPIEndpoints(r, h)
-	})
-
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
-		Handler:      r,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	tmConfig := middleware.TimeoutConfig{
+		Timeout: 20 * time.Second,
 	}
+
+	e.Use(middleware.TimeoutWithConfig(tmConfig))
+
+	e.POST("/auth/telegram", h.AuthTelegram)
+
+	// Routes
+	g := e.Group("/v1")
+
+	authCfg := getAuthConfig(cfg.JWTSecret)
+
+	g.Use(echojwt.WithConfig(authCfg))
+
+	g.GET("/matches", h.ListMatches)
+	g.POST("/predictions", h.SavePrediction)
+	g.GET("/predictions", h.GetUserPredictions)
+	g.GET("/leaderboard", h.GetLeaderboard)
+	g.GET("/users/:username", h.GetUserInfo)
+	g.GET("/seasons/active", h.GetActiveSeason)
+	g.GET("/me/referrals", h.ListMyReferrals)
 
 	done := make(chan bool, 1)
 
-	go gracefulShutdown(server, done)
+	go gracefulShutdown(e, done)
 
-	sync := syncer.NewSyncer(storage, footballAPIBaseURL, cfg.FootballAPIKey, "CL")
-
+	sync := syncer.NewSyncer(storage, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go startSyncer(ctx, sync)
 
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("http server error: %v", err)
+	if err := e.Start(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)); err != nil {
+		log.Fatalf("failed to start server: %v", err)
 	}
 
 	<-done
 	log.Println("Graceful shutdown complete.")
-}
-
-func setupAPIEndpoints(r chi.Router, h *handler.Handler) {
-	r.Use(authmw.AuthMiddleware("secret"))
-	r.Get("/matches", h.ListMatches)
-	r.Post("/predictions", h.SavePrediction)
-	r.Get("/predictions", h.GetUserPredictions)
-	r.Get("/leaderboard", h.GetLeaderboard)
-	r.Get("/users/{username}", h.GetUserInfo)
-	r.Get("/seasons/active", h.GetActiveSeason)
 }

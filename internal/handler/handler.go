@@ -2,23 +2,24 @@ package handler
 
 import (
 	"context"
-	"github.com/go-chi/render"
+	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
-	"github.com/user/project/internal/handler/errrender"
+	"github.com/user/project/internal/terrors"
 	"net/http"
 )
 
 // servicer interface for database operations
 type servicer interface {
-	GetActiveMatches(ctx context.Context) ([]contract.MatchResponse, error)
+	GetActiveMatches(ctx context.Context, uid string) ([]contract.MatchResponse, error)
 	Health() (db.HealthStats, error)
 	TelegramAuth(query string) (*contract.UserAuthResponse, error)
-	SavePrediction(ctx context.Context, prediction contract.PredictionRequest) error
-	GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error)
+	SavePrediction(ctx context.Context, uid string, prediction contract.PredictionRequest) error
+	GetUserPredictions(ctx context.Context, uid string) ([]contract.PredictionResponse, error)
 	GetLeaderboard(ctx context.Context) ([]contract.LeaderboardEntry, error)
 	GetUserInfo(ctx context.Context, username string) (*contract.UserInfoResponse, error)
 	GetActiveSeason(ctx context.Context) (contract.SeasonResponse, error)
+	GetUserReferrals(ctx context.Context, userID string) ([]contract.UserProfile, error)
 }
 
 // Handler struct for handling business logic
@@ -33,32 +34,30 @@ func New(service servicer) *Handler {
 	}
 }
 
-func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Health(c echo.Context) error {
 	stats, err := h.service.Health()
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get health stats")
+		return terrors.InternalServer(err, "cannot get health stats")
 	}
 
-	render.JSON(w, r, stats)
+	return c.JSON(http.StatusOK, stats)
 }
 
-func (h *Handler) AuthTelegram(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.RawQuery
+func (h *Handler) AuthTelegram(c echo.Context) error {
+	query := c.QueryString()
 	user, err := h.service.TelegramAuth(query)
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to authenticate user")
-		return
+		return terrors.InternalServer(err, "failed to authenticate user")
 	}
 
-	render.JSON(w, r, user)
+	return c.JSON(http.StatusOK, user)
 }
 
-func (h *Handler) GetActiveSeason(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.service.GetActiveSeason(r.Context())
+func (h *Handler) GetActiveSeason(c echo.Context) error {
+	resp, err := h.service.GetActiveSeason(c.Request().Context())
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get active season")
-		return
+		return terrors.InternalServer(err, "cannot get active season")
 	}
 
-	render.JSON(w, r, resp)
+	return c.JSON(http.StatusOK, resp)
 }

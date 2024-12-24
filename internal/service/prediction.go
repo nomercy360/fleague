@@ -8,9 +8,7 @@ import (
 	"sort"
 )
 
-func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequest) error {
-	uid := GetUserIDFromContext(ctx)
-
+func (s Service) SavePrediction(ctx context.Context, uid string, req contract.PredictionRequest) error {
 	match, err := s.storage.GetMatchByID(ctx, req.MatchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		return contract.ErrMatchNotFound
@@ -41,7 +39,7 @@ func (s Service) SavePrediction(ctx context.Context, req contract.PredictionRequ
 	return nil
 }
 
-func (s Service) predictionsByUserID(ctx context.Context, uid int, onlyCompleted bool) ([]contract.PredictionResponse, error) {
+func (s Service) predictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]contract.PredictionResponse, error) {
 	predictions, err := s.storage.GetPredictionsByUserID(ctx, uid, onlyCompleted)
 	if err != nil {
 		return nil, err
@@ -86,8 +84,6 @@ func (s Service) predictionsByUserID(ctx context.Context, uid int, onlyCompleted
 	return res, nil
 }
 
-func (s Service) GetUserPredictions(ctx context.Context) ([]contract.PredictionResponse, error) {
-	uid := GetUserIDFromContext(ctx)
-
+func (s Service) GetUserPredictions(ctx context.Context, uid string) ([]contract.PredictionResponse, error) {
 	return s.predictionsByUserID(ctx, uid, false)
 }

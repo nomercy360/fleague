@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/user/project/internal/db"
@@ -16,18 +17,18 @@ type storager interface {
 	SaveMatch(ctx context.Context, match db.Match) error
 	GetTeamByName(ctx context.Context, name string) (db.Team, error)
 	GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]db.Match, error)
-	GetPredictionsForMatch(ctx context.Context, matchID int) ([]db.Prediction, error)
-	UpdatePredictionResult(ctx context.Context, matchID, userID, points int) error
+	GetPredictionsForMatch(ctx context.Context, matchID string) ([]db.Prediction, error)
+	UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error
 	GetActiveSeason(ctx context.Context) (db.Season, error)
-	UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID, points int) error
-	UpdateUserPoints(ctx context.Context, userID, points int) error
+	UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID string, points int) error
+	UpdateUserPoints(ctx context.Context, userID string, points int) error
+	SaveTeam(ctx context.Context, team db.Team) error
 }
 
 type Syncer struct {
-	storage     storager
-	apiBaseURL  string
-	apiKey      string
-	competition string
+	storage    storager
+	apiBaseURL string
+	apiKey     string
 }
 
 type APIMatch struct {
@@ -100,12 +101,11 @@ type APIResponse struct {
 }
 
 // NewSyncer creates a new instance of the syncer
-func NewSyncer(storage storager, apiBaseURL, apiKey, competition string) *Syncer {
+func NewSyncer(storage storager, apiBaseURL, apiKey string) *Syncer {
 	return &Syncer{
-		storage:     storage,
-		apiBaseURL:  apiBaseURL,
-		apiKey:      apiKey,
-		competition: competition,
+		storage:    storage,
+		apiBaseURL: apiBaseURL,
+		apiKey:     apiKey,
 	}
 }
 
@@ -123,19 +123,60 @@ func statusMapper(status string) string {
 	}
 }
 
-// SyncMatches fetches matches from the API and saves them to the database
-func (s *Syncer) SyncMatches(ctx context.Context) error {
-	url := fmt.Sprintf("%s/competitions/%s/matches", s.apiBaseURL, s.competition)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func executeWithRateLimit(ctx context.Context, client *http.Client, req *http.Request, limit int, lastRequestTime *time.Time) (*http.Response, error) {
+	requestInterval := time.Minute / time.Duration(limit)
+	elapsed := time.Since(*lastRequestTime)
+	if elapsed < requestInterval {
+		time.Sleep(requestInterval - elapsed)
+	}
+	*lastRequestTime = time.Now()
+
+	var retryCount int
+	for {
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute request: %w", err)
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			return resp, nil
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			retryCount++
+			if retryCount > 3 { // Limit retries
+				log.Printf("Too many retries. Skipping request.")
+				return nil, fmt.Errorf("too many retries for request")
+			}
+
+			resetTime := time.Now().Add(10 * time.Second) // Default retry delay
+			if val := resp.Header.Get("X-RequestCounter-Reset"); val != "" {
+				if resetUnix, err := strconv.ParseInt(val, 10, 64); err == nil {
+					resetTime = time.Unix(resetUnix, 0)
+				}
+			}
+
+			waitDuration := time.Until(resetTime)
+			log.Printf("Rate limit reached. Retrying after %v...", waitDuration)
+			time.Sleep(waitDuration)
+			continue
+		}
+
+		return nil, fmt.Errorf("unexpected response status: %d", resp.StatusCode)
+	}
+}
+
+func (s *Syncer) fetchAPIData(ctx context.Context, endpoint string, lastRequestTime *time.Time, result interface{}) error {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s%s", s.apiBaseURL, endpoint), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("X-Auth-Token", s.apiKey)
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := executeWithRateLimit(ctx, client, req, 10, lastRequestTime)
 	if err != nil {
-		return fmt.Errorf("failed to fetch matches: %w", err)
+		return fmt.Errorf("failed to fetch data: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -143,49 +184,113 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 		return fmt.Errorf("unexpected response status: %d", resp.StatusCode)
 	}
 
-	var apiResp APIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return fmt.Errorf("failed to decode API response: %w", err)
 	}
 
-	for _, match := range apiResp.Matches {
-		continue
-		if match.HomeTeam.Name == nil || match.AwayTeam.Name == nil {
-			log.Printf("Skipping match with missing team names")
+	return nil
+}
+
+func (s *Syncer) SyncTeams(ctx context.Context) error {
+	competitions := []string{"PL", "PD", "FL1", "SA", "BL1", "CL"} // England, Spain, France, Italy, Germany, Champions League
+	lastRequestTime := time.Now().Add(-time.Minute)
+
+	for _, competition := range competitions {
+		log.Printf("Starting team sync for competition: %s", competition)
+
+		var apiResp struct {
+			Teams []struct {
+				ID        int    `json:"id"`
+				Name      string `json:"name"`
+				ShortName string `json:"shortName"`
+				Tla       string `json:"tla"`
+				Crest     string `json:"crest"`
+				Area      struct {
+					ID   int    `json:"id"`
+					Name string `json:"name"`
+					Code string `json:"code"`
+				}
+			} `json:"teams"`
+		}
+
+		if err := s.fetchAPIData(ctx, fmt.Sprintf("/competitions/%s/teams", competition), &lastRequestTime, &apiResp); err != nil {
+			log.Printf("Failed to fetch teams for competition %s: %v", competition, err)
 			continue
 		}
 
-		homeTeam, err := s.storage.GetTeamByName(ctx, *match.HomeTeam.Name)
-		if err != nil {
-			log.Printf("Failed to save or retrieve home team ID: %v", err)
+		for _, team := range apiResp.Teams {
+			err := s.storage.SaveTeam(ctx, db.Team{
+				ID:           fmt.Sprintf("%d", team.ID),
+				Name:         team.Name,
+				ShortName:    team.ShortName,
+				Abbreviation: team.Tla,
+				CrestURL:     team.Crest,
+				Country:      team.Area.Code,
+			})
+			if err != nil {
+				log.Printf("Failed to save team %d (%s): %v", team.ID, team.Name, err)
+			}
+		}
+
+		log.Printf("Completed team sync for competition: %s", competition)
+	}
+
+	return nil
+}
+
+// SyncMatches fetches matches from the API and saves them to the database
+func (s *Syncer) SyncMatches(ctx context.Context) error {
+	if err := s.SyncTeams(ctx); err != nil {
+		return fmt.Errorf("failed to sync teams: %w", err)
+	}
+
+	competitions := []string{"PL", "PD", "FL1", "SA", "BL1", "CL"} // Competition codes
+	lastRequestTime := time.Now().Add(-time.Minute)
+
+	for _, competition := range competitions {
+		log.Printf("Starting sync for competition: %s", competition)
+
+		var apiResp APIResponse
+		if err := s.fetchAPIData(ctx, fmt.Sprintf("/competitions/%s/matches", competition), &lastRequestTime, &apiResp); err != nil {
+			log.Printf("Failed to fetch matches for competition %s: %v", competition, err)
 			continue
 		}
 
-		awayTeam, err := s.storage.GetTeamByName(ctx, *match.AwayTeam.Name)
-		if err != nil {
-			log.Printf("Failed to save or retrieve away team ID: %v", err)
-			continue
+		for _, match := range apiResp.Matches {
+			if match.HomeTeam.Name == nil || match.AwayTeam.Name == nil {
+				log.Printf("Skipping match with missing team names in competition %s", competition)
+				continue
+			}
+
+			homeTeam, err := s.storage.GetTeamByName(ctx, *match.HomeTeam.Name)
+			if err != nil {
+				log.Printf("Failed to retrieve home team ID in competition %s: %v", competition, err)
+				continue
+			}
+
+			awayTeam, err := s.storage.GetTeamByName(ctx, *match.AwayTeam.Name)
+			if err != nil {
+				log.Printf("Failed to retrieve away team ID in competition %s: %v", competition, err)
+				continue
+			}
+
+			matchDate := match.UtcDate // Assume valid date parsing here
+			err = s.storage.SaveMatch(ctx, db.Match{
+				ID:         fmt.Sprintf("%d", match.Id),
+				Tournament: match.Competition.Name,
+				HomeTeamID: homeTeam.ID,
+				AwayTeamID: awayTeam.ID,
+				MatchDate:  matchDate,
+				Status:     statusMapper(match.Status),
+				HomeScore:  match.Score.FullTime.Home,
+				AwayScore:  match.Score.FullTime.Away,
+			})
+			if err != nil {
+				log.Printf("Failed to save match %d in competition %s: %v", match.Id, competition, err)
+			}
 		}
 
-		matchDate, err := time.Parse(time.RFC3339, match.UtcDate.Format(time.RFC3339))
-		if err != nil {
-			log.Printf("Skipping match with invalid date format: %v", err)
-			continue
-		}
-
-		err = s.storage.SaveMatch(ctx, db.Match{
-			ID:         match.Id,
-			Tournament: match.Competition.Name,
-			HomeTeamID: homeTeam.ID,
-			AwayTeamID: awayTeam.ID,
-			MatchDate:  matchDate,
-			Status:     statusMapper(match.Status),
-			HomeScore:  match.Score.FullTime.Home,
-			AwayScore:  match.Score.FullTime.Away,
-		})
-		if err != nil {
-			log.Printf("Failed to save match %d: %v", match.Id, err)
-		}
+		log.Printf("Completed sync for competition: %s", competition)
 	}
 
 	return nil

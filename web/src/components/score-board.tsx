@@ -106,7 +106,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 					<div class="w-full justify-between flex flex-col items-start gap-2">
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row items-center space-x-2">
-								<img src={`/logos/${props.match.home_team.name}.png`} alt="" class="w-6" />
+								<img src={props.match.home_team.crest_url} alt="" class="w-6" />
 								<p class="mt-2 text-base mb-2">
 									{props.match.home_team.short_name}
 								</p>
@@ -138,7 +138,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						</div>
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row items-center space-x-2">
-								<img src={`/logos/${props.match.away_team.name}.png`} alt="" class="w-6" />
+								<img src={props.match.away_team.crest_url} alt="" class="w-6" />
 								<p class="mt-2 text-base mb-2">
 									{props.match.away_team.short_name}
 								</p>

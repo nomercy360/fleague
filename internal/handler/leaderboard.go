@@ -1,18 +1,17 @@
 package handler
 
 import (
-	"github.com/go-chi/render"
-	"github.com/user/project/internal/handler/errrender"
+	"github.com/labstack/echo/v4"
+	"github.com/user/project/internal/terrors"
 	"net/http"
 )
 
-func (h *Handler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.service.GetLeaderboard(r.Context())
+func (h *Handler) GetLeaderboard(c echo.Context) error {
+	resp, err := h.service.GetLeaderboard(c.Request().Context())
 
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get leaderboard")
-		return
+		return terrors.InternalServer(err, "cannot get leaderboard")
 	}
 
-	render.JSON(w, r, resp)
+	return c.JSON(http.StatusOK, resp)
 }

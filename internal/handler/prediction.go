@@ -1,41 +1,35 @@
 package handler
 
 import (
-	"encoding/json"
-	"github.com/go-chi/render"
+	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/contract"
-	"github.com/user/project/internal/handler/errrender"
+	"github.com/user/project/internal/terrors"
 	"net/http"
 )
 
-func (h *Handler) SavePrediction(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SavePrediction(c echo.Context) error {
 	var prediction contract.PredictionRequest
-	err := json.NewDecoder(r.Body).Decode(&prediction)
-	if err != nil {
-		errrender.RenderError(w, r, err, contract.FailedDecodeJSON)
-		return
+	if err := c.Bind(&prediction); err != nil {
+		return terrors.BadRequest(err, "failed to decode request")
 	}
 
 	if err := prediction.Validate(); err != nil {
-		errrender.RenderError(w, r, err, contract.InvalidRequest)
-		return
+		return terrors.BadRequest(err, "failed to validate request")
 	}
 
-	err = h.service.SavePrediction(r.Context(), prediction)
+	err := h.service.SavePrediction(c.Request().Context(), getUserID(c), prediction)
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to save prediction")
-		return
+		return terrors.InternalServer(err, "failed to save prediction")
 	}
 
-	render.NoContent(w, r)
+	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *Handler) GetUserPredictions(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.service.GetUserPredictions(r.Context())
+func (h *Handler) GetUserPredictions(c echo.Context) error {
+	resp, err := h.service.GetUserPredictions(c.Request().Context(), getUserID(c))
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get user predictions")
-		return
+		return terrors.InternalServer(err, "failed to get user predictions")
 	}
 
-	render.JSON(w, r, resp)
+	return c.JSON(http.StatusOK, resp)
 }

@@ -37,3 +37,27 @@ func (s Service) GetUserInfo(ctx context.Context, username string) (*contract.Us
 		Predictions: userPredictions,
 	}, nil
 }
+
+func (s Service) GetUserReferrals(ctx context.Context, userID string) ([]contract.UserProfile, error) {
+	res, err := s.storage.ListUserReferrals(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []contract.UserProfile
+	for _, user := range res {
+		users = append(users, contract.UserProfile{
+			ID:                 user.ID,
+			FirstName:          user.FirstName,
+			LastName:           user.LastName,
+			Username:           user.Username,
+			AvatarURL:          user.AvatarURL,
+			TotalPoints:        user.TotalPoints,
+			TotalPredictions:   user.TotalPredictions,
+			CorrectPredictions: user.CorrectPredictions,
+			GlobalRank:         user.GlobalRank,
+		})
+	}
+
+	return users, nil
+}

@@ -1,29 +1,43 @@
 package handler
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
-	"github.com/user/project/internal/handler/errrender"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	"github.com/user/project/internal/contract"
+	"github.com/user/project/internal/terrors"
 	"net/http"
 )
 
-func (h *Handler) ListMatches(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.service.GetActiveMatches(r.Context())
-	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get active matches")
-		return
-	}
-
-	render.JSON(w, r, resp)
+func getUserID(c echo.Context) string {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*contract.JWTClaims)
+	return claims.UID
 }
 
-func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
-	username := chi.URLParam(r, "username")
-	resp, err := h.service.GetUserInfo(r.Context(), username)
+func (h *Handler) ListMatches(c echo.Context) error {
+	resp, err := h.service.GetActiveMatches(c.Request().Context(), getUserID(c))
 	if err != nil {
-		errrender.RenderError(w, r, err, "failed to get user info")
-		return
+		return err
 	}
 
-	render.JSON(w, r, resp)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) GetUserInfo(c echo.Context) error {
+	username := c.Param("username")
+	resp, err := h.service.GetUserInfo(c.Request().Context(), username)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get user info")
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) ListMyReferrals(c echo.Context) error {
+	resp, err := h.service.GetUserReferrals(c.Request().Context(), getUserID(c))
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get referrals")
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

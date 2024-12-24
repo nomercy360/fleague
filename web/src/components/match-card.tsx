@@ -124,7 +124,10 @@ export default function MatchCard(props: MatchCardProps) {
 			</Show>
 
 			<div class="z-10 flex flex-col items-center space-y-2 text-center">
-				<img src={`/logos/${home_team.name}.png`} alt={home_team.name} class="w-10" />
+				<img src={home_team.crest_url}
+						 alt={home_team.name}
+						 class="w-10"
+				/>
 				<p class="max-w-20 text-xs text-foreground">{home_team.short_name}</p>
 			</div>
 
@@ -151,7 +154,11 @@ export default function MatchCard(props: MatchCardProps) {
 			</Show>
 
 			<div class="flex flex-col items-center space-y-2 text-center">
-				<img src={`/logos/${away_team.name}.png`} alt={away_team.name} class="w-10" />
+				<img
+					src={away_team.crest_url}
+					alt={away_team.name}
+					class="w-10"
+				/>
 				<p class="text-xs text-foreground">{away_team.short_name}</p>
 			</div>
 		</div>

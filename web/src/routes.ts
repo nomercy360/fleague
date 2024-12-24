@@ -3,15 +3,27 @@ import type { RouteDefinition } from '@solidjs/router'
 
 import FeedPage from '~/pages/feed'
 import MatchesPage from '~/pages/matches'
+import NavigationTabs from '~/components/navigation-tabs'
+import FriendsPage from '~/pages/friends'
 
 export const routes: RouteDefinition[] = [
 	{
 		path: '/',
-		component: FeedPage,
-	},
-	{
-		path: '/matches',
-		component: MatchesPage,
+		component: NavigationTabs,
+		children: [
+			{
+				'path': '/',
+				'component': FeedPage,
+			},
+			{
+				'path': '/matches',
+				'component': MatchesPage,
+			},
+			{
+				'path': '/friends',
+				'component': FriendsPage,
+			},
+		],
 	},
 	{
 		'path': '/users/:username',

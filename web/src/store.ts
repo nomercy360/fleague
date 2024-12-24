@@ -3,7 +3,7 @@ import { createSignal } from 'solid-js'
 
 
 type User = {
-	id: number
+	id: string
 	first_name: string
 	last_name: string
 	username: string
@@ -15,6 +15,8 @@ type User = {
 	total_points: number
 	total_predictions: number
 	correct_predictions: number
+	referral_code: number
+	referred_by: string
 	global_rank: number
 }
 

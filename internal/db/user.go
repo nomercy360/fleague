@@ -10,7 +10,7 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID                 int       `db:"id"`
+	ID                 string    `db:"id"`
 	FirstName          *string   `db:"first_name"`
 	LastName           *string   `db:"last_name"`
 	Username           string    `db:"username"`
@@ -48,10 +48,10 @@ func IsForeignKeyViolationError(err error) bool {
 
 func (s *storage) CreateUser(user User) error {
 	query := `
-		INSERT INTO users (first_name, last_name, username, language_code, chat_id, avatar_url)
+		INSERT INTO users (first_name, last_name, username, language_code, chat_id, avatar_url, referral_code)
 		VALUES (?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL)
+	_, err := s.db.Exec(query, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL, user.ReferralCode)
 	return err
 }
 
@@ -71,6 +71,8 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 		&user.TotalPredictions,
 		&user.CorrectPredictions,
 		&user.AvatarURL,
+		&user.ReferredBy,
+		&user.ReferralCode,
 		&user.GlobalRank,
 	); err != nil && IsNoRowsError(err) {
 		return nil, ErrNotFound
@@ -83,9 +85,9 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 
 func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users
@@ -94,11 +96,11 @@ func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	return s.getUserBy(query, chatID)
 }
 
-func (s *storage) GetUserByID(id int) (*User, error) {
+func (s *storage) GetUserByID(id string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users
@@ -109,9 +111,9 @@ func (s *storage) GetUserByID(id int) (*User, error) {
 
 func (s *storage) GetUserByUsername(uname string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users
@@ -120,7 +122,7 @@ func (s *storage) GetUserByUsername(uname string) (*User, error) {
 	return s.getUserBy(query, uname)
 }
 
-func (s *storage) UpdateUserPoints(ctx context.Context, userID, points int) error {
+func (s *storage) UpdateUserPoints(ctx context.Context, userID string, points int) error {
 	query := `
 		UPDATE users
 		SET total_points = total_points + ?,
@@ -131,7 +133,7 @@ func (s *storage) UpdateUserPoints(ctx context.Context, userID, points int) erro
 	return err
 }
 
-func (s *storage) UpdateUserPredictionCount(ctx context.Context, userID int) error {
+func (s *storage) UpdateUserPredictionCount(ctx context.Context, userID string) error {
 	query := `
 		UPDATE users
 		SET total_predictions = total_predictions + 1
@@ -139,4 +141,50 @@ func (s *storage) UpdateUserPredictionCount(ctx context.Context, userID int) err
 
 	_, err := s.db.ExecContext(ctx, query, userID)
 	return err
+}
+
+func (s *storage) ListUserReferrals(ctx context.Context, userID string) ([]User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
+		FROM (
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by,
+		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
+		         FROM users
+		     ) ranked_users
+		WHERE referred_by = ?`
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.FirstName,
+			&user.LastName,
+			&user.Username,
+			&user.LanguageCode,
+			&user.ChatID,
+			&user.CreatedAt,
+			&user.TotalPoints,
+			&user.TotalPredictions,
+			&user.CorrectPredictions,
+			&user.AvatarURL,
+			&user.ReferredBy,
+			&user.GlobalRank,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
