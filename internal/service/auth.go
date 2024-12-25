@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,15 +17,15 @@ import (
 	"time"
 )
 
-func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) {
+func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserAuthResponse, error) {
 	expIn := 24 * time.Hour
 	botToken := s.cfg.BotToken
 
-	if err := initdata.Validate(query, botToken, expIn); err != nil {
+	if err := initdata.Validate(req.Query, botToken, expIn); err != nil {
 		return nil, terrors.Unauthorized(err, "invalid init data from telegram")
 	}
 
-	data, err := initdata.Parse(query)
+	data, err := initdata.Parse(req.Query)
 
 	if err != nil {
 		return nil, terrors.Unauthorized(err, "cannot parse init data from telegram")
@@ -65,15 +66,35 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 			}()
 		}
 
+		// if referrer is not empty, get referrer user by ID
+		var referrerID *string
+		if req.ReferrerID != nil {
+			referrer, err := s.storage.GetUserByID(*req.ReferrerID)
+			if err != nil && errors.Is(err, db.ErrNotFound) {
+				log.Printf("referrer not found: %v", err)
+			} else if err != nil {
+				log.Printf("failed to get referrer: %v", err)
+			}
+
+			if referrer != nil {
+				referrerID = &referrer.ID
+
+				// add 10 points to referrer
+				if err = s.storage.UpdateUserPoints(context.Background(), referrer.ID, 10); err != nil {
+					log.Printf("failed to update referrer points: %v", err)
+				}
+			}
+		}
+
 		create := db.User{
 			ID:           nanoid.Must(),
 			Username:     username,
 			ChatID:       data.User.ID,
-			ReferralCode: nanoid.Must(),
 			FirstName:    first,
 			LastName:     last,
 			LanguageCode: &lang,
 			AvatarURL:    &imgUrl,
+			ReferredBy:   referrerID,
 		}
 
 		if err = s.storage.CreateUser(create); err != nil {
@@ -107,7 +128,6 @@ func (s Service) TelegramAuth(query string) (*contract.UserAuthResponse, error) 
 		CorrectPredictions: user.CorrectPredictions,
 		AvatarURL:          user.AvatarURL,
 		ReferredBy:         user.ReferredBy,
-		ReferralCode:       user.ReferralCode,
 		GlobalRank:         user.GlobalRank,
 	}
 

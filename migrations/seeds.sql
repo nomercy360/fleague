@@ -18,27 +18,27 @@ BEGIN
     WHERE id = NEW.user_id;
 END;
 
-INSERT INTO users (id, first_name, last_name, username, language_code, chat_id, referral_code, referred_by,
+INSERT INTO users (id, first_name, last_name, username, language_code, chat_id, referred_by,
                    total_points, total_predictions, correct_predictions, avatar_url)
-VALUES ('1', 'Maksim', NULL, 'mkkksim', 'en', 927635965, 'ref1', NULL, 0, 0, 0,
+VALUES ('1', 'Maksim', NULL, 'mkkksim', 'en', 927635965, 'ref1', 0, 0, 0,
         'https://assets.peatch.io/fb/users/uY8YwvCn.jpg'),
-       ('2', 'Gor', NULL, 'cronaldo', 'en', 428630919, 'ref2', 1, 0, 0, 0,
+       ('2', 'Gor', NULL, 'cronaldo', 'en', 428630919, 'ref2', 0, 0, 0,
         'https://assets.peatch.io/avatars/gor.jpeg'),
-       ('3', 'Neymar', 'Junior', 'njunior', 'en', 345678912, 'ref3', 1, 0, 0, 0,
+       ('3', 'Neymar', 'Junior', 'njunior', 'en', 345678912, 1, 0, 0, 0,
         'https://assets.peatch.io/avatars/neymar.webp'),
-       ('4', 'Kevin', 'De Bruyne', 'kdebruyne', 'en', 456789123, 'ref4', 2, 0, 0, 0,
+       ('4', 'Kevin', 'De Bruyne', 'kdebruyne', 'en', 456789123, 2, 0, 0, 0,
         'https://assets.peatch.io/avatars/kevin.webp'),
-       ('5', 'Kylian', 'Mbappe', 'kmbappe', 'en', 567891234, 'ref5', 3, 0, 0, 0,
+       ('5', 'Kylian', 'Mbappe', 'kmbappe', 'en', 567891234, 3, 0, 0, 0,
         'https://assets.peatch.io/avatars/mbappe.jpg'),
-       ('6', 'Erling', 'Haaland', 'ehaaland', 'en', 678912345, 'ref6', NULL, 0, 0, 0,
+       ('6', 'Erling', 'Haaland', 'ehaaland', 'en', 678912345, NULL, 0, 0, 0,
         'https://assets.peatch.io/avatars/haaland.jpeg'),
-       ('7', 'Robert', 'Lewandowski', 'rlewandowski', 'en', 789123456, 'ref7', 5, 0, 0, 0,
+       ('7', 'Robert', 'Lewandowski', 'rlewandowski', 'en', 789123456, 5, 0, 0, 0,
         'https://assets.peatch.io/avatars/lewandowski.jpg'),
-       ('8', 'Sadio', 'Mane', 'smane', 'en', 891234567, 'ref8', 4, 0, 0, 0,
+       ('8', 'Sadio', 'Mane', 'smane', 'en', 891234567, 4, 0, 0, 0,
         'https://assets.peatch.io/avatars/sadio-mane.gif'),
-       ('9', 'Virgil', 'van Dijk', 'vvdijk', 'en', 912345678, 'ref9', 6, 0, 0, 0,
+       ('9', 'Virgil', 'van Dijk', 'vvdijk', 'en', 912345678, 6, 0, 0, 0,
         'https://assets.peatch.io/avatars/van_dijk.jpg'),
-       ('10', 'Mohamed', 'Salah', 'msalah', 'en', 123456789, 'ref10', 8, 0, 0, 0,
+       ('10', 'Mohamed', 'Salah', 'msalah', 'en', 123456789, 8, 0, 0, 0,
         'https://assets.peatch.io/avatars/salah.jpg');
 
 -- schedule matches

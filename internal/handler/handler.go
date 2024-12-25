@@ -13,7 +13,7 @@ import (
 type servicer interface {
 	GetActiveMatches(ctx context.Context, uid string) ([]contract.MatchResponse, error)
 	Health() (db.HealthStats, error)
-	TelegramAuth(query string) (*contract.UserAuthResponse, error)
+	TelegramAuth(request contract.AuthTelegramRequest) (*contract.UserAuthResponse, error)
 	SavePrediction(ctx context.Context, uid string, prediction contract.PredictionRequest) error
 	GetUserPredictions(ctx context.Context, uid string) ([]contract.PredictionResponse, error)
 	GetLeaderboard(ctx context.Context) ([]contract.LeaderboardEntry, error)
@@ -44,8 +44,16 @@ func (h *Handler) Health(c echo.Context) error {
 }
 
 func (h *Handler) AuthTelegram(c echo.Context) error {
-	query := c.QueryString()
-	user, err := h.service.TelegramAuth(query)
+	var req contract.AuthTelegramRequest
+	if err := c.Bind(&req); err != nil {
+		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	if err := req.Validate(); err != nil {
+		return terrors.BadRequest(err, "failed to validate request")
+	}
+
+	user, err := h.service.TelegramAuth(req)
 	if err != nil {
 		return terrors.InternalServer(err, "failed to authenticate user")
 	}

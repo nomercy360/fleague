@@ -181,7 +181,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'home' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('home')}
 								>
-									П1
+									Team 1
 								</Button>
 								<Button
 									size="sm"
@@ -189,7 +189,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'draw' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('draw')}
 								>
-									Ничья
+									Draw
 								</Button>
 								<Button
 									size="sm"
@@ -197,7 +197,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'away' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('away')}
 								>
-									П2
+									Team 2
 								</Button>
 							</div>
 						</Show>
@@ -212,7 +212,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
 						onClick={onPredictionSave}
 					>
-						Сохранить
+						Save
 					</Button>
 				</DrawerClose>
 			</DrawerFooter>

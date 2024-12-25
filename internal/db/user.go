@@ -17,8 +17,7 @@ type User struct {
 	AvatarURL          *string   `db:"avatar_url"`
 	LanguageCode       *string   `db:"language_code"`
 	ChatID             int64     `db:"chat_id"`
-	ReferralCode       string    `db:"referral_code"`
-	ReferredBy         *int      `db:"referred_by"`
+	ReferredBy         *string   `db:"referred_by"`
 	CreatedAt          time.Time `db:"created_at"`
 	TotalPoints        int       `db:"total_points"`
 	TotalPredictions   int       `db:"total_predictions"`
@@ -48,10 +47,10 @@ func IsForeignKeyViolationError(err error) bool {
 
 func (s *storage) CreateUser(user User) error {
 	query := `
-		INSERT INTO users (id, first_name, last_name, username, language_code, chat_id, avatar_url, referral_code)
+		INSERT INTO users (id, first_name, last_name, username, language_code, chat_id, avatar_url, referred_by)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.Exec(query, user.ID, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL, user.ReferralCode)
+	_, err := s.db.Exec(query, user.ID, user.FirstName, user.LastName, user.Username, user.LanguageCode, user.ChatID, user.AvatarURL, user.ReferredBy)
 	return err
 }
 
@@ -72,7 +71,6 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 		&user.CorrectPredictions,
 		&user.AvatarURL,
 		&user.ReferredBy,
-		&user.ReferralCode,
 		&user.GlobalRank,
 	); err != nil && IsNoRowsError(err) {
 		return nil, ErrNotFound
@@ -85,9 +83,9 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 
 func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, 
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users
@@ -98,9 +96,9 @@ func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
 
 func (s *storage) GetUserByID(id string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by,
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users
@@ -111,9 +109,9 @@ func (s *storage) GetUserByID(id string) (*User, error) {
 
 func (s *storage) GetUserByUsername(uname string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code, global_rank
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
 		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, referral_code,
+		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by,
 		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
 		         FROM users
 		     ) ranked_users

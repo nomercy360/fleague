@@ -72,7 +72,7 @@ export default function MatchesPage() {
 
 	return (
 		<>
-			<div class="px-5 h-[140px] flex-col flex items-center justify-center">
+			<div class="p-3 flex-col flex items-center justify-center">
 				<Show when={seasonQuery.data} fallback={<div class="w-full h-20 rounded-2xl bg-secondary" />}>
 					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
 										text={`Ends in ${calculateDuration(seasonQuery.data.end_date)}`} />
@@ -93,7 +93,7 @@ export default function MatchesPage() {
 						Leaderboard
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="matches" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll"
+				<TabsContent value="matches" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]"
 										 style={{ height: `${height()}px` }}>
 					<Drawer>
 						<Show when={!query.isLoading}>
@@ -121,7 +121,7 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class="pt-5 px-3 space-y-2 w-full overflow-y-scroll"
+				<TabsContent value="leaderboard" class="pt-5 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]"
 										 style={{ height: `${height()}px` }}>
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
@@ -155,12 +155,12 @@ export default function MatchesPage() {
 
 function InfoCard({ title, text }: { title: string; text: string }) {
 	return (
-
-		<div class="rounded-2xl bg-secondary w-full p-4 h-20">
-			<p class="text-base font-semibold text-card-foreground uppercase tracking-widest">
-				{title}
-			</p>
-			<p class="mt-1 text-sm text-muted-foreground">
+		<div class="w-full bg-secondary p-3 rounded-2xl flex items-center justify-center flex-col">
+			<span class="material-symbols-rounded text-[48px] text-primary-foreground">
+				sports_soccer
+			</span>
+			<h1 class="text-xl font-bold text-center">{title}</h1>
+			<p class="text-sm text-secondary-foreground text-center mt-2">
 				{text}
 			</p>
 		</div>

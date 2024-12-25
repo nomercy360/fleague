@@ -9,7 +9,6 @@ CREATE TABLE users
     username            TEXT,
     language_code       TEXT,
     chat_id             INTEGER UNIQUE, -- ID чата в телеграме
-    referral_code       TEXT UNIQUE,
     referred_by         TEXT,
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
     total_points        INTEGER  DEFAULT 0,

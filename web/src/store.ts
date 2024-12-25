@@ -15,7 +15,6 @@ type User = {
 	total_points: number
 	total_predictions: number
 	correct_predictions: number
-	referral_code: number
 	referred_by: string
 	global_rank: number
 }

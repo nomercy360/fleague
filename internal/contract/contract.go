@@ -28,8 +28,7 @@ type UserResponse struct {
 	TotalPredictions   int       `json:"total_predictions"`
 	CorrectPredictions int       `json:"correct_predictions"`
 	AvatarURL          *string   `json:"avatar_url"`
-	ReferredBy         *int      `json:"referred_by"`
-	ReferralCode       string    `json:"referral_code"`
+	ReferredBy         *string   `json:"referred_by"`
 	GlobalRank         int       `json:"global_rank"`
 }
 
@@ -129,4 +128,22 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 	UID    string `json:"uid"`
 	ChatID int64  `json:"chat_id"`
+}
+
+type AuthTelegramRequest struct {
+	Query      string  `json:"query"`
+	ReferrerID *string `json:"referrer_id"`
+}
+
+func (a AuthTelegramRequest) Validate() error {
+	if a.Query == "" {
+		return fmt.Errorf("query cannot be empty")
+	}
+
+	// if not nil, check not empty
+	if a.ReferrerID != nil && *a.ReferrerID == "" {
+		return fmt.Errorf("referrer id cannot be empty")
+	}
+
+	return nil
 }

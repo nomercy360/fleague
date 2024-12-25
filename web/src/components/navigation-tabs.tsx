@@ -12,7 +12,7 @@ export default function NavigationTabs(props: any) {
 	]
 
 	return (
-		<div class="h-screen overflow-y-scroll bg-background text-foreground pb-[120px]">
+		<div class="h-screen overflow-y-scroll bg-background text-foreground">
 			<div
 				class="flex flex-row items-start border-t h-[100px] fixed bottom-0 w-full bg-background z-50 transform -translate-x-1/2 left-1/2"
 			>

@@ -299,7 +299,7 @@ func main() {
 	g.GET("/leaderboard", h.GetLeaderboard)
 	g.GET("/users/:username", h.GetUserInfo)
 	g.GET("/seasons/active", h.GetActiveSeason)
-	g.GET("/me/referrals", h.ListMyReferrals)
+	g.GET("/referrals", h.ListMyReferrals)
 
 	done := make(chan bool, 1)
 

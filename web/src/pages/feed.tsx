@@ -31,7 +31,7 @@ export default function FeedPage() {
 	})
 
 	return (
-		<>
+		<div class="overflow-y-scroll bg-background text-foreground pb-[120px]">
 			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<Button
 					class="absolute top-6 left-6"
@@ -72,17 +72,7 @@ export default function FeedPage() {
 					</div>
 				</div>
 			</div>
-			<div class="px-3 mb-6">
-				<Link class="flex flex-row h-14 justify-between items-center rounded-2xl p-3 bg-secondary"
-							href="/matches">
-					<p class="text-sm font-semibold">
-						Make a prediction{' '}
-						<span class="text-muted-foreground font-normal">12 matches available</span>
-					</p>
-					<IconChevronRight class="size-6" />
-				</Link>
-			</div>
 			<UserActivity />
-		</>
+		</div>
 	)
 }

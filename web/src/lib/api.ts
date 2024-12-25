@@ -171,3 +171,9 @@ export const fetchPredictions = async () => {
 		endpoint: '/predictions',
 	})
 }
+
+export const fetchReferrals = async () => {
+	return await apiFetch({
+		endpoint: '/referrals',
+	})
+}
