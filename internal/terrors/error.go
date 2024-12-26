@@ -11,7 +11,10 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return e.Err.Error()
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return e.Message
 }
 
 func NotFound(err error, message string) *Error {

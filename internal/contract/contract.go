@@ -42,7 +42,6 @@ type TeamResponse struct {
 }
 
 type PredictionResponse struct {
-	ID                 string        `json:"id"`
 	UserID             string        `json:"user_id"`
 	MatchID            string        `json:"match_id"`
 	PredictedOutcome   *string       `json:"predicted_outcome"`

@@ -19,7 +19,7 @@ func (h *Handler) SavePrediction(c echo.Context) error {
 
 	err := h.service.SavePrediction(c.Request().Context(), getUserID(c), prediction)
 	if err != nil {
-		return terrors.InternalServer(err, "failed to save prediction")
+		return err
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -28,7 +28,7 @@ func (h *Handler) SavePrediction(c echo.Context) error {
 func (h *Handler) GetUserPredictions(c echo.Context) error {
 	resp, err := h.service.GetUserPredictions(c.Request().Context(), getUserID(c))
 	if err != nil {
-		return terrors.InternalServer(err, "failed to get user predictions")
+		return err
 	}
 
 	return c.JSON(http.StatusOK, resp)

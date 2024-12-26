@@ -63,20 +63,20 @@ func (s Service) Health() (db.HealthStats, error) {
 func (s Service) GetLeaderboard(ctx context.Context) ([]contract.LeaderboardEntry, error) {
 	season, err := s.storage.GetActiveSeason(ctx)
 	if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "failed to get active season")
 	}
 
 	res, err := s.storage.GetLeaderboard(ctx, season.ID)
 
 	if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "failed to get leaderboard")
 	}
 
 	var leaderboard []contract.LeaderboardEntry
 	for _, entry := range res {
 		user, err := s.storage.GetUserByID(entry.UserID)
 		if err != nil && !errors.Is(err, db.ErrNotFound) {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to get user")
 		} else if err != nil {
 			continue
 		}
@@ -163,7 +163,7 @@ func (s Service) GetActiveMatches(ctx context.Context, uid string) ([]contract.M
 
 		prediction, err := s.storage.GetUserPredictionByMatchID(ctx, uid, match.ID)
 		if err != nil && !errors.Is(err, db.ErrNotFound) {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to get user prediction")
 		}
 
 		resp := toMatchResponse(match, homeTeam, awayTeam)
@@ -197,7 +197,7 @@ func (s Service) GetUserProfile(ctx context.Context, userID string) (db.User, er
 func (s Service) GetActiveSeason(ctx context.Context) (contract.SeasonResponse, error) {
 	season, err := s.storage.GetActiveSeason(ctx)
 	if err != nil {
-		return contract.SeasonResponse{}, err
+		return contract.SeasonResponse{}, terrors.InternalServer(err, "failed to get active season")
 	}
 
 	return contract.SeasonResponse{

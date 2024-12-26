@@ -67,9 +67,6 @@ export default function MatchesPage() {
 		return `${days}d ${hours}h ${minutes}m`
 	}
 
-
-	console.log('height', height)
-
 	return (
 		<>
 			<div class="p-3 flex-col flex items-center justify-center">

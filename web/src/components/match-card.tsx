@@ -90,6 +90,7 @@ export default function MatchCard(props: MatchCardProps) {
 			'from-green-500': predictionCorrect,
 			'from-red-500': predictionLost,
 			'from-primary': predictionEditable,
+			'from-gray-500': status === 'ongoing',
 		},
 	)
 
@@ -133,12 +134,12 @@ export default function MatchCard(props: MatchCardProps) {
 
 			<Show when={status === 'scheduled'}>
 				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">
-          <span class="text-2xl font-bold text-center">
-            {timeToLocaleString(match_date)}
-          </span>
-					<span class="text-xs text-muted-foreground text-center">
-            {formatDate(match_date, false)}
-          </span>
+					<span class="text-2xl font-bold text-center">
+						{timeToLocaleString(match_date)}
+					</span>
+					<span class="text-xs text-center">
+						{formatDate(match_date, false)}
+					</span>
 				</div>
 			</Show>
 
@@ -147,9 +148,21 @@ export default function MatchCard(props: MatchCardProps) {
           <span class="text-2xl font-bold text-center">
             {home_score} - {away_score}
           </span>
-					<span class="text-xs text-muted-foreground text-center">
+					<span class="text-xs text-center">
             {formatDate(match_date, false)}
           </span>
+				</div>
+			</Show>
+
+			<Show when={status === 'ongoing'}>
+				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">
+					<span class="text-2xl font-bold text-center">
+						{home_score} - {away_score}
+					</span>
+					<span class="flex items-center justify-center text-xs text-center">
+						Live <span
+						class="material-symbols-rounded text-green-400 text-[16px] animate-pulse">fiber_manual_record</span>
+					</span>
 				</div>
 			</Show>
 

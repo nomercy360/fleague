@@ -5,19 +5,20 @@ import (
 	"errors"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/terrors"
 	"sort"
 )
 
 func (s Service) SavePrediction(ctx context.Context, uid string, req contract.PredictionRequest) error {
 	match, err := s.storage.GetMatchByID(ctx, req.MatchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return contract.ErrMatchNotFound
+		return terrors.BadRequest(nil, "match not found")
 	} else if err != nil {
 		return err
 	}
 
 	if match.Status != db.MatchStatusScheduled {
-		return contract.MatchStatusInvalid
+		return terrors.BadRequest(nil, "match is not scheduled")
 	}
 
 	prediction := db.Prediction{
@@ -49,22 +50,23 @@ func (s Service) predictionsByUserID(ctx context.Context, uid string, onlyComple
 	for _, prediction := range predictions {
 		match, err := s.storage.GetMatchByID(ctx, prediction.MatchID)
 		if err != nil && errors.Is(err, db.ErrNotFound) {
-			return nil, contract.ErrMatchNotFound
+			return nil, terrors.NotFound(err, "match not found")
 		} else if err != nil {
 			return nil, err
 		}
 
 		homeTeam, err := s.storage.GetTeamByID(ctx, match.HomeTeamID)
 		if err != nil {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to get home team")
 		}
 
 		awayTeam, err := s.storage.GetTeamByID(ctx, match.AwayTeamID)
 		if err != nil {
-			return nil, err
+			return nil, terrors.InternalServer(err, "failed to get away team")
 		}
 
 		res = append(res, contract.PredictionResponse{
+			UserID:             prediction.UserID,
 			MatchID:            prediction.MatchID,
 			PredictedOutcome:   prediction.PredictedOutcome,
 			PredictedHomeScore: prediction.PredictedHomeScore,

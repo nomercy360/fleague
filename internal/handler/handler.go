@@ -37,7 +37,7 @@ func New(service servicer) *Handler {
 func (h *Handler) Health(c echo.Context) error {
 	stats, err := h.service.Health()
 	if err != nil {
-		return terrors.InternalServer(err, "cannot get health stats")
+		return terrors.InternalServer(err, "failed to get health stats")
 	}
 
 	return c.JSON(http.StatusOK, stats)
@@ -55,7 +55,7 @@ func (h *Handler) AuthTelegram(c echo.Context) error {
 
 	user, err := h.service.TelegramAuth(req)
 	if err != nil {
-		return terrors.InternalServer(err, "failed to authenticate user")
+		return err
 	}
 
 	return c.JSON(http.StatusOK, user)
@@ -64,7 +64,7 @@ func (h *Handler) AuthTelegram(c echo.Context) error {
 func (h *Handler) GetActiveSeason(c echo.Context) error {
 	resp, err := h.service.GetActiveSeason(c.Request().Context())
 	if err != nil {
-		return terrors.InternalServer(err, "cannot get active season")
+		return err
 	}
 
 	return c.JSON(http.StatusOK, resp)

@@ -5,21 +5,22 @@ import (
 	"errors"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/terrors"
 )
 
 func (s Service) GetUserInfo(ctx context.Context, username string) (*contract.UserInfoResponse, error) {
 	user, err := s.storage.GetUserByUsername(username)
 
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return nil, contract.ErrUserNotFound
+		return nil, terrors.NotFound(err, "user not found")
 	} else if err != nil {
-
+		return nil, terrors.InternalServer(err, "failed to get user")
 	}
 
 	userPredictions, err := s.predictionsByUserID(ctx, user.ID, true)
 
 	if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "failed to get user predictions")
 	}
 
 	return &contract.UserInfoResponse{
@@ -41,7 +42,7 @@ func (s Service) GetUserInfo(ctx context.Context, username string) (*contract.Us
 func (s Service) GetUserReferrals(ctx context.Context, userID string) ([]contract.UserProfile, error) {
 	res, err := s.storage.ListUserReferrals(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, terrors.InternalServer(err, "failed to get user referrals")
 	}
 
 	var users []contract.UserProfile
