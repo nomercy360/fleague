@@ -27,7 +27,7 @@ export default function UserProfilePage() {
 	}))
 
 	return (
-		<div class="bg-background text-foreground pb-24">
+		<div class="bg-background text-foreground pb-24 h-full overflow-y-scroll">
 			<Show when={userInfoQuery.isLoading}>
 				<div class="flex flex-col items-center justify-center h-full">
 					<div class="loader" />

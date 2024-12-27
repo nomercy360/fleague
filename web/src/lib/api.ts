@@ -1,5 +1,5 @@
 import { store } from '~/store'
-import { addToast } from '~/components/toast'
+import { showToast } from '~/components/ui/toast'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -14,7 +14,13 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 			},
 		})
 
-		const data = await response.json()
+		let data
+		try {
+			data = await response.json()
+		} catch {
+			showToast({ title: 'Failed to get response from server', variant: 'error', duration: 2500 })
+			return { error: 'Failed to get response from server', data: null }
+		}
 
 		if (!response.ok) {
 			const errorMessage =
@@ -24,18 +30,15 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 						? data.error
 						: 'An error occurred'
 
-			addToast(errorMessage)
-
-			return { data: null }
+			showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+			return { error: errorMessage, data: null }
 		}
 
-		return { data }
-	} catch (err) {
-		const errorMessage = 'A network error occurred. Please try again later.'
-
-		addToast(errorMessage)
-
-		return { data: null }
+		return { data, error: null }
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+		showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+		return { error: errorMessage, data: null }
 	}
 }
 

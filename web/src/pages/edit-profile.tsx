@@ -58,21 +58,22 @@ export default function EditUserPage() {
 	})
 
 	async function updateUser() {
-		try {
-			await fetchUpdateUser({
-				...editUser,
-				favorite_team_id: selectedTeam()?.id,
-			})
-			setUser({
-				...store.user,
-				first_name: editUser.first_name,
-				last_name: editUser.last_name,
-				favorite_team: selectedTeam(),
-			})
-			navigate('/')
-		} catch (error) {
-			console.error('Failed to update user:', error)
+		const { error } = await fetchUpdateUser({
+			...editUser,
+			favorite_team_id: selectedTeam()?.id,
+		})
+
+		if (error) {
+			return
 		}
+
+		setUser({
+			...store.user,
+			...editUser,
+			favorite_team: selectedTeam(),
+		})
+
+		navigate('/')
 	}
 
 	onMount(() => {
@@ -86,7 +87,7 @@ export default function EditUserPage() {
 	})
 
 	return (
-		<div class="flex flex-col items-center justify-center bg-background text-foreground px-2 py-3 space-y-3">
+		<div class="flex flex-col items-center justify-center bg-background text-foreground px-2 py-3 gap-3">
 			<Show when={!showTeamSelector()}>
 				<img
 					src={store.user?.avatar_url}
@@ -107,8 +108,10 @@ export default function EditUserPage() {
 						onInput={(e) => setEditUser('last_name', e.currentTarget.value)}
 					/>
 				</TextField>
-				<div class="w-full">
-					<p class="text-sm text-muted-foreground">Your favorite team</p>
+				<div class="mt-4 w-full">
+					<p class="px-2 text-sm text-muted-foreground">
+						Your favorite team. Extra <span class="text-primary">3 points</span> for correct prediction.
+					</p>
 					<Button
 						size="sm"
 						class="mt-1 h-12 w-full justify-between"

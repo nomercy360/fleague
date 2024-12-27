@@ -4,8 +4,7 @@ import { API_BASE_URL } from '~/lib/api'
 import { NavigationProvider } from './lib/useNavigation'
 import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import Toast from '~/components/toast'
-import NavigationTabs from '~/components/navigation-tabs'
+import { Toaster } from '~/components/ui/toast'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -111,7 +110,7 @@ export default function App(props: any) {
 						</div>
 					</Match>
 				</Switch>
-				<Toast />
+				<Toaster />
 			</QueryClientProvider>
 		</NavigationProvider>
 	)

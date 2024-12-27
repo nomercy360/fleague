@@ -58,11 +58,9 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			prediction.predicted_outcome = outcome()
 		}
 
-		try {
-			await saveMatchPrediction(prediction)
+		const { error } = await saveMatchPrediction(prediction)
+		if (!error) {
 			props.onUpdate()
-		} catch (e) {
-			console.error('Failed to save prediction:', e)
 		}
 	}
 
