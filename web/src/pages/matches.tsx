@@ -9,6 +9,7 @@ import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
+import MatchStats from '~/components/match-stats'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)

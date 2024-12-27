@@ -6,6 +6,7 @@ import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import FootballScoreboard from '~/components/score-board'
 import { Link } from '~/components/link'
 import { IconChevronRight } from '~/components/icons'
+import MatchStats from '~/components/match-stats'
 
 
 const UserActivity = () => {
@@ -37,11 +38,16 @@ const UserActivity = () => {
 								</DrawerTrigger>
 							)}
 						</For>
-						<FootballScoreboard
-							match={selectedPrediction().match}
-							onUpdate={onPredictionUpdate}
-							prediction={selectedPrediction()}
-						/>
+						<Show when={selectedPrediction()?.match?.status === 'scheduled'}>
+							<FootballScoreboard
+								match={selectedPrediction().match}
+								onUpdate={onPredictionUpdate}
+								prediction={selectedPrediction()}
+							/>
+						</Show>
+						<Show when={selectedPrediction()?.match?.status === 'completed'}>
+							<MatchStats match={selectedPrediction().match} />
+						</Show>
 					</Drawer>
 				</Show>
 			</div>

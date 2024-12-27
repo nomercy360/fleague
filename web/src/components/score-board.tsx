@@ -219,3 +219,4 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		</DrawerContent>
 	)
 }
+
