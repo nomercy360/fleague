@@ -27,7 +27,7 @@ function transformStartParam(startParam?: string) {
 	if (startParam.startsWith('u_')) {
 		const path = startParam.slice('u_'.length)
 
-		return { redirect: path, referrer: null }
+		return { redirect: '/users/' + path, referrer: null }
 	} else if (startParam.startsWith('r_')) {
 		const referrer = startParam.slice('r_'.length)
 		return { redirect: null, referrer }

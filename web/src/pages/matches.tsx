@@ -154,7 +154,7 @@ export default function MatchesPage() {
 function InfoCard({ title, text }: { title: string; text: string }) {
 	return (
 		<div class="w-full bg-secondary p-3 rounded-2xl flex items-center justify-center flex-col">
-			<span class="material-symbols-rounded text-[48px] text-primary-foreground">
+			<span class="material-symbols-rounded text-[48px]">
 				sports_soccer
 			</span>
 			<h1 class="text-xl font-bold text-center">{title}</h1>

@@ -53,7 +53,7 @@ export default function FriendsPage() {
 	return (
 		<div class="p-3">
 			<div class="bg-secondary p-3 rounded-2xl flex flex-col items-center justify-center">
-				<span class="material-symbols-rounded text-[48px] text-primary-foreground">
+				<span class="material-symbols-rounded text-[48px]">
 					people
 				</span>
 				<h1 class="text-xl font-bold text-center">Invite Friends & Earn</h1>
