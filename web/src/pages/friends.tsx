@@ -98,7 +98,7 @@ export default function FriendsPage() {
 					</For>
 				</Show>
 			</div>
-			<div class="mt-6 flex flex-row items-center space-x-2">
+			<div class="p-3 flex flex-row items-center space-x-2 absolute bottom-[100px] w-full left-0 right-0">
 				<Button class="w-full" onClick={shareProfileURL}>
 					Invite a Friend
 				</Button>

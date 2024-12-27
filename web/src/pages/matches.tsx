@@ -43,17 +43,6 @@ export default function MatchesPage() {
 		return idx + 1
 	}
 
-	onMount(() => {
-		// disable scroll on body when drawer is open
-		document.body.style.overflow = 'hidden'
-		setHeight(window.Telegram.WebApp.viewportHeight - 140 - 56)
-	})
-
-	onCleanup(() => {
-		// enable scroll on body when drawer is closed
-		document.body.style.overflow = 'auto'
-	})
-
 	function calculateDuration(date: string) {
 		// until that date from now
 		// format: 2d 3h 4m
@@ -70,14 +59,14 @@ export default function MatchesPage() {
 
 	return (
 		<>
-			<div class="p-3 flex-col flex items-center justify-center">
-				<Show when={seasonQuery.data} fallback={<div class="w-full h-20 rounded-2xl bg-secondary" />}>
+			<div class="h-[180px] p-3 flex-col flex items-center justify-center">
+				<Show when={seasonQuery.data} fallback={<div class="w-full rounded-2xl bg-secondary" />}>
 					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
 										text={`Ends in ${calculateDuration(seasonQuery.data.end_date)}`} />
 				</Show>
 			</div>
-			<Tabs defaultValue="preview" class="relative mr-auto w-full">
-				<TabsList class="w-full justify-start rounded-none border-b bg-transparent p-0 h-[56px]">
+			<Tabs defaultValue="preview" class="flex flex-col relative mr-auto w-full h-full">
+				<TabsList class="flex-shrink-0 w-full justify-start rounded-none border-b bg-transparent p-0 h-[56px]">
 					<TabsTrigger
 						value="matches"
 						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
@@ -91,8 +80,8 @@ export default function MatchesPage() {
 						Leaderboard
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="matches" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]"
-										 style={{ height: `${height()}px` }}>
+				<TabsContent value="matches"
+										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]">
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (

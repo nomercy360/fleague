@@ -96,19 +96,19 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 			return nil, terrors.InternalServer(err, "failed to get user")
 		}
 
-		if data.User.PhotoURL != "" {
-			go func() {
-				imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
-				imgUrl := fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
-				if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
-					log.Printf("failed to upload user avatar to S3: %v", err)
-				}
-
-				if err = s.storage.UpdateUserAvatarURL(context.Background(), data.User.ID, imgUrl); err != nil {
-					log.Printf("failed to update user avatar URL: %v", err)
-				}
-			}()
-		}
+		//if data.User.PhotoURL != "" {
+		//	go func() {
+		//		imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
+		//		imgUrl := fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
+		//		if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
+		//			log.Printf("failed to upload user avatar to S3: %v", err)
+		//		}
+		//
+		//		if err = s.storage.UpdateUserAvatarURL(context.Background(), data.User.ID, imgUrl); err != nil {
+		//			log.Printf("failed to update user avatar URL: %v", err)
+		//		}
+		//	}()
+		//}
 	} else if err != nil {
 		return nil, terrors.InternalServer(err, "failed to get user")
 	}

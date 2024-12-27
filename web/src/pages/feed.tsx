@@ -20,18 +20,8 @@ export default function FeedPage() {
 		window.Telegram.WebApp.openTelegramLink(url)
 	}
 
-	onMount(() => {
-		// disable scroll on body when drawer is open
-		document.body.style.overflow = 'hidden'
-	})
-
-	onCleanup(() => {
-		// enable scroll on body when drawer is closed
-		document.body.style.overflow = 'auto'
-	})
-
 	return (
-		<div class="overflow-y-scroll bg-background text-foreground pb-[120px]">
+		<div class="h-full overflow-y-scroll bg-background text-foreground pb-[120px]">
 			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<Button
 					class="absolute top-6 left-6"
