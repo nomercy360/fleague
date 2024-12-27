@@ -54,18 +54,6 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 			lang = "en"
 		}
 
-		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", s.cfg.AssetsURL, rand.Intn(30)+1)
-
-		if data.User.PhotoURL != "" {
-			imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
-			imgUrl = fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
-			go func() {
-				if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
-					log.Printf("failed to upload user avatar to S3: %v", err)
-				}
-			}()
-		}
-
 		// if referrer is not empty, get referrer user by ID
 		var referrerID *string
 		if req.ReferrerID != nil {
@@ -86,6 +74,8 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 			}
 		}
 
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", s.cfg.AssetsURL, rand.Intn(30)+1)
+
 		create := db.User{
 			ID:           nanoid.Must(),
 			Username:     username,
@@ -104,6 +94,20 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 		user, err = s.storage.GetUserByChatID(data.User.ID)
 		if err != nil {
 			return nil, terrors.InternalServer(err, "failed to get user")
+		}
+
+		if data.User.PhotoURL != "" {
+			go func() {
+				imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
+				imgUrl := fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
+				if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
+					log.Printf("failed to upload user avatar to S3: %v", err)
+				}
+
+				if err = s.storage.UpdateUserAvatarURL(context.Background(), data.User.ID, imgUrl); err != nil {
+					log.Printf("failed to update user avatar URL: %v", err)
+				}
+			}()
 		}
 	} else if err != nil {
 		return nil, terrors.InternalServer(err, "failed to get user")

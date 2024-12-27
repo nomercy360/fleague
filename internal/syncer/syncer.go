@@ -231,8 +231,6 @@ func (s *Syncer) SyncTeams(ctx context.Context) error {
 				log.Printf("Failed to save team %d (%s): %v", team.ID, team.Name, err)
 			}
 		}
-
-		log.Printf("Completed team sync for competition: %s", competition)
 	}
 
 	return nil
@@ -248,8 +246,6 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 	lastRequestTime := time.Now().Add(-time.Minute)
 
 	for _, competition := range competitions {
-		log.Printf("Starting sync for competition: %s", competition)
-
 		var apiResp APIResponse
 		if err := s.fetchAPIData(ctx, fmt.Sprintf("/competitions/%s/matches", competition), &lastRequestTime, &apiResp); err != nil {
 			log.Printf("Failed to fetch matches for competition %s: %v", competition, err)
@@ -289,8 +285,6 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 				log.Printf("Failed to save match %d in competition %s: %v", match.Id, competition, err)
 			}
 		}
-
-		log.Printf("Completed sync for competition: %s", competition)
 	}
 
 	return nil
@@ -352,7 +346,7 @@ func calculatePoints(match db.Match, prediction db.Prediction) int {
 		predictedAwayScore := *prediction.PredictedAwayScore
 
 		if homeScore == predictedHomeScore && awayScore == predictedAwayScore {
-			return 5
+			return 7
 		}
 	}
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
@@ -52,6 +53,8 @@ func (h *Handler) AuthTelegram(c echo.Context) error {
 	if err := req.Validate(); err != nil {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
+
+	log.Printf("AuthTelegram: %+v", req)
 
 	user, err := h.service.TelegramAuth(req)
 	if err != nil {
