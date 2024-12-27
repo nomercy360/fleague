@@ -3,26 +3,56 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/mattn/go-sqlite3"
 	"time"
 )
 
 // User represents a user in the system
 type User struct {
-	ID                 string    `db:"id"`
-	FirstName          *string   `db:"first_name"`
-	LastName           *string   `db:"last_name"`
-	Username           string    `db:"username"`
-	AvatarURL          *string   `db:"avatar_url"`
-	LanguageCode       *string   `db:"language_code"`
-	ChatID             int64     `db:"chat_id"`
-	ReferredBy         *string   `db:"referred_by"`
-	CreatedAt          time.Time `db:"created_at"`
-	TotalPoints        int       `db:"total_points"`
-	TotalPredictions   int       `db:"total_predictions"`
-	CorrectPredictions int       `db:"correct_predictions"`
-	GlobalRank         int       `db:"global_rank"`
+	ID                 string        `db:"id"`
+	FirstName          *string       `db:"first_name"`
+	LastName           *string       `db:"last_name"`
+	Username           string        `db:"username"`
+	AvatarURL          *string       `db:"avatar_url"`
+	LanguageCode       *string       `db:"language_code"`
+	ChatID             int64         `db:"chat_id"`
+	ReferredBy         *string       `db:"referred_by"`
+	CreatedAt          time.Time     `db:"created_at"`
+	TotalPoints        int           `db:"total_points"`
+	TotalPredictions   int           `db:"total_predictions"`
+	CorrectPredictions int           `db:"correct_predictions"`
+	GlobalRank         int           `db:"global_rank"`
+	FavoriteTeamID     *string       `db:"favorite_team_id"`
+	FavoriteTeam       *FavoriteTeam `db:"favorite_team"`
+}
+
+type FavoriteTeam Team
+
+func (ft *FavoriteTeam) Scan(src interface{}) error {
+	var source []byte
+	switch src := src.(type) {
+	case []byte:
+		source = src
+	case string:
+		source = []byte(src)
+	case nil:
+		return nil
+	default:
+		return errors.New("unsupported type")
+	}
+
+	if len(source) == 0 {
+		return nil
+	}
+
+	if err := json.Unmarshal(source, ft); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func IsNoRowsError(err error) bool {
@@ -54,9 +84,31 @@ func (s *storage) CreateUser(user User) error {
 	return err
 }
 
-func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
+func (s *storage) getUserBy(condition string, value interface{}) (User, error) {
+	query := fmt.Sprintf(`
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank, favorite_team
+		FROM (
+		         SELECT u.id, u.first_name, u.last_name, u.username, u.language_code, u.chat_id, u.created_at, u.total_points, u.total_predictions, u.correct_predictions, u.avatar_url, u.referred_by,
+		                RANK() OVER (ORDER BY total_points DESC) AS global_rank,
+		                CASE 
+						   WHEN u.favorite_team_id IS NOT NULL THEN 
+							   json_object(
+								   'id', t.id, 
+								   'name', t.name, 
+								   'short_name', t.short_name, 
+								   'crest_url', t.crest_url, 
+								   'country', t.country, 
+								   'abbreviation', t.abbreviation
+							   ) 
+						   ELSE NULL 
+					   END AS favorite_team
+		         FROM users u
+			     LEFT JOIN teams t ON u.favorite_team_id = t.id	
+		     ) ranked_users
+		WHERE %s`, condition)
+
 	var user User
-	row := s.db.QueryRowContext(context.Background(), query, args...)
+	row := s.db.QueryRowContext(context.Background(), query, value)
 
 	if err := row.Scan(
 		&user.ID,
@@ -72,52 +124,26 @@ func (s *storage) getUserBy(query string, args ...interface{}) (*User, error) {
 		&user.AvatarURL,
 		&user.ReferredBy,
 		&user.GlobalRank,
+		&user.FavoriteTeam,
 	); err != nil && IsNoRowsError(err) {
-		return nil, ErrNotFound
+		return User{}, ErrNotFound
 	} else if err != nil {
-		return nil, err
+		return User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func (s *storage) GetUserByChatID(chatID int64) (*User, error) {
-	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
-		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, 
-		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
-		         FROM users
-		     ) ranked_users
-		WHERE chat_id = ?`
-
-	return s.getUserBy(query, chatID)
+func (s *storage) GetUserByChatID(chatID int64) (User, error) {
+	return s.getUserBy("chat_id = ?", chatID)
 }
 
-func (s *storage) GetUserByID(id string) (*User, error) {
-	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
-		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by,
-		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
-		         FROM users
-		     ) ranked_users
-		WHERE id = ?`
-
-	return s.getUserBy(query, id)
+func (s *storage) GetUserByID(id string) (User, error) {
+	return s.getUserBy("id = ?", id)
 }
 
-func (s *storage) GetUserByUsername(uname string) (*User, error) {
-	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, global_rank
-		FROM (
-		         SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by,
-		                RANK() OVER (ORDER BY total_points DESC) AS global_rank
-		         FROM users
-		     ) ranked_users
-		WHERE username = ?`
-
-	return s.getUserBy(query, uname)
+func (s *storage) GetUserByUsername(uname string) (User, error) {
+	return s.getUserBy("username = ?", uname)
 }
 
 func (s *storage) UpdateUserPoints(ctx context.Context, userID string, points int) error {
@@ -185,4 +211,19 @@ func (s *storage) ListUserReferrals(ctx context.Context, userID string) ([]User,
 	}
 
 	return users, nil
+}
+
+func (s *storage) UpdateUserInformation(ctx context.Context, user User) error {
+	query := `
+		UPDATE users
+		SET first_name = ?,
+		    last_name = ?,
+		    username = ?,
+		    avatar_url = ?,
+		    language_code = ?,
+		    favorite_team_id = ?
+		WHERE id = ?`
+
+	_, err := s.db.ExecContext(ctx, query, user.FirstName, user.LastName, user.Username, user.AvatarURL, user.LanguageCode, user.FavoriteTeamID, user.ID)
+	return err
 }

@@ -6,7 +6,7 @@ import { useParams } from '@solidjs/router'
 import { For, Show } from 'solid-js'
 import MatchCard from '~/components/match-card'
 
-export default function FeedPage() {
+export default function UserProfilePage() {
 	const params = useParams()
 	const username = params.username
 

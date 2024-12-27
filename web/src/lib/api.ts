@@ -1,57 +1,50 @@
 import { store } from '~/store'
+import { addToast } from '~/components/toast'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
-export const CDN_URL = 'https://assets.peatch.io'
 
-export const apiFetch = async ({
-																 endpoint,
-																 method = 'GET',
-																 body = null,
-																 showProgress = true,
-																 responseContentType = 'json' as 'json' | 'blob',
-															 }: {
-	endpoint: string
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-	body?: any
-	showProgress?: boolean
-	responseContentType?: string
-}) => {
-	const headers: { [key: string]: string } = {
-		'Content-Type': 'application/json',
-		Authorization: `Bearer ${store.token}`,
-	}
-
+export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 	try {
-		showProgress && window.Telegram.WebApp.MainButton.showProgress(false)
-
 		const response = await fetch(`${API_BASE_URL}/v1${endpoint}`, {
-			method,
-			headers,
-			body: body ? JSON.stringify(body) : undefined,
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${store.token}`,
+				...(options.headers || {}),
+			},
 		})
 
+		const data = await response.json()
+
 		if (!response.ok) {
-			const errorResponse = await response.json()
-			throw { code: response.status, message: errorResponse.message }
+			const errorMessage =
+				Array.isArray(data?.error)
+					? data.error.join('\n')
+					: typeof data?.error === 'string'
+						? data.error
+						: 'An error occurred'
+
+			addToast(errorMessage)
+
+			return { data: null }
 		}
 
-		switch (response.status) {
-			case 204:
-				return true
-			default:
-				return response[responseContentType as 'json' | 'blob']()
-		}
-	} finally {
-		showProgress && window.Telegram.WebApp.MainButton.hideProgress()
+		return { data }
+	} catch (err) {
+		const errorMessage = 'A network error occurred. Please try again later.'
+
+		addToast(errorMessage)
+
+		return { data: null }
 	}
 }
 
 export const fetchMatches = async () => {
-	const resp = await apiFetch({
-		endpoint: '/matches',
+	const { data } = await apiRequest('/matches', {
+		method: 'GET',
 	})
 
-	return resp.reduce((acc: any, match: any) => {
+	return data.reduce((acc: any, match: any) => {
 		const date = new Date(match.match_date).toDateString()
 		if (!acc[date]) acc[date] = []
 		acc[date].push(match)
@@ -60,21 +53,27 @@ export const fetchMatches = async () => {
 }
 
 export const fetchLeaderboard = async () => {
-	return await apiFetch({
-		endpoint: '/leaderboard',
+	const { data } = await apiRequest('/leaderboard', {
+		method: 'GET',
 	})
+
+	return data
 }
 
 export const fetchActiveSeason = async () => {
-	return await apiFetch({
-		endpoint: '/seasons/active',
+	const { data } = await apiRequest('/seasons/active', {
+		method: 'GET',
 	})
+
+	return data
 }
 
 export const fetchUserInfo = async (username: string) => {
-	return await apiFetch({
-		endpoint: '/users/' + username,
+	const { data } = await apiRequest(`/users/${username}`, {
+		method: 'GET',
 	})
+
+	return data
 }
 
 export const uploadToS3 = (
@@ -102,12 +101,11 @@ export const uploadToS3 = (
 }
 
 export const fetchPresignedUrl = async (file: string) => {
-	const { path, url } = await apiFetch({
-		endpoint: `/presigned-url?filename=${file}`,
-		showProgress: false,
+	const { data } = await apiRequest(`/presigned-url?filename=${file}`, {
+		method: 'GET',
 	})
 
-	return { path, url }
+	return data
 }
 
 export type PredictionRequest = {
@@ -159,21 +157,39 @@ export type PredictionResponse = {
 
 
 export const saveMatchPrediction = async (prediction: PredictionRequest) => {
-	await apiFetch({
-		endpoint: `/predictions`,
+	return await apiRequest('/predictions', {
 		method: 'POST',
-		body: prediction,
+		body: JSON.stringify(prediction),
 	})
 }
 
 export const fetchPredictions = async () => {
-	return await apiFetch({
-		endpoint: '/predictions',
+	const { data } = await apiRequest('/predictions', {
+		method: 'GET',
 	})
+
+	return data
 }
 
 export const fetchReferrals = async () => {
-	return await apiFetch({
-		endpoint: '/referrals',
+	const { data } = await apiRequest('/referrals', {
+		method: 'GET',
+	})
+
+	return data
+}
+
+export const fetchTeams = async () => {
+	const { data } = await apiRequest('/teams', {
+		method: 'GET',
+	})
+
+	return data
+}
+
+export const fetchUpdateUser = async (user: any) => {
+	return await apiRequest('/users', {
+		method: 'PUT',
+		body: JSON.stringify(user),
 	})
 }

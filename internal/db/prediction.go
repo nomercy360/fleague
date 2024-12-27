@@ -42,7 +42,7 @@ func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) err
 	return err
 }
 
-func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (*Prediction, error) {
+func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (Prediction, error) {
 	query := `
 		SELECT
 			user_id,
@@ -69,12 +69,12 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 	)
 
 	if err != nil && IsNoRowsError(err) {
-		return nil, ErrNotFound
+		return Prediction{}, ErrNotFound
 	} else if err != nil {
-		return nil, err
+		return Prediction{}, err
 	}
 
-	return &prediction, nil
+	return prediction, nil
 }
 
 func (s *storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]Prediction, error) {

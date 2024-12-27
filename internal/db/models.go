@@ -20,10 +20,10 @@ type Season struct {
 
 // Team represents a sports team
 type Team struct {
-	ID           string `db:"id"`
-	Name         string `db:"name"`
-	ShortName    string `db:"short_name"`
-	Abbreviation string `db:"abbreviation"`
-	CrestURL     string `db:"crest_url"`
-	Country      string `db:"country"`
+	ID           string `db:"id" json:"id"`
+	Name         string `db:"name" json:"name"`
+	ShortName    string `db:"short_name" json:"short_name"`
+	Abbreviation string `db:"abbreviation" json:"abbreviation"`
+	CrestURL     string `db:"crest_url" json:"crest_url"`
+	Country      string `db:"country" json:"country"`
 }

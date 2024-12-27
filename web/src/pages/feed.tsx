@@ -6,7 +6,6 @@ import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
-import { onCleanup, onMount } from 'solid-js'
 
 export default function FeedPage() {
 	function shareProfileURL() {
@@ -23,23 +22,36 @@ export default function FeedPage() {
 	return (
 		<div class="h-full overflow-y-scroll bg-background text-foreground pb-[120px]">
 			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
-				<Button
-					class="absolute top-6 left-6"
-					onClick={shareProfileURL}
-					size="sm"
-					variant="secondary"
-				>
-					<IconShare class="size-6" />
-					Share
-				</Button>
+				<div class="flex flex-row justify-between items-center w-full">
+					<Button
+						onClick={shareProfileURL}
+						size="sm"
+						variant="secondary"
+					>
+						<IconShare class="size-6" />
+						Share
+					</Button>
+					<Button
+						href="/edit-profile"
+						as={Link}
+						size="sm">
+						Edit profile
+						<IconChevronRight class="size-6" />
+					</Button>
+				</div>
 				<img
 					src={store.user?.avatar_url}
 					alt="User avatar"
 					class="size-24 rounded-full object-cover"
 				/>
-				<p class="text-lg font-semibold mt-2">
-					{store.user?.first_name}
-				</p>
+				<div class="text-lg font-semibold mt-2 flex flex-row items-center">
+					<span>{store.user?.first_name}</span>
+					<img
+						src={store.user?.favorite_team?.crest_url}
+						alt={store.user?.favorite_team?.short_name}
+						class="size-4 ml-1"
+					/>
+				</div>
 				<Link href="/" class="text-muted-foreground flex flex-row items-center">
 					<p class="text-sm">
 						@{store.user?.username}

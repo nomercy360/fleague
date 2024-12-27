@@ -87,3 +87,43 @@ func (s *storage) SaveTeam(ctx context.Context, team Team) error {
 
 	return err
 }
+
+func (s *storage) ListTeams(ctx context.Context) ([]Team, error) {
+	query := `
+		SELECT
+			id,
+			name,
+			short_name,
+			crest_url,
+			country,
+			abbreviation
+		FROM teams`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var teams []Team
+	for rows.Next() {
+		var team Team
+		if err := rows.Scan(
+			&team.ID,
+			&team.Name,
+			&team.ShortName,
+			&team.CrestURL,
+			&team.Country,
+			&team.Abbreviation,
+		); err != nil {
+			return nil, err
+		}
+		teams = append(teams, team)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
+}

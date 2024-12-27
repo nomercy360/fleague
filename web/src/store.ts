@@ -17,6 +17,13 @@ type User = {
 	correct_predictions: number
 	referred_by: string
 	global_rank: number
+	favorite_team: {
+		id: number
+		name: string
+		short_name: string
+		crest_url: string
+		country: string
+	}
 }
 
 export const [store, setStore] = createStore<{

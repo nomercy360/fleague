@@ -17,28 +17,20 @@ type UserAuthResponse struct {
 }
 
 type UserResponse struct {
-	ID                 string    `json:"id"`
-	FirstName          *string   `json:"first_name"`
-	LastName           *string   `json:"last_name"`
-	Username           string    `json:"username"`
-	ChatID             int64     `json:"chat_id"`
-	LanguageCode       *string   `json:"language_code"`
-	CreatedAt          time.Time `json:"created_at"`
-	TotalPoints        int       `json:"total_points"`
-	TotalPredictions   int       `json:"total_predictions"`
-	CorrectPredictions int       `json:"correct_predictions"`
-	AvatarURL          *string   `json:"avatar_url"`
-	ReferredBy         *string   `json:"referred_by"`
-	GlobalRank         int       `json:"global_rank"`
-}
-
-type TeamResponse struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	ShortName    string `json:"short_name"`
-	CrestURL     string `json:"crest_url"`
-	Country      string `json:"country"`
-	Abbreviation string `json:"abbreviation"`
+	ID                 string           `json:"id"`
+	FirstName          *string          `json:"first_name"`
+	LastName           *string          `json:"last_name"`
+	Username           string           `json:"username"`
+	ChatID             int64            `json:"chat_id"`
+	LanguageCode       *string          `json:"language_code"`
+	CreatedAt          time.Time        `json:"created_at"`
+	TotalPoints        int              `json:"total_points"`
+	TotalPredictions   int              `json:"total_predictions"`
+	CorrectPredictions int              `json:"correct_predictions"`
+	AvatarURL          *string          `json:"avatar_url"`
+	ReferredBy         *string          `json:"referred_by"`
+	GlobalRank         int              `json:"global_rank"`
+	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
 }
 
 type PredictionResponse struct {
@@ -82,8 +74,8 @@ func (p PredictionRequest) Validate() error {
 type MatchResponse struct {
 	ID         string         `json:"id"`
 	Tournament string         `json:"tournament"`
-	HomeTeam   TeamResponse   `json:"home_team"`
-	AwayTeam   TeamResponse   `json:"away_team"`
+	HomeTeam   db.Team        `json:"home_team"`
+	AwayTeam   db.Team        `json:"away_team"`
 	MatchDate  time.Time      `json:"match_date"`
 	Status     string         `json:"status"`
 	AwayScore  *int           `json:"away_score"`
@@ -92,15 +84,16 @@ type MatchResponse struct {
 }
 
 type UserProfile struct {
-	ID                 string  `json:"id"`
-	FirstName          *string `json:"first_name"`
-	LastName           *string `json:"last_name"`
-	Username           string  `json:"username"`
-	AvatarURL          *string `json:"avatar_url"`
-	TotalPoints        int     `json:"total_points"`
-	TotalPredictions   int     `json:"total_predictions"`
-	CorrectPredictions int     `json:"correct_predictions"`
-	GlobalRank         int     `json:"global_rank"`
+	ID                 string           `json:"id"`
+	FirstName          *string          `json:"first_name"`
+	LastName           *string          `json:"last_name"`
+	Username           string           `json:"username"`
+	AvatarURL          *string          `json:"avatar_url"`
+	TotalPoints        int              `json:"total_points"`
+	TotalPredictions   int              `json:"total_predictions"`
+	CorrectPredictions int              `json:"correct_predictions"`
+	GlobalRank         int              `json:"global_rank"`
+	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
 }
 
 type LeaderboardEntry struct {
@@ -144,5 +137,24 @@ func (a AuthTelegramRequest) Validate() error {
 		return fmt.Errorf("referrer id cannot be empty")
 	}
 
+	return nil
+}
+
+type UpdateUserRequest struct {
+	FirstName      *string `json:"first_name"`
+	LastName       *string `json:"last_name"`
+	FavoriteTeamID *string `json:"favorite_team_id"`
+}
+
+func (u UpdateUserRequest) Validate() error {
+	if u.FirstName != nil && *u.FirstName == "" {
+		return fmt.Errorf("first name cannot be empty")
+	}
+	if u.LastName != nil && *u.LastName == "" {
+		return fmt.Errorf("last name cannot be empty")
+	}
+	if u.FavoriteTeamID != nil && *u.FavoriteTeamID == "" {
+		return fmt.Errorf("favorite team id cannot be empty")
+	}
 	return nil
 }

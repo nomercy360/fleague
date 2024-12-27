@@ -1,10 +1,11 @@
-package service
+package api
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
@@ -17,21 +18,32 @@ import (
 	"time"
 )
 
-func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserAuthResponse, error) {
+func (a API) TelegramAuth(c echo.Context) error {
+	var req contract.AuthTelegramRequest
+	if err := c.Bind(&req); err != nil {
+		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	if err := req.Validate(); err != nil {
+		return terrors.BadRequest(err, "failed to validate request")
+	}
+
+	log.Printf("AuthTelegram: %+v", req)
+
 	expIn := 24 * time.Hour
-	botToken := s.cfg.BotToken
+	botToken := a.cfg.BotToken
 
 	if err := initdata.Validate(req.Query, botToken, expIn); err != nil {
-		return nil, terrors.Unauthorized(err, "invalid init data from telegram")
+		return terrors.Unauthorized(err, "invalid init data from telegram")
 	}
 
 	data, err := initdata.Parse(req.Query)
 
 	if err != nil {
-		return nil, terrors.Unauthorized(err, "cannot parse init data from telegram")
+		return terrors.Unauthorized(err, "cannot parse init data from telegram")
 	}
 
-	user, err := s.storage.GetUserByChatID(data.User.ID)
+	user, err := a.storage.GetUserByChatID(data.User.ID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		username := data.User.Username
 		if username == "" {
@@ -57,24 +69,24 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 		// if referrer is not empty, get referrer user by ID
 		var referrerID *string
 		if req.ReferrerID != nil {
-			referrer, err := s.storage.GetUserByID(*req.ReferrerID)
+			referrer, err := a.storage.GetUserByID(*req.ReferrerID)
 			if err != nil && errors.Is(err, db.ErrNotFound) {
 				log.Printf("referrer not found: %v", err)
 			} else if err != nil {
 				log.Printf("failed to get referrer: %v", err)
 			}
 
-			if referrer != nil {
+			if referrer.ID != "" {
 				referrerID = &referrer.ID
 
 				// add 10 points to referrer
-				if err = s.storage.UpdateUserPoints(context.Background(), referrer.ID, 10); err != nil {
+				if err = a.storage.UpdateUserPoints(context.Background(), referrer.ID, 10); err != nil {
 					log.Printf("failed to update referrer points: %v", err)
 				}
 			}
 		}
 
-		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", s.cfg.AssetsURL, rand.Intn(30)+1)
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", a.cfg.AssetsURL, rand.Intn(30)+1)
 
 		create := db.User{
 			ID:           nanoid.Must(),
@@ -87,13 +99,13 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 			ReferredBy:   referrerID,
 		}
 
-		if err = s.storage.CreateUser(create); err != nil {
-			return nil, terrors.InternalServer(err, "failed to create user")
+		if err = a.storage.CreateUser(create); err != nil {
+			return terrors.InternalServer(err, "failed to create user")
 		}
 
-		user, err = s.storage.GetUserByChatID(data.User.ID)
+		user, err = a.storage.GetUserByChatID(data.User.ID)
 		if err != nil {
-			return nil, terrors.InternalServer(err, "failed to get user")
+			return terrors.InternalServer(err, "failed to get user")
 		}
 
 		//if data.User.PhotoURL != "" {
@@ -110,13 +122,13 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 		//	}()
 		//}
 	} else if err != nil {
-		return nil, terrors.InternalServer(err, "failed to get user")
+		return terrors.InternalServer(err, "failed to get user")
 	}
 
-	token, err := generateJWT(user.ID, user.ChatID, s.cfg.JWTSecret)
+	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
 
 	if err != nil {
-		return nil, terrors.InternalServer(err, "jwt library error")
+		return terrors.InternalServer(err, "jwt library error")
 	}
 
 	uresp := contract.UserResponse{
@@ -133,12 +145,15 @@ func (s Service) TelegramAuth(req contract.AuthTelegramRequest) (*contract.UserA
 		AvatarURL:          user.AvatarURL,
 		ReferredBy:         user.ReferredBy,
 		GlobalRank:         user.GlobalRank,
+		FavoriteTeam:       user.FavoriteTeam,
 	}
 
-	return &contract.UserAuthResponse{
+	resp := &contract.UserAuthResponse{
 		Token: token,
 		User:  uresp,
-	}, nil
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 func generateJWT(userID string, chatID int64, secretKey string) (string, error) {
@@ -160,7 +175,7 @@ func generateJWT(userID string, chatID int64, secretKey string) (string, error) 
 	return t, nil
 }
 
-func (s Service) uploadImageToS3(imgURL string, fileName string) error {
+func (a API) uploadImageToS3(imgURL string, fileName string) error {
 	resp, err := http.Get(imgURL)
 
 	if err != nil {
@@ -176,7 +191,7 @@ func (s Service) uploadImageToS3(imgURL string, fileName string) error {
 		return fmt.Errorf("failed to read file: %v", err)
 	}
 
-	if _, err = s.s3Client.UploadFile(data, fileName); err != nil {
+	if _, err = a.s3Client.UploadFile(data, fileName); err != nil {
 		return fmt.Errorf("failed to upload user avatar to S3: %v", err)
 	}
 

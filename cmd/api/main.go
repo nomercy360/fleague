@@ -9,11 +9,10 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/user/project/internal/api"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
-	"github.com/user/project/internal/handler"
 	"github.com/user/project/internal/s3"
-	"github.com/user/project/internal/service"
 	"github.com/user/project/internal/syncer"
 	"github.com/user/project/internal/terrors"
 	"gopkg.in/yaml.v3"
@@ -261,7 +260,7 @@ func main() {
 
 	e.Validator = &customValidator{validator: validator.New()}
 
-	apiCfg := service.Config{
+	apiCfg := api.Config{
 		BotToken:  cfg.TelegramBotToken,
 		JWTSecret: cfg.JWTSecret,
 		AssetsURL: cfg.AssetsURL,
@@ -274,9 +273,7 @@ func main() {
 		log.Fatalf("Failed to initialize AWS S3 client: %v\n", err)
 	}
 
-	svc := service.New(storage, apiCfg, s3Client)
-
-	h := handler.New(svc)
+	a := api.New(storage, apiCfg, s3Client)
 
 	tmConfig := middleware.TimeoutConfig{
 		Timeout: 20 * time.Second,
@@ -284,7 +281,7 @@ func main() {
 
 	e.Use(middleware.TimeoutWithConfig(tmConfig))
 
-	e.POST("/auth/telegram", h.AuthTelegram)
+	e.POST("/auth/telegram", a.TelegramAuth)
 
 	// Routes
 	g := e.Group("/v1")
@@ -293,13 +290,15 @@ func main() {
 
 	g.Use(echojwt.WithConfig(authCfg))
 
-	g.GET("/matches", h.ListMatches)
-	g.POST("/predictions", h.SavePrediction)
-	g.GET("/predictions", h.GetUserPredictions)
-	g.GET("/leaderboard", h.GetLeaderboard)
-	g.GET("/users/:username", h.GetUserInfo)
-	g.GET("/seasons/active", h.GetActiveSeason)
-	g.GET("/referrals", h.ListMyReferrals)
+	g.GET("/matches", a.ListMatches)
+	g.POST("/predictions", a.SavePrediction)
+	g.GET("/predictions", a.GetUserPredictions)
+	g.GET("/leaderboard", a.GetLeaderboard)
+	g.GET("/users/:username", a.GetUserInfo)
+	g.GET("/seasons/active", a.GetActiveSeason)
+	g.GET("/referrals", a.ListMyReferrals)
+	g.GET("/teams", a.ListTeams)
+	g.PUT("/users", a.UpdateUser)
 
 	done := make(chan bool, 1)
 

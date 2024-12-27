@@ -30,6 +30,10 @@ export const routes: RouteDefinition[] = [
 		'component': lazy(() => import('./pages/user')),
 	},
 	{
+		'path': '/edit-profile',
+		'component': lazy(() => import('./pages/edit-profile')),
+	},
+	{
 		path: '**',
 		component: lazy(() => import('./pages/404')),
 	},

@@ -1,0 +1,174 @@
+import { setUser, store } from '~/store'
+import { createEffect, onCleanup, onMount, createSignal, Show } from 'solid-js'
+import { TextField, TextFieldInput } from '~/components/ui/text-field'
+import { createStore } from 'solid-js/store'
+import { useMainButton } from '~/lib/useMainButton'
+import { Button } from '~/components/ui/button'
+import { IconChevronRight } from '~/components/icons'
+import { createQuery } from '@tanstack/solid-query'
+import { fetchTeams, fetchUpdateUser } from '~/lib/api'
+import { cn } from '~/lib/utils'
+import { useNavigate } from '@solidjs/router'
+
+type Team = {
+	id: number
+	name: string
+	short_name: string
+	crest_url: string
+	country: string
+}
+
+export default function EditUserPage() {
+	const mainButton = useMainButton()
+
+	const [editUser, setEditUser] = createStore({
+		first_name: '',
+		last_name: '',
+		favorite_team_id: '',
+	})
+
+	const [showTeamSelector, setShowTeamSelector] = createSignal(false)
+
+	const [searchTerm, setSearchTerm] = createSignal('')
+	const [selectedTeam, setSelectedTeam] = createSignal({} as Team)
+
+	const teams = createQuery<Team[]>(() => ({
+		queryKey: ['teams'],
+		queryFn: () => fetchTeams(),
+	}))
+
+	const filteredTeams = () =>
+		teams.data?.filter((team) =>
+			team.name.toLowerCase().includes(searchTerm().toLowerCase()),
+		) || []
+
+	const navigate = useNavigate()
+
+	createEffect(() => {
+		if (store.user?.username) {
+			setEditUser({
+				first_name: store.user.first_name,
+				last_name: store.user.last_name,
+			})
+
+			if (store.user.favorite_team) {
+				setSelectedTeam(store.user.favorite_team)
+			}
+		}
+	})
+
+	async function updateUser() {
+		try {
+			await fetchUpdateUser({
+				...editUser,
+				favorite_team_id: selectedTeam()?.id,
+			})
+			setUser({
+				...store.user,
+				first_name: editUser.first_name,
+				last_name: editUser.last_name,
+				favorite_team: selectedTeam(),
+			})
+			navigate('/')
+		} catch (error) {
+			console.error('Failed to update user:', error)
+		}
+	}
+
+	onMount(() => {
+		mainButton.enable('Save & close')
+		mainButton.onClick(updateUser)
+	})
+
+	onCleanup(() => {
+		mainButton.offClick(updateUser)
+		mainButton.hide()
+	})
+
+	return (
+		<div class="flex flex-col items-center justify-center bg-background text-foreground px-2 py-3 space-y-3">
+			<Show when={!showTeamSelector()}>
+				<img
+					src={store.user?.avatar_url}
+					alt="User avatar"
+					class="my-6 size-24 rounded-full object-cover"
+				/>
+				<TextField>
+					<TextFieldInput
+						placeholder="First name"
+						value={editUser.first_name}
+						onInput={(e) => setEditUser('first_name', e.currentTarget.value)}
+					/>
+				</TextField>
+				<TextField>
+					<TextFieldInput
+						placeholder="Last name"
+						value={editUser.last_name}
+						onInput={(e) => setEditUser('last_name', e.currentTarget.value)}
+					/>
+				</TextField>
+				<div class="w-full">
+					<p class="text-sm text-muted-foreground">Your favorite team</p>
+					<Button
+						size="sm"
+						class="mt-1 h-12 w-full justify-between"
+						variant="secondary"
+						onClick={() => setShowTeamSelector(true)}
+					>
+          <span class="flex flex-row items-center gap-2">
+            {selectedTeam() ? (
+							<>
+								<img
+									src={selectedTeam().crest_url}
+									alt={selectedTeam().short_name}
+									class="size-6"
+								/>
+								{selectedTeam().short_name}
+							</>
+						) : (
+							'Select a team'
+						)}
+          </span>
+						<IconChevronRight class="size-6" />
+					</Button>
+				</div>
+			</Show>
+
+			<Show when={showTeamSelector()}>
+				<div class="h-screen flex-col flex items-center justify-start w-full">
+					<div class="w-full flex items-center relative">
+						<TextField class="flex-grow">
+							<TextFieldInput
+								placeholder="Search team"
+								value={searchTerm()}
+								onInput={(e) => setSearchTerm(e.currentTarget.value)}
+							/>
+							{searchTerm() && (
+								<button
+									class="z-10 text-muted-foreground absolute right-3 top-3"
+									onClick={() => setSearchTerm('')}
+								>
+									<span class="material-symbols-rounded text-[24px]">close</span>
+								</button>
+							)}
+						</TextField>
+					</div>
+					<div class="mt-4 grid grid-cols-3 gap-2 w-full overflow-y-scroll pb-[40px]">
+						{filteredTeams().map((team) => (
+							<button
+								class={cn('border flex flex-col items-center p-3 rounded-2xl bg-secondary', selectedTeam()?.id === team.id && 'border-primary')}
+								onClick={() => {
+									setSelectedTeam(team)
+									setShowTeamSelector(false)
+								}}
+							>
+								<img src={team.crest_url} alt={team.name} class="size-12 mb-4" />
+								<span class="text-xs text-secondary-foreground">{team.short_name}</span>
+							</button>
+						))}
+					</div>
+				</div>
+			</Show>
+		</div>
+	)
+}
