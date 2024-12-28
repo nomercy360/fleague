@@ -127,19 +127,19 @@ export default function MatchesPage() {
 											{entry.user?.first_name}{' '}{entry.user?.last_name}
 										</p>
 										<Show
-											when={store.user?.favorite_team}
+											when={entry.user?.favorite_team}
 										>
 											<img
-												src={store.user?.favorite_team?.crest_url}
-												alt={store.user?.favorite_team?.short_name}
+												src={entry.user?.favorite_team?.crest_url}
+												alt={entry.user?.favorite_team?.short_name}
 												class="size-4 ml-1"
 											/>
 										</Show>
 										<Show
-											when={store.user?.current_win_streak}
+											when={entry.user?.current_win_streak}
 										>
 										<span class="text-xs text-orange-500 ml-1">
-											{store.user?.current_win_streak}
+											{entry.user?.current_win_streak}
 										</span>
 											<span class="material-symbols-rounded text-[16px] text-orange-500">
 											local_fire_department
