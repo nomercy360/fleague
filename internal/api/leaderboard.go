@@ -34,11 +34,14 @@ func (a API) GetLeaderboard(c echo.Context) error {
 		}
 
 		userProfile := contract.UserProfile{
-			ID:        user.ID,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Username:  user.Username,
-			AvatarURL: user.AvatarURL,
+			ID:               user.ID,
+			FirstName:        user.FirstName,
+			LastName:         user.LastName,
+			Username:         user.Username,
+			AvatarURL:        user.AvatarURL,
+			FavoriteTeam:     user.FavoriteTeam,
+			CurrentWinStreak: user.CurrentWinStreak,
+			LongestWinStreak: user.LongestWinStreak,
 		}
 
 		leaderboard = append(leaderboard, contract.LeaderboardEntry{

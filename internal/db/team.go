@@ -2,7 +2,7 @@ package db
 
 import "context"
 
-func (s *storage) GetTeamByName(ctx context.Context, name string) (Team, error) {
+func (s *Storage) GetTeamByName(ctx context.Context, name string) (Team, error) {
 	query := `
 		SELECT
 			id,
@@ -33,7 +33,7 @@ func (s *storage) GetTeamByName(ctx context.Context, name string) (Team, error) 
 	return team, nil
 }
 
-func (s *storage) GetTeamByID(ctx context.Context, id string) (Team, error) {
+func (s *Storage) GetTeamByID(ctx context.Context, id string) (Team, error) {
 	query := `
 		SELECT
 			id,
@@ -64,7 +64,7 @@ func (s *storage) GetTeamByID(ctx context.Context, id string) (Team, error) {
 	return team, nil
 }
 
-func (s *storage) SaveTeam(ctx context.Context, team Team) error {
+func (s *Storage) SaveTeam(ctx context.Context, team Team) error {
 	query := `
 		INSERT INTO teams (id, name, short_name, crest_url, country, abbreviation)
 		VALUES (?, ?, ?, ?, ?, ?)
@@ -88,7 +88,7 @@ func (s *storage) SaveTeam(ctx context.Context, team Team) error {
 	return err
 }
 
-func (s *storage) ListTeams(ctx context.Context) ([]Team, error) {
+func (s *Storage) ListTeams(ctx context.Context) ([]Team, error) {
 	query := `
 		SELECT
 			id,

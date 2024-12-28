@@ -80,7 +80,7 @@ func (a API) TelegramAuth(c echo.Context) error {
 				referrerID = &referrer.ID
 
 				// add 10 points to referrer
-				if err = a.storage.UpdateUserPoints(context.Background(), referrer.ID, 10); err != nil {
+				if err = a.storage.UpdateUserPoints(context.Background(), referrer.ID, 10, false); err != nil {
 					log.Printf("failed to update referrer points: %v", err)
 				}
 			}
@@ -146,6 +146,8 @@ func (a API) TelegramAuth(c echo.Context) error {
 		ReferredBy:         user.ReferredBy,
 		GlobalRank:         user.GlobalRank,
 		FavoriteTeam:       user.FavoriteTeam,
+		CurrentWinStreak:   user.CurrentWinStreak,
+		LongestWinStreak:   user.LongestWinStreak,
 	}
 
 	resp := &contract.UserAuthResponse{

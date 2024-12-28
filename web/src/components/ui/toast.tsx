@@ -10,16 +10,16 @@ import { cva } from 'class-variance-authority'
 import { cn } from '~/lib/utils'
 
 const toastVariants = cva(
-	'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl border p-3 pr-8 transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--kb-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--kb-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[opened]:animate-in data-[closed]:animate-out data-[swipe=end]:animate-out data-[closed]:fade-out-80 data-[closed]:slide-out-to-right-full data-[opened]:slide-in-from-top-full data-[opened]:sm:slide-in-from-bottom-full',
+	'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl p-3 pr-8 transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--kb-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--kb-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[opened]:animate-in data-[closed]:animate-out data-[swipe=end]:animate-out data-[closed]:fade-out-80 data-[closed]:slide-out-to-right-full data-[opened]:slide-in-from-top-full data-[opened]:sm:slide-in-from-bottom-full',
 	{
 		variants: {
 			variant: {
-				default: 'bg-background text-foreground',
+				default: 'bg-background text-primary-foreground',
 				destructive:
-					'destructive group bg-destructive text-destructive-foreground',
-				success: 'success bg-success text-success-foreground',
-				warning: 'warning bg-warning text-warning-foreground',
-				error: 'error bg-red-500 text-error-foreground',
+					'destructive group bg-destructive text-primary-foreground',
+				success: 'success bg-success text-primary-foreground',
+				warning: 'warning bg-warning text-primary-foreground',
+				error: 'error bg-red-500 text-primary-foreground',
 			},
 		},
 		defaultVariants: {
@@ -105,7 +105,7 @@ const ToastTitle = <T extends ValidComponent = 'div'>(
 	props: PolymorphicProps<T, ToastTitleProps<T>>,
 ) => {
 	const [local, others] = splitProps(props as ToastTitleProps, ['class'])
-	return <ToastPrimitive.Title class={cn('text-sm font-semibold', local.class)} {...others} />
+	return <ToastPrimitive.Title class={cn('text-sm', local.class)} {...others} />
 }
 
 type ToastDescriptionProps<T extends ValidComponent = 'div'> =

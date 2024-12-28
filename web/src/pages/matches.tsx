@@ -9,7 +9,7 @@ import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
-import MatchStats from '~/components/match-stats'
+import { store } from '~/store'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
@@ -126,6 +126,25 @@ export default function MatchesPage() {
 										<p class="text-base font-semibold ml-2">
 											{entry.user?.first_name}{' '}{entry.user?.last_name}
 										</p>
+										<Show
+											when={store.user?.favorite_team}
+										>
+											<img
+												src={store.user?.favorite_team?.crest_url}
+												alt={store.user?.favorite_team?.short_name}
+												class="size-4 ml-1"
+											/>
+										</Show>
+										<Show
+											when={store.user?.current_win_streak}
+										>
+										<span class="text-xs text-orange-500 ml-1">
+											{store.user?.current_win_streak}
+										</span>
+											<span class="material-symbols-rounded text-[16px] text-orange-500">
+											local_fire_department
+										</span>
+										</Show>
 									</div>
 									<div class="flex items-center">
 										<p class="text-base font-semibold mr-2">{entry.points} DPS</p>

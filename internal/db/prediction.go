@@ -22,7 +22,7 @@ const (
 	MatchOutcomeDraw = "draw"
 )
 
-func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) error {
+func (s *Storage) SavePrediction(ctx context.Context, prediction Prediction) error {
 	query := `
 		INSERT INTO predictions (user_id, match_id, predicted_outcome, predicted_home_score, predicted_away_score)
 		VALUES (?, ?, ?, ?, ?)
@@ -42,7 +42,7 @@ func (s *storage) SavePrediction(ctx context.Context, prediction Prediction) err
 	return err
 }
 
-func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (Prediction, error) {
+func (s *Storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (Prediction, error) {
 	query := `
 		SELECT
 			user_id,
@@ -77,7 +77,7 @@ func (s *storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 	return prediction, nil
 }
 
-func (s *storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]Prediction, error) {
+func (s *Storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]Prediction, error) {
 	// Base query
 	query := `
 		SELECT
@@ -125,7 +125,7 @@ func (s *storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCo
 	return predictions, rows.Err()
 }
 
-func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([]Prediction, error) {
+func (s *Storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([]Prediction, error) {
 	query := `
 		SELECT
 			user_id,
@@ -168,7 +168,7 @@ func (s *storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([
 	return predictions, nil
 }
 
-func (s *storage) UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error {
+func (s *Storage) UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error {
 	query := `
 		UPDATE predictions
 		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP

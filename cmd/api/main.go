@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	telegram "github.com/go-telegram/bot"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -12,6 +13,7 @@ import (
 	"github.com/user/project/internal/api"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/notification"
 	"github.com/user/project/internal/s3"
 	"github.com/user/project/internal/syncer"
 	"github.com/user/project/internal/terrors"
@@ -192,8 +194,8 @@ func gracefulShutdown(e *echo.Echo, done chan<- bool) {
 
 func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 	log.Println("Starting initial sync process...")
-	if err := sync.SyncMatches(ctx); err != nil {
-		log.Printf("Initial sync failed: %v", err)
+	if err := sync.SyncTeams(ctx); err != nil {
+		log.Printf("Initial team sync failed: %v", err)
 	}
 
 	if err := sync.ProcessPredictions(ctx); err != nil {
@@ -304,7 +306,15 @@ func main() {
 
 	go gracefulShutdown(e, done)
 
-	sync := syncer.NewSyncer(storage, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
+	bot, err := telegram.New(cfg.TelegramBotToken)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize bot: %v", err)
+	}
+
+	notifier := notification.NewTelegramNotifier(bot)
+
+	sync := syncer.NewSyncer(storage, notifier, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

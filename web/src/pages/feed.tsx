@@ -6,6 +6,7 @@ import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
+import { Show } from 'solid-js'
 
 export default function FeedPage() {
 	function shareProfileURL() {
@@ -46,11 +47,25 @@ export default function FeedPage() {
 				/>
 				<div class="text-lg font-semibold mt-2 flex flex-row items-center">
 					<span>{store.user?.first_name}</span>
-					<img
-						src={store.user?.favorite_team?.crest_url}
-						alt={store.user?.favorite_team?.short_name}
-						class="size-4 ml-1"
-					/>
+					<Show
+						when={store.user?.favorite_team}
+					>
+						<img
+							src={store.user?.favorite_team?.crest_url}
+							alt={store.user?.favorite_team?.short_name}
+							class="size-4 ml-1"
+						/>
+					</Show>
+					<Show
+						when={store.user?.current_win_streak}
+					>
+						<span class="text-xs text-orange-500 ml-1">
+							{store.user?.current_win_streak}
+						</span>
+						<span class="material-symbols-rounded text-[16px] text-orange-500">
+							local_fire_department
+						</span>
+					</Show>
 				</div>
 				<Link href="/" class="text-muted-foreground flex flex-row items-center">
 					<p class="text-sm">

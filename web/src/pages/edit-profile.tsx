@@ -119,7 +119,12 @@ export default function EditUserPage() {
 						onClick={() => setShowTeamSelector(true)}
 					>
           <span class="flex flex-row items-center gap-2">
-            {selectedTeam() ? (
+            <Show
+							when={selectedTeam().id}
+							fallback={
+								<span class="text-muted-foreground">Select your favorite team</span>
+							}
+						>
 							<>
 								<img
 									src={selectedTeam().crest_url}
@@ -128,9 +133,7 @@ export default function EditUserPage() {
 								/>
 								{selectedTeam().short_name}
 							</>
-						) : (
-							'Select a team'
-						)}
+						</Show>
           </span>
 						<IconChevronRight class="size-6" />
 					</Button>

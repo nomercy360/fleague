@@ -9,16 +9,16 @@ import (
 	"time"
 )
 
-type storage struct {
+type Storage struct {
 	db *sql.DB
 }
 
-func (s *storage) AddPrediction(ctx context.Context, prediction Prediction) error {
+func (s *Storage) AddPrediction(ctx context.Context, prediction Prediction) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *storage) GetUserProfile(ctx context.Context, userID string) (User, error) {
+func (s *Storage) GetUserProfile(ctx context.Context, userID string) (User, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -52,7 +52,7 @@ func init() {
 	)
 }
 
-func ConnectDB(dbPath string) (*storage, error) {
+func ConnectDB(dbPath string) (*Storage, error) {
 	db, err := sql.Open("sql", dbPath)
 	if err != nil {
 		return nil, err
@@ -62,11 +62,11 @@ func ConnectDB(dbPath string) (*storage, error) {
 		return nil, err
 	}
 
-	return &storage{db: db}, nil
+	return &Storage{db: db}, nil
 }
 
-func NewStorage(db *sql.DB) *storage {
-	return &storage{
+func NewStorage(db *sql.DB) *Storage {
+	return &Storage{
 		db: db,
 	}
 }
@@ -89,7 +89,7 @@ type HealthStats struct {
 	MaxLifetimeClosed int64  `json:"max_lifetime_closed"`
 }
 
-func (s *storage) Health() (HealthStats, error) {
+func (s *Storage) Health() (HealthStats, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 

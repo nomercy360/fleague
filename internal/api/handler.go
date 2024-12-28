@@ -27,7 +27,7 @@ type storager interface {
 	GetActiveSeason(ctx context.Context) (db.Season, error)
 	UpdateUserPredictionCount(ctx context.Context, userID string) error
 	ListUserReferrals(ctx context.Context, userID string) ([]db.User, error)
-	UpdateUserPoints(ctx context.Context, userID string, points int) error
+	UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error
 	ListTeams(ctx context.Context) ([]db.Team, error)
 	UpdateUserInformation(ctx context.Context, user db.User) error
 }

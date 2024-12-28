@@ -31,6 +31,8 @@ type UserResponse struct {
 	ReferredBy         *string          `json:"referred_by"`
 	GlobalRank         int              `json:"global_rank"`
 	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
+	CurrentWinStreak   int              `json:"current_win_streak"`
+	LongestWinStreak   int              `json:"longest_win_streak"`
 }
 
 type PredictionResponse struct {
@@ -94,6 +96,8 @@ type UserProfile struct {
 	CorrectPredictions int              `json:"correct_predictions"`
 	GlobalRank         int              `json:"global_rank"`
 	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
+	CurrentWinStreak   int              `json:"current_win_streak"`
+	LongestWinStreak   int              `json:"longest_win_streak"`
 }
 
 type LeaderboardEntry struct {
@@ -157,4 +161,13 @@ func (u UpdateUserRequest) Validate() error {
 		return fmt.Errorf("favorite team id cannot be empty")
 	}
 	return nil
+}
+
+type SendNotificationParams struct {
+	ChatID     int64
+	Message    string
+	BotWebApp  string
+	WebAppURL  string
+	Image      []byte
+	ButtonText string
 }

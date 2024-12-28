@@ -23,7 +23,7 @@ const (
 	MatchStatusOngoing   = "ongoing"
 )
 
-func (s *storage) SaveMatch(ctx context.Context, match Match) error {
+func (s *Storage) SaveMatch(ctx context.Context, match Match) error {
 	query := `
         INSERT INTO matches (id, tournament, home_team_id, away_team_id, match_date, status, away_score, home_score)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -49,7 +49,7 @@ func (s *storage) SaveMatch(ctx context.Context, match Match) error {
 	return err
 }
 
-func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
+func (s *Storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	var query string
 	var args []interface{}
 
@@ -87,7 +87,7 @@ func (s *storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	return matches, nil
 }
 
-func (s *storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
+func (s *Storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 	query := `
 		SELECT
 			m.id,
@@ -121,7 +121,7 @@ func (s *storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 	return match, nil
 }
 
-func (s *storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]Match, error) {
+func (s *Storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Context) ([]Match, error) {
 	query := `
 		SELECT m.id, m.home_score, m.away_score
 		FROM matches m

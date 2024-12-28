@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	telegram "github.com/go-telegram/bot"
+	"github.com/user/project/internal/contract"
 	"log"
 	"net/http"
 	"time"
@@ -20,12 +22,15 @@ type storager interface {
 	UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error
 	GetActiveSeason(ctx context.Context) (db.Season, error)
 	UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID string, points int) error
-	UpdateUserPoints(ctx context.Context, userID string, points int) error
+	UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error
 	SaveTeam(ctx context.Context, team db.Team) error
+	GetUserByID(id string) (db.User, error)
+	UpdateUserStreak(ctx context.Context, userID string, currentStreak, longestStreak int) error
 }
 
 type Syncer struct {
 	storage    storager
+	notifier   noifier
 	apiBaseURL string
 	apiKey     string
 }
@@ -95,14 +100,19 @@ type APIMatch struct {
 	} `json:"referees"`
 }
 
+type noifier interface {
+	SendTextNotification(params contract.SendNotificationParams) error
+}
+
 type APIResponse struct {
 	Matches []APIMatch `json:"matches"`
 }
 
 // NewSyncer creates a new instance of the syncer
-func NewSyncer(storage storager, apiBaseURL, apiKey string) *Syncer {
+func NewSyncer(storage storager, notifier noifier, apiBaseURL, apiKey string) *Syncer {
 	return &Syncer{
 		storage:    storage,
+		notifier:   notifier,
 		apiBaseURL: apiBaseURL,
 		apiKey:     apiKey,
 	}
@@ -238,10 +248,6 @@ func (s *Syncer) SyncTeams(ctx context.Context) error {
 
 // SyncMatches fetches matches from the API and saves them to the database
 func (s *Syncer) SyncMatches(ctx context.Context) error {
-	if err := s.SyncTeams(ctx); err != nil {
-		return fmt.Errorf("failed to sync teams: %w", err)
-	}
-
 	competitions := []string{"PL", "PD", "FL1", "SA", "BL1", "CL"} // Competition codes
 	lastRequestTime := time.Now().Add(-time.Minute)
 
@@ -291,11 +297,13 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 }
 
 func (s *Syncer) ProcessPredictions(ctx context.Context) error {
+	// Retrieve all completed matches that have predictions pending evaluation
 	matches, err := s.storage.GetCompletedMatchesWithoutCompletedPredictions(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get completed matches: %w", err)
 	}
 
+	// Fetch the active season
 	season, err := s.storage.GetActiveSeason(ctx)
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		return fmt.Errorf("failed to get active season: %w", err)
@@ -304,43 +312,107 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 	}
 
 	for _, match := range matches {
+		// Retrieve all predictions for the current match
 		predictions, err := s.storage.GetPredictionsForMatch(ctx, match.ID)
 		if err != nil {
-			log.Printf("Failed to fetch predictions for match %d: %v", match.ID, err)
+			log.Printf("Failed to fetch predictions for match %s: %v", match.ID, err)
 			continue
 		}
 
 		for _, prediction := range predictions {
+			// Ensure match scores are available
 			if match.AwayScore == nil || match.HomeScore == nil {
-				log.Printf("Skipping prediction for match %d with missing scores", match.ID)
+				log.Printf("Skipping prediction for match %s with missing scores", match.ID)
 				continue
 			}
 
-			points := calculatePoints(match, prediction)
-			if err := s.storage.UpdatePredictionResult(ctx, prediction.MatchID, prediction.UserID, points); err != nil {
-				log.Printf("Failed to update prediction result for match %d, user %d: %v", prediction.MatchID, prediction.UserID, err)
+			// Calculate base points based on prediction correctness
+			basePoints := calculateBasePoints(match, prediction)
+			isExactCorrect := basePoints == 7
+			isOutcomeCorrect := basePoints == 3
+
+			// Determine if the prediction was correct
+			isCorrect := isExactCorrect || isOutcomeCorrect
+
+			// Fetch the user to update streaks
+			user, err := s.storage.GetUserByID(prediction.UserID)
+			if err != nil {
+				log.Printf("Failed to fetch user %s: %v", prediction.UserID, err)
+				continue
 			}
 
-			// update user points in leaderboard for current season
-			if err := s.storage.UpdateUserLeaderboardPoints(ctx, prediction.UserID, season.ID, points); err != nil {
-				log.Printf("Failed to update leaderboard for user %d: %v", prediction.UserID, err)
+			// Initialize bonus points
+			bonusPoints := 0
+
+			if isCorrect {
+				// Increment the user's current streak
+				user.CurrentWinStreak += 1
+
+				// Update the longest streak if necessary
+				if user.CurrentWinStreak > user.LongestWinStreak {
+					user.LongestWinStreak = user.CurrentWinStreak
+				}
+
+				// Calculate bonus based on the new streak
+				bonusPoints = calculateBonus(user.CurrentWinStreak)
+			} else {
+				// Reset the user's current streak
+				user.CurrentWinStreak = 0
 			}
 
-			// update user stats
-			if err := s.storage.UpdateUserPoints(ctx, prediction.UserID, points); err != nil {
-				log.Printf("Failed to update user points for user %d: %v", prediction.UserID, err)
+			// Calculate total points (base + bonus)
+			totalPoints := basePoints + bonusPoints
+
+			// Update the prediction result with total points
+			err = s.storage.UpdatePredictionResult(ctx, prediction.MatchID, prediction.UserID, totalPoints)
+			if err != nil {
+				log.Printf("Failed to update prediction result for match %s, user %s: %v", prediction.MatchID, prediction.UserID, err)
+				continue
 			}
+
+			err = s.storage.UpdateUserLeaderboardPoints(ctx, prediction.UserID, season.ID, totalPoints)
+			if err != nil {
+				log.Printf("Failed to update leaderboard for user %s: %v", prediction.UserID, err)
+				continue
+			}
+
+			err = s.storage.UpdateUserPoints(ctx, prediction.UserID, totalPoints, isCorrect)
+			if err != nil {
+				log.Printf("Failed to update user points for user %s: %v", prediction.UserID, err)
+				continue
+			}
+
+			err = s.storage.UpdateUserStreak(ctx, user.ID, user.CurrentWinStreak, user.LongestWinStreak)
+			if err != nil {
+				log.Printf("Failed to update streak for user %s: %v", user.ID, err)
+				continue
+			}
+
+			// go s.notifyUser(ctx, user, user.CurrentWinStreak, bonusPoints)
 		}
 	}
 
 	return nil
 }
 
-func calculatePoints(match db.Match, prediction db.Prediction) int {
+func calculateBonus(currentStreak int) int {
+	switch {
+	case currentStreak >= 11:
+		return 10
+	case currentStreak >= 7:
+		return 5
+	case currentStreak >= 4:
+		return 2
+	default:
+		return 0
+	}
+}
+
+func calculateBasePoints(match db.Match, prediction db.Prediction) int {
 	awayScore := *match.AwayScore
 	homeScore := *match.HomeScore
 
-	// If prediction was by exact score
+	// Exact score prediction
 	if prediction.PredictedHomeScore != nil && prediction.PredictedAwayScore != nil {
 		predictedHomeScore := *prediction.PredictedHomeScore
 		predictedAwayScore := *prediction.PredictedAwayScore
@@ -350,7 +422,7 @@ func calculatePoints(match db.Match, prediction db.Prediction) int {
 		}
 	}
 
-	// If prediction was by outcome
+	// Outcome prediction
 	if prediction.PredictedOutcome != nil {
 		outcome := *prediction.PredictedOutcome
 
@@ -366,4 +438,20 @@ func calculatePoints(match db.Match, prediction db.Prediction) int {
 	}
 
 	return 0
+}
+
+func (s *Syncer) notifyUser(ctx context.Context, user db.User, streak int, bonusPoints int) {
+	if streak < 4 && bonusPoints == 0 {
+		return
+	}
+
+	message := fmt.Sprintf("🎉 Congratulations! You've achieved a streak of %d correct predictions and earned an extra %d points!", streak, bonusPoints)
+	err := s.notifier.SendTextNotification(contract.SendNotificationParams{
+		ChatID:  user.ChatID,
+		Message: telegram.EscapeMarkdown(message),
+	})
+
+	if err != nil {
+		log.Printf("Failed to send notification to user %s: %v", user.ID, err)
+	}
 }

@@ -24,6 +24,8 @@ type User = {
 		crest_url: string
 		country: string
 	}
+	current_win_streak: number
+	longest_win_streak: number
 }
 
 export const [store, setStore] = createStore<{

@@ -155,6 +155,8 @@ func (a API) GetUserInfo(c echo.Context) error {
 			CorrectPredictions: user.CorrectPredictions,
 			GlobalRank:         user.GlobalRank,
 			FavoriteTeam:       user.FavoriteTeam,
+			CurrentWinStreak:   user.CurrentWinStreak,
+			LongestWinStreak:   user.LongestWinStreak,
 		},
 		Predictions: userPredictions,
 	}
@@ -179,7 +181,6 @@ func (a API) ListMyReferrals(c echo.Context) error {
 			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
-			GlobalRank:         user.GlobalRank,
 		})
 	}
 
