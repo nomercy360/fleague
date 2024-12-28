@@ -114,7 +114,7 @@ export default function MatchesPage() {
 						<For each={leaderboardQuery.data}>
 							{(entry) => (
 								<Link class="flex items-center justify-between h-12 px-3 bg-card rounded-2xl"
-											href={`/users/${entry.user.username}`}>
+											href={`/users/${entry.user.username}`} state={{ from: '/matches' }}>
 									<div class="flex items-center">
 										<span
 											class="w-4 text-center text-base font-semibold text-secondary-foreground">{getUserPosition(entry.user_id)}</span>

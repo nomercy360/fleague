@@ -88,33 +88,39 @@ export default function UserProfilePage() {
 							label="Points Earned"
 							color="#F1C40F"
 						/>
-						<ProfileStat
-							icon="local_fire_department"
-							value={userInfoQuery.data.user.current_win_streak}
-							label="Current Streak"
-							color="#E74C3C"
-						/>
-						<ProfileStat
-							icon="emoji_events"
-							value={userInfoQuery.data.user.longest_win_streak}
-							label="Max Streak"
-							color="#FFC107"
-						/>
-						<div class="flex flex-col items-center justify-center text-center bg-secondary rounded-2xl p-2">
+						<Show when={userInfoQuery.data.user.current_win_streak > 3}>
+							<ProfileStat
+								icon="local_fire_department"
+								value={userInfoQuery.data.user.current_win_streak}
+								label="Current Streak"
+								color="#E74C3C"
+							/>
+						</Show>
+						<Show when={userInfoQuery.data.user.longest_win_streak > 3}>
+							<ProfileStat
+								icon="emoji_events"
+								value={userInfoQuery.data.user.longest_win_streak}
+								label="Max Streak"
+								color="#FFC107"
+							/>
+						</Show>
+						<Show when={userInfoQuery.data.user.favorite_team}>
+							<div class="flex flex-col items-center justify-center text-center bg-secondary rounded-2xl p-2">
 							<span class="material-symbols-rounded text-2xl mb-1"
 										style={{ color: '#f33333' }}>
 								favorite
 							</span>
-							<div class="flex flex-col items-center">
-								<img
-									src={userInfoQuery.data.user.favorite_team.crest_url}
-									alt={`${userInfoQuery.data.user.favorite_team.name} crest`}
-									class="size-5 object-cover rounded-full mb-1.5"
-								/>
-								<span
-									class="font-semibold text-muted-foreground text-xs">{userInfoQuery.data.user.favorite_team.short_name}</span>
+								<div class="flex flex-col items-center">
+									<img
+										src={userInfoQuery.data.user.favorite_team.crest_url}
+										alt={`${userInfoQuery.data.user.favorite_team.name} crest`}
+										class="size-5 object-cover rounded-full mb-1.5"
+									/>
+									<span
+										class="font-semibold text-muted-foreground text-xs">{userInfoQuery.data.user.favorite_team.short_name}</span>
+								</div>
 							</div>
-						</div>
+						</Show>
 					</div>
 				</div>
 				<div class="px-3 space-y-2">
