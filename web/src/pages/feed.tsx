@@ -98,7 +98,7 @@ export default function FeedPage() {
 						<span class="text-xs text-orange-500 ml-1">
 							{store.user?.current_win_streak}
 						</span>
-						<span class="material-symbols-rounded text-[16px] text-orange-500">
+						<span class="material-symbols-rounded text-[16px] text-[#E74C3C]">
 							local_fire_department
 						</span>
 					</Show>

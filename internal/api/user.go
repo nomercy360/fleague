@@ -143,6 +143,11 @@ func (a API) GetUserInfo(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get user predictions")
 	}
 
+	rank, err := a.storage.GetUserRank(ctx, user.ID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get user rank")
+	}
+
 	resp := &contract.UserInfoResponse{
 		User: contract.UserProfile{
 			ID:                 user.ID,
@@ -153,7 +158,7 @@ func (a API) GetUserInfo(c echo.Context) error {
 			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
-			GlobalRank:         user.GlobalRank,
+			GlobalRank:         rank,
 			FavoriteTeam:       user.FavoriteTeam,
 			CurrentWinStreak:   user.CurrentWinStreak,
 			LongestWinStreak:   user.LongestWinStreak,

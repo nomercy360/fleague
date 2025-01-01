@@ -63,3 +63,30 @@ func (s *Storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seaso
 	_, err := s.db.ExecContext(ctx, query, seasonID, userID, points, points)
 	return err
 }
+
+func (s *Storage) GetUserRank(ctx context.Context, userID string) (int, error) {
+	query := `
+		WITH ranked_leaderboard AS (
+			SELECT
+				user_id,
+				points,
+				RANK() OVER (ORDER BY points DESC) AS position
+			FROM leaderboards
+			WHERE season_id = (
+				SELECT id
+				FROM seasons
+				WHERE is_active = 1
+				LIMIT 1
+			)
+		)
+		SELECT position
+		FROM ranked_leaderboard
+		WHERE user_id = ?`
+
+	var rank int
+	if err := s.db.QueryRowContext(ctx, query, userID).Scan(&rank); err != nil {
+		return 0, err
+	}
+
+	return rank, nil
+}

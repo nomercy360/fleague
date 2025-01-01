@@ -131,6 +131,11 @@ func (a API) TelegramAuth(c echo.Context) error {
 		return terrors.InternalServer(err, "jwt library error")
 	}
 
+	rank, err := a.storage.GetUserRank(context.Background(), user.ID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get user rank")
+	}
+
 	uresp := contract.UserResponse{
 		ID:                 user.ID,
 		FirstName:          user.FirstName,
@@ -144,7 +149,7 @@ func (a API) TelegramAuth(c echo.Context) error {
 		CorrectPredictions: user.CorrectPredictions,
 		AvatarURL:          user.AvatarURL,
 		ReferredBy:         user.ReferredBy,
-		GlobalRank:         user.GlobalRank,
+		GlobalRank:         rank,
 		FavoriteTeam:       user.FavoriteTeam,
 		CurrentWinStreak:   user.CurrentWinStreak,
 		LongestWinStreak:   user.LongestWinStreak,

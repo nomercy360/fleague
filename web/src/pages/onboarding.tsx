@@ -3,6 +3,7 @@ import { useNavigate } from '@solidjs/router'
 import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import { setIsOnboardingComplete } from '~/pages/feed'
+import { cn } from '~/lib/utils'
 
 
 function OnboardingPage() {
@@ -16,31 +17,39 @@ function OnboardingPage() {
 			title: 'Welcome to MatchPredict!',
 			description: 'Make predictions on upcoming match scores or outcomes and earn points.',
 			icon: 'sports_soccer',
+			color: '#3498DB',
 		},
 		{
 			title: 'Earn Points',
-			description: 'Guess the exact score to earn 7 points or predict the outcome for 3 points. Points are locked once the match starts.',
-			icon: 'score',
+			description: <span>Guess the exact score to earn <span class="text-primary font-semibold">+7 points</span> or predict the outcome for <span
+				class="text-primary font-semibold">+3 points.</span> Points are locked once the match starts.</span>,
+			icon: 'star',
+			color: '#F1C40F',
 		},
 		{
 			title: 'Bonus Streaks',
 			description: 'Maintain a streak of correct predictions to earn bonus points. The longer your streak, the higher your bonus!',
-			icon: 'emoji_events',
+			icon: 'local_fire_department',
+			color: '#E74C3C',
 		},
 		{
 			title: 'Invite Friends',
-			description: 'Invite friends to join MatchPredict and receive 10% of their prediction points. Grow your network and your rewards!',
+			description: <span>Invite friends to join MatchPredict and receive <span
+				class="text-primary font-semibold">10%</span> of their prediction points. Grow your network and your rewards!</span>,
 			icon: 'people',
+			color: '#2ECC71',
 		},
 		{
 			title: 'Climb the Leaderboard',
 			description: 'Compete with others and climb the leaderboard each season. Top players will receive exciting prizes!',
 			icon: 'leaderboard',
+			color: '#3498DB',
 		},
 		{
 			title: 'Get Started!',
 			description: 'Let’s dive in and start predicting matches. Good luck!',
 			icon: 'thumb_up',
+			color: '#2ECC71',
 		},
 	]
 
@@ -103,12 +112,12 @@ function OnboardingPage() {
 	})
 
 	return (
-		<div class="min-h-screen bg-gradient-to-b from-blue-500 to-indigo-600 flex items-center justify-center p-4">
+		<div class="min-h-screen bg-gradient-to-b from-background to-primary flex items-center justify-center p-4">
 			<div
-				class="h-[60vh] bg-card rounded-2xl shadow-lg w-full max-w-md p-6 flex flex-col justify-between items-center">
+				class="h-[60vh] bg-card rounded-2xl w-full max-w-md p-6 flex flex-col justify-between items-center">
 				<div class="flex flex-col items-center justify-center">
 					<div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
-          <span class="material-symbols-rounded text-4xl text-blue-500">
+          <span class="material-symbols-rounded text-4xl" style={{ color: steps[currentStep()].color }}>
             {steps[currentStep()].icon}
           </span>
 					</div>

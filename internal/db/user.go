@@ -24,7 +24,6 @@ type User struct {
 	TotalPoints        int           `db:"total_points"`
 	TotalPredictions   int           `db:"total_predictions"`
 	CorrectPredictions int           `db:"correct_predictions"`
-	GlobalRank         int           `db:"global_rank"`
 	CurrentWinStreak   int           `db:"current_win_streak"`
 	LongestWinStreak   int           `db:"longest_win_streak"`
 	FavoriteTeamID     *string       `db:"favorite_team_id"`
@@ -88,50 +87,33 @@ func (s *Storage) CreateUser(user User) error {
 
 func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 	query := fmt.Sprintf(`
-			SELECT id,
-				   first_name,
-				   last_name,
-				   username,
-				   language_code,
-				   chat_id,
-				   created_at,
-				   total_points,
-				   total_predictions,
-				   correct_predictions,
-				   avatar_url,
-				   referred_by,
-				   global_rank,
-				   current_win_streak,
-				   longest_win_streak,
-				   favorite_team
-			FROM (SELECT u.id,
-						 u.first_name,
-						 u.last_name,
-						 u.username,
-						 u.language_code,
-						 u.chat_id,
-						 u.created_at,
-						 u.total_points,
-						 u.total_predictions,
-						 u.correct_predictions,
-						 u.avatar_url,
-						 u.referred_by,
-						 u.current_win_streak,
-						 u.longest_win_streak,
-						 RANK() OVER (ORDER BY total_points DESC) AS global_rank,
-						 CASE
-							 WHEN u.favorite_team_id IS NOT NULL THEN
-								 json_object(
-										 'id', t.id,
-										 'name', t.name,
-										 'short_name', t.short_name,
-										 'crest_url', t.crest_url,
-										 'country', t.country,
-										 'abbreviation', t.abbreviation
-								 )
-						 END                                  AS favorite_team
-				  FROM users u
-						   LEFT JOIN teams t ON u.favorite_team_id = t.id) ranked_users
+			SELECT u.id,
+				 u.first_name,
+				 u.last_name,
+				 u.username,
+				 u.language_code,
+				 u.chat_id,
+				 u.created_at,
+				 u.total_points,
+				 u.total_predictions,
+				 u.correct_predictions,
+				 u.avatar_url,
+				 u.referred_by,
+				 u.current_win_streak,
+				 u.longest_win_streak,
+				 CASE
+					 WHEN u.favorite_team_id IS NOT NULL THEN
+						 json_object(
+								 'id', t.id,
+								 'name', t.name,
+								 'short_name', t.short_name,
+								 'crest_url', t.crest_url,
+								 'country', t.country,
+								 'abbreviation', t.abbreviation
+						 )
+				 END                                  AS favorite_team
+			  FROM users u
+					   LEFT JOIN teams t ON u.favorite_team_id = t.id
 			WHERE %s`, condition)
 
 	var user User
@@ -150,7 +132,6 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 		&user.CorrectPredictions,
 		&user.AvatarURL,
 		&user.ReferredBy,
-		&user.GlobalRank,
 		&user.CurrentWinStreak,
 		&user.LongestWinStreak,
 		&user.FavoriteTeam,
@@ -164,15 +145,15 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 }
 
 func (s *Storage) GetUserByChatID(chatID int64) (User, error) {
-	return s.getUserBy("chat_id = ?", chatID)
+	return s.getUserBy("u.chat_id = ?", chatID)
 }
 
 func (s *Storage) GetUserByID(id string) (User, error) {
-	return s.getUserBy("id = ?", id)
+	return s.getUserBy("u.id = ?", id)
 }
 
 func (s *Storage) GetUserByUsername(uname string) (User, error) {
-	return s.getUserBy("username = ?", uname)
+	return s.getUserBy("u.username = ?", uname)
 }
 
 func (s *Storage) UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error {

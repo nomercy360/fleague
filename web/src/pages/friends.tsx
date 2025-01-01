@@ -18,8 +18,8 @@ export default function FriendsPage() {
 			'https://t.me/share/url?' +
 			new URLSearchParams({
 				url: `${botURL}?startapp=r_${store.user?.id}`,
-				text: `Compete with friends in predicting football matches!`,
-			}).toString()
+			}).toString() +
+			`&text=Compete with friends in predicting football matches!`
 		)
 	}
 
