@@ -46,6 +46,7 @@ function OnboardingPage() {
 
 	const nextStep = () => {
 		if (currentStep() < steps.length - 1) {
+			window.Telegram.WebApp.HapticFeedback.selectionChanged()
 			setCurrentStep(currentStep() + 1)
 		} else {
 			navigate('/')
@@ -54,6 +55,7 @@ function OnboardingPage() {
 
 	const prevStep = () => {
 		if (currentStep() > 0) {
+			window.Telegram.WebApp.HapticFeedback.selectionChanged()
 			setCurrentStep(currentStep() - 1)
 		}
 	}

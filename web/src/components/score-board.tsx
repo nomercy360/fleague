@@ -22,11 +22,13 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 	const [isExactScore, setIsExactScore] = createSignal(false)
 
 	const increment = (setScore: (value: number) => void) => {
+		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 		setScore((prev) => prev + 1)
 		setOutcome(null)
 	}
 
 	const decrement = (setScore: (value: number) => void) => {
+		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 		setScore((prev) => (prev > 0 ? prev - 1 : 0))
 		setOutcome(null)
 	}
@@ -36,6 +38,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			setOutcome(null)
 			return
 		}
+		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 		setOutcome(newValue)
 		setTeam1Score(null)
 		setTeam2Score(null)

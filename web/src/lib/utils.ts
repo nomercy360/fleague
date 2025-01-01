@@ -51,6 +51,12 @@ export function formatDate(dateString: string, dateTime = false) {
 
 export function timeToLocaleString(dateString: string) {
 	const date = new Date(dateString)
-	const timeOptions = { hour: '2-digit', minute: '2-digit' } as const
+
+	const timeOptions: Intl.DateTimeFormatOptions = {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	}
+
 	return date.toLocaleTimeString('en-US', timeOptions)
 }
