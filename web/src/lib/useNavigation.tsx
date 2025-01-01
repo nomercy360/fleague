@@ -61,11 +61,12 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 	}
 
 	createEffect(() => {
-		if (location.pathname !== '/') {
+		if (location.pathname !== '/' && location.pathname !== '/onboarding') {
 			backButton.setVisible()
 			backButton.onClick(navigateBack)
 		} else {
 			backButton.hide()
+			backButton.offClick(navigateBack)
 		}
 	})
 

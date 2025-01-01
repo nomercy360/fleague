@@ -1,14 +1,19 @@
 import {
-	IconChevronRight, IconShare,
+	IconChevronRight,
 } from '~/components/icons'
 
 import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
-import { Show } from 'solid-js'
+import { createSignal, onMount, Show } from 'solid-js'
+import { useNavigate } from '@solidjs/router'
+
+export const [isOnboardingComplete, setIsOnboardingComplete] = createSignal(false)
 
 export default function FeedPage() {
+	const navigate = useNavigate()
+
 	function shareProfileURL() {
 		const url =
 			'https://t.me/share/url?' +
@@ -20,18 +25,49 @@ export default function FeedPage() {
 		window.Telegram.WebApp.openTelegramLink(url)
 	}
 
+	const updateOnboardingComplete = (err: unknown, value: unknown) => {
+		const isComplete = value === 'true'
+		if (!isComplete && !isOnboardingComplete()) {
+			navigate('/onboarding')
+		}
+	}
+
+	onMount(() => {
+		// window.Telegram.WebApp.CloudStorage.removeItem('onboarding_complete')
+
+		window.Telegram.WebApp.CloudStorage.getItem(
+			'onboarding_complete',
+			updateOnboardingComplete,
+		)
+	})
+
 	return (
 		<div class="h-full overflow-y-scroll bg-background text-foreground pb-[120px]">
 			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<div class="flex flex-row justify-between items-center w-full">
-					<Button
-						onClick={shareProfileURL}
-						size="sm"
-						variant="secondary"
-					>
-						<IconShare class="size-6" />
-						Share
-					</Button>
+					<div class="flex flex-row items-center justify-start gap-1">
+						<Button
+							onClick={shareProfileURL}
+							size="sm"
+							variant="secondary"
+						>
+							<span class="material-symbols-rounded text-[16px] text-secondary-foreground">
+								ios_share
+							</span>
+							Share
+						</Button>
+						<Button
+							onClick={shareProfileURL}
+							size="sm"
+							variant="ghost"
+							as={Link}
+							href="/onboarding"
+						>
+							<span class="material-symbols-rounded text-[16px] text-secondary-foreground">
+								info
+							</span>
+						</Button>
+					</div>
 					<Button
 						href="/edit-profile"
 						as={Link}

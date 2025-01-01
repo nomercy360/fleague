@@ -1,4 +1,4 @@
-import { createSignal, For, onCleanup, onMount, Show, Suspense } from 'solid-js'
+import { createSignal, For, Show } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchActiveSeason, fetchLeaderboard, fetchMatches } from '~/lib/api'
 
@@ -9,7 +9,6 @@ import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
-import { store } from '~/store'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
@@ -81,7 +80,7 @@ export default function MatchesPage() {
 					</TabsTrigger>
 				</TabsList>
 				<TabsContent value="matches"
-										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]">
+										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (
@@ -108,8 +107,8 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard" class="pt-5 px-3 space-y-2 w-full overflow-y-scroll pb-[120px]"
-										 style={{ height: `${height()}px` }}>
+				<TabsContent value="leaderboard"
+										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data}>
 							{(entry) => (

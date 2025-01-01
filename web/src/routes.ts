@@ -5,6 +5,7 @@ import FeedPage from '~/pages/feed'
 import MatchesPage from '~/pages/matches'
 import NavigationTabs from '~/components/navigation-tabs'
 import FriendsPage from '~/pages/friends'
+import OnboardingPage from '~/pages/onboarding'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -32,6 +33,10 @@ export const routes: RouteDefinition[] = [
 	{
 		'path': '/edit-profile',
 		'component': lazy(() => import('./pages/edit-profile')),
+	},
+	{
+		'path': '/onboarding',
+		'component': OnboardingPage,
 	},
 	{
 		path: '**',
