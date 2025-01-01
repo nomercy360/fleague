@@ -27,7 +27,7 @@ const UserActivity = () => {
 				Your Predictions
 			</p>
 			<div class="space-y-2">
-				<Show when={query.data && !query.isLoading} fallback={<EmptyPage />}>
+				<Show when={query.data && !query.isLoading}>
 					<Drawer>
 						<For each={query.data}>
 							{(prediction: PredictionResponse) => (
@@ -51,23 +51,6 @@ const UserActivity = () => {
 					</Drawer>
 				</Show>
 			</div>
-		</div>
-	)
-}
-
-const EmptyPage = () => {
-	return (
-		<div class="flex flex-col items-center justify-start mt-4">
-			<Link class="w-full flex flex-row h-14 justify-between items-center rounded-2xl p-3 bg-card space-x-6"
-						href="/matches">
-				<div>
-					<p class="text-sm font-semibold">
-						Make a prediction
-					</p>
-					<p class="text-xs text-muted-foreground font-normal">12 matches available</p>
-				</div>
-				<IconChevronRight class="size-6" />
-			</Link>
 		</div>
 	)
 }

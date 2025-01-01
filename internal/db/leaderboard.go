@@ -84,7 +84,9 @@ func (s *Storage) GetUserRank(ctx context.Context, userID string) (int, error) {
 		WHERE user_id = ?`
 
 	var rank int
-	if err := s.db.QueryRowContext(ctx, query, userID).Scan(&rank); err != nil {
+	if err := s.db.QueryRowContext(ctx, query, userID).Scan(&rank); err != nil && IsNoRowsError(err) {
+		return 0, nil
+	} else if err != nil {
 		return 0, err
 	}
 

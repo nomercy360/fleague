@@ -6,7 +6,7 @@ import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
-import { createSignal, onMount, Show } from 'solid-js'
+import { createSignal, Match, onMount, Show, Switch } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 
 export const [isOnboardingComplete, setIsOnboardingComplete] = createSignal(false)
@@ -108,24 +108,44 @@ export default function FeedPage() {
 						@{store.user?.username}
 					</p>
 				</Link>
-				<div class="flex flex-row items-center justify-center space-x-2 mt-4">
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">{store.user?.correct_predictions}</span>
-						<span class="text-xs text-muted-foreground">Correct predictions</span>
-					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">
-							#{store.user?.global_rank}
-						</span>
-						<span class="text-xs text-muted-foreground">Global ranking</span>
-					</div>
-					<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-						<span class="text-2xl font-semibold">{store.user?.total_points}</span>
-						<span class="text-xs text-muted-foreground">Points earned</span>
-					</div>
+				<div class="w-full flex flex-row items-center justify-center space-x-2 mt-4">
+					<Show when={store.user?.global_rank && store.user?.correct_predictions > 0} fallback={<GoToMatchesLink />}>
+						<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
+							<span class="text-2xl font-semibold">{store.user?.correct_predictions}</span>
+							<span class="text-xs text-muted-foreground">Correct predictions</span>
+						</div>
+						<div
+							class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
+							<span class="text-2xl font-semibold">
+								#{store.user?.global_rank}
+							</span>
+							<span class="text-xs text-muted-foreground">Global ranking</span>
+						</div>
+						<div
+							class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
+							<span class="text-2xl font-semibold">{store.user?.total_points}</span>
+							<span class="text-xs text-muted-foreground">Points earned</span>
+						</div>
+					</Show>
 				</div>
 			</div>
 			<UserActivity />
 		</div>
+	)
+}
+
+
+const GoToMatchesLink = () => {
+	return (
+		<Link class="bg-secondary w-full flex flex-row h-14 justify-between items-center rounded-2xl p-3 space-x-6"
+					href="/matches">
+			<div>
+				<p class="text-sm font-semibold">
+					Make your first prediction
+				</p>
+				<p class="text-xs text-muted-foreground font-normal">12 matches available</p>
+			</div>
+			<IconChevronRight class="size-6" />
+		</Link>
 	)
 }
