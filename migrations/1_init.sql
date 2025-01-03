@@ -72,6 +72,7 @@ CREATE TABLE predictions
     points_awarded       INTEGER  DEFAULT 0,
     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at         DATETIME, -- Дата когда матч завершился и прогноз был подсчитан
+    updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, match_id)

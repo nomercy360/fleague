@@ -13,6 +13,7 @@ type Prediction struct {
 	PredictedAwayScore *int       `json:"predicted_away_score" db:"predicted_away_score"`
 	PointsAwarded      int        `json:"points_awarded" db:"points_awarded"`
 	CompletedAt        *time.Time `json:"completed_at" db:"completed_at"`
+	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
 	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
 }
 
@@ -30,7 +31,8 @@ func (s *Storage) SavePrediction(ctx context.Context, prediction Prediction) err
 		predicted_outcome = excluded.predicted_outcome,
 		predicted_home_score = excluded.predicted_home_score,
 		predicted_away_score = excluded.predicted_away_score,
-		points_awarded = excluded.points_awarded`
+		points_awarded = excluded.points_awarded,
+		updated_at = CURRENT_TIMESTAMP`
 	_, err := s.db.ExecContext(ctx, query,
 		prediction.UserID,
 		prediction.MatchID,
@@ -52,6 +54,7 @@ func (s *Storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 			predicted_away_score,
 			points_awarded,
 			created_at,
+			updated_at,
 			completed_at
 		FROM predictions
 		WHERE user_id = ? AND match_id = ?`
@@ -65,6 +68,7 @@ func (s *Storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 		&prediction.PredictedAwayScore,
 		&prediction.PointsAwarded,
 		&prediction.CreatedAt,
+		&prediction.UpdatedAt,
 		&prediction.CompletedAt,
 	)
 
@@ -88,6 +92,7 @@ func (s *Storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCo
 			predicted_away_score,
 			points_awarded,
 			created_at,
+			updated_at,
 			completed_at
 		FROM predictions
 		WHERE user_id = ?
@@ -114,6 +119,7 @@ func (s *Storage) GetPredictionsByUserID(ctx context.Context, uid string, onlyCo
 			&prediction.PredictedAwayScore,
 			&prediction.PointsAwarded,
 			&prediction.CreatedAt,
+			&prediction.UpdatedAt,
 			&prediction.CompletedAt,
 		); err != nil {
 			return nil, err
@@ -135,6 +141,7 @@ func (s *Storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([
 			predicted_away_score,
 			points_awarded,
 			created_at,
+			updated_at,
 			completed_at
 		FROM predictions
 		WHERE match_id = ?`
@@ -156,6 +163,7 @@ func (s *Storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([
 			&prediction.PredictedAwayScore,
 			&prediction.PointsAwarded,
 			&prediction.CreatedAt,
+			&prediction.UpdatedAt,
 			&prediction.CompletedAt,
 		)
 		if err != nil {
@@ -171,7 +179,7 @@ func (s *Storage) GetPredictionsForMatch(ctx context.Context, matchID string) ([
 func (s *Storage) UpdatePredictionResult(ctx context.Context, matchID, userID string, points int) error {
 	query := `
 		UPDATE predictions
-		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP
+		SET points_awarded = ?, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 		WHERE match_id = ? AND user_id = ?`
 	_, err := s.db.ExecContext(ctx, query, points, matchID, userID)
 

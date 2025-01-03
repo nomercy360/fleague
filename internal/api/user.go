@@ -119,7 +119,7 @@ func (a API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted 
 
 	// sort predictions by match date
 	sort.Slice(res, func(i, j int) bool {
-		return res[i].Match.MatchDate.After(res[j].Match.MatchDate)
+		return res[i].UpdatedAt.Before(res[j].UpdatedAt)
 	})
 
 	return res, nil

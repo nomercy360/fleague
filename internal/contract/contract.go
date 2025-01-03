@@ -43,6 +43,7 @@ type PredictionResponse struct {
 	PredictedAwayScore *int          `json:"predicted_away_score"`
 	PointsAwarded      int           `json:"points_awarded"`
 	CreatedAt          time.Time     `json:"created_at"`
+	UpdatedAt          time.Time     `json:"updated_at"`
 	CompletedAt        *time.Time    `json:"completed_at"`
 	Match              MatchResponse `json:"match"`
 }

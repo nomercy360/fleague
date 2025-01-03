@@ -1,4 +1,3 @@
-import { Link } from '~/components/link'
 import { store } from '~/store'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchUserInfo } from '~/lib/api'
@@ -10,15 +9,21 @@ import {
 	IconShare,
 } from '~/components/icons'
 
-function ProfileStat({ icon, value, label, color }: { icon: string; value: string; label: string, color: string }) {
+export function ProfileStat({ icon, value, label, color }: {
+	icon: string;
+	value: string;
+	label: string,
+	color: string
+}) {
 	return (
-		<div class="bg-secondary flex flex-col items-center text-center rounded-2xl p-2">
-			<span class="material-symbols-rounded text-2xl mb-1"
-						style={{ color }}>
-				{icon}
-			</span>
-			<span class="font-semibold text-lg">{value}</span>
-			<span class="text-xs text-muted-foreground">{label}</span>
+		<div class="flex-grow bg-secondary flex flex-col items-start text-center rounded-2xl py-3 pl-3 pr-1">
+			<div class="flex flex-row items-center space-x-1 mb-1">
+				<span class="material-symbols-rounded text-[20px]" style={{ color }}>
+					{icon}
+				</span>
+				<span class="font-semibold text-xl">{value}</span>
+			</div>
+			<span class="text-xs text-muted-foreground text-nowrap">{label}</span>
 		</div>
 	)
 }
@@ -63,13 +68,30 @@ export default function UserProfilePage() {
 						alt="User avatar"
 						class="w-24 h-24 rounded-full object-cover mt-4"
 					/>
-					<p class="text-lg font-semibold mt-2">
-						{userInfoQuery.data.user.first_name}
-					</p>
-					<Link href="/" class="text-muted-foreground flex flex-row items-center">
-						<p class="text-sm">@{userInfoQuery.data.user.username}</p>
-					</Link>
-					<div class="grid grid-cols-3 gap-4 mt-6 w-full px-2">
+					<div class="text-lg font-semibold mt-2 flex flex-row items-center">
+						<span>{store.user?.first_name}</span>
+						<Show
+							when={store.user?.favorite_team}
+						>
+							<img
+								src={store.user?.favorite_team?.crest_url}
+								alt={store.user?.favorite_team?.short_name}
+								class="size-4 ml-1"
+							/>
+						</Show>
+						<Show
+							when={store.user?.current_win_streak}
+						>
+						<span class="text-xs text-orange-500 ml-1">
+							{store.user?.current_win_streak}
+						</span>
+							<span class="-ml-0.5 material-symbols-rounded text-[16px] text-orange-500">
+							local_fire_department
+						</span>
+						</Show>
+					</div>
+					<p class="text-sm font-medium text-muted-foreground">@{userInfoQuery.data.user.username}</p>
+					<div class="flex flex-row items-center gap-1 mt-6 w-full px-2">
 						<ProfileStat
 							icon="check_circle"
 							value={userInfoQuery.data.user.correct_predictions}
@@ -88,14 +110,6 @@ export default function UserProfilePage() {
 							label="Points Earned"
 							color="#F1C40F"
 						/>
-						<Show when={userInfoQuery.data.user.current_win_streak > 3}>
-							<ProfileStat
-								icon="local_fire_department"
-								value={userInfoQuery.data.user.current_win_streak}
-								label="Current Streak"
-								color="#E74C3C"
-							/>
-						</Show>
 						<Show when={userInfoQuery.data.user.longest_win_streak > 3}>
 							<ProfileStat
 								icon="emoji_events"
@@ -103,23 +117,6 @@ export default function UserProfilePage() {
 								label="Max Streak"
 								color="#FFC107"
 							/>
-						</Show>
-						<Show when={userInfoQuery.data.user.favorite_team}>
-							<div class="flex flex-col items-center justify-center text-center bg-secondary rounded-2xl p-2">
-							<span class="material-symbols-rounded text-2xl mb-1"
-										style={{ color: '#f33333' }}>
-								favorite
-							</span>
-								<div class="flex flex-col items-center">
-									<img
-										src={userInfoQuery.data.user.favorite_team.crest_url}
-										alt={`${userInfoQuery.data.user.favorite_team.name} crest`}
-										class="size-5 object-cover rounded-full mb-1.5"
-									/>
-									<span
-										class="font-semibold text-muted-foreground text-xs">{userInfoQuery.data.user.favorite_team.short_name}</span>
-								</div>
-							</div>
 						</Show>
 					</div>
 				</div>

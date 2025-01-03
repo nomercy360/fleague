@@ -6,8 +6,9 @@ import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'
 import { Button } from '~/components/ui/button'
-import { createSignal, Match, onMount, Show, Switch } from 'solid-js'
+import { createSignal, onMount, Show } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
+import { ProfileStat } from '~/pages/user'
 
 export const [isOnboardingComplete, setIsOnboardingComplete] = createSignal(false)
 
@@ -56,17 +57,6 @@ export default function FeedPage() {
 							</span>
 							Share
 						</Button>
-						<Button
-							onClick={shareProfileURL}
-							size="sm"
-							variant="ghost"
-							as={Link}
-							href="/onboarding"
-						>
-							<span class="material-symbols-rounded text-[16px] text-secondary-foreground">
-								info
-							</span>
-						</Button>
 					</div>
 					<Button
 						href="/edit-profile"
@@ -98,34 +88,38 @@ export default function FeedPage() {
 						<span class="text-xs text-orange-500 ml-1">
 							{store.user?.current_win_streak}
 						</span>
-						<span class="material-symbols-rounded text-[16px] text-[#E74C3C]">
+						<span class="-ml-0.5 material-symbols-rounded text-[16px] text-orange-500">
 							local_fire_department
 						</span>
 					</Show>
 				</div>
-				<Link href="/" class="text-muted-foreground flex flex-row items-center">
-					<p class="text-sm">
-						@{store.user?.username}
-					</p>
-				</Link>
-				<div class="w-full flex flex-row items-center justify-center space-x-2 mt-4">
-					<Show when={store.user?.global_rank && store.user?.correct_predictions > 0} fallback={<GoToMatchesLink />}>
-						<div class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-							<span class="text-2xl font-semibold">{store.user?.correct_predictions}</span>
-							<span class="text-xs text-muted-foreground">Correct predictions</span>
-						</div>
-						<div
-							class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-							<span class="text-2xl font-semibold">
-								#{store.user?.global_rank}
-							</span>
-							<span class="text-xs text-muted-foreground">Global ranking</span>
-						</div>
-						<div
-							class="flex flex-col rounded-2xl py-3 px-4 bg-secondary text-card-foreground w-[100px] self-stretch">
-							<span class="text-2xl font-semibold">{store.user?.total_points}</span>
-							<span class="text-xs text-muted-foreground">Points earned</span>
-						</div>
+				<p class="text-sm font-medium text-muted-foreground">@{store.user?.username}</p>
+				<div class="flex flex-row items-center gap-1 mt-6 w-full px-2">
+					<ProfileStat
+						icon="check_circle"
+						value={store.user?.correct_predictions}
+						label="Correct"
+						color="#2ECC71"
+					/>
+					<ProfileStat
+						icon="leaderboard"
+						value={`#${store.user?.global_rank}`}
+						label="Rank"
+						color="#3498DB"
+					/>
+					<ProfileStat
+						icon="star"
+						value={store.user?.total_points}
+						label="Points Earned"
+						color="#F1C40F"
+					/>
+					<Show when={store.user?.longest_win_streak || 0 > 3}>
+						<ProfileStat
+							icon="emoji_events"
+							value={store.user?.longest_win_streak}
+							label="Max Streak"
+							color="#FFC107"
+						/>
 					</Show>
 				</div>
 			</div>

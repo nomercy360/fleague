@@ -42,6 +42,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setOutcome(newValue)
 		setTeam1Score(null)
 		setTeam2Score(null)
+		setIsExactScore(false)
 	}
 
 	const onPredictionSave = async () => {
@@ -83,27 +84,15 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 
 	const updateSwitch = (value: boolean) => {
 		setIsExactScore(value)
-		if (!value) {
-			setTeam1Score(null)
-			setTeam2Score(null)
-			setOutcome(null)
-		}
+		setTeam1Score(null)
+		setTeam2Score(null)
+		setOutcome(null)
 	}
 
 	return (
-		<DrawerContent>
+		<DrawerContent class="pb-3">
 			<div class="mx-auto w-full px-4">
 				<div class="flex flex-col items-center gap-4">
-					<Switch class="rounded-2xl my-2 flex w-full items-center justify-between space-x-6"
-									checked={isExactScore()}
-									onChange={updateSwitch}>
-						<SwitchLabel class="text-sm text-muted-foreground font-normal">
-							Score
-						</SwitchLabel>
-						<SwitchControl>
-							<SwitchThumb />
-						</SwitchControl>
-					</Switch>
 					<div class="w-full justify-between flex flex-col items-start gap-2">
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row items-center space-x-2">
@@ -173,13 +162,13 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 							{formatDate(props.match.match_date, true)}
 						</p>
 					</div>
-					<div class="h-12 w-full">
-						<Show when={!isExactScore()}>
+					<div class="w-full gap-2 flex flex-col mb-4">
+						<div class="w-full">
 							<div class="grid grid-cols-3 w-full gap-2">
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'home' && 'bg-primary text-primary-foreground')}
+									class={cn(outcome() === 'home' && 'bg-muted text-muted-foreground')}
 									onClick={() => updateOutcome('home')}
 								>
 									Team 1
@@ -187,7 +176,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'draw' && 'bg-primary text-primary-foreground')}
+									class={cn(outcome() === 'draw' && 'bg-muted text-muted-foreground')}
 									onClick={() => updateOutcome('draw')}
 								>
 									Draw
@@ -195,13 +184,21 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'away' && 'bg-primary text-primary-foreground')}
+									class={cn(outcome() === 'away' && 'bg-muted text-muted-foreground')}
 									onClick={() => updateOutcome('away')}
 								>
 									Team 2
 								</Button>
 							</div>
-						</Show>
+						</div>
+						<Button
+							size="sm"
+							class={cn(isExactScore() && 'bg-muted text-muted-foreground')}
+							variant="outline"
+							onClick={() => updateSwitch(!isExactScore())}
+						>
+							Exact Score
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -213,7 +210,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
 						onClick={onPredictionSave}
 					>
-						Save
+						Save & Close
 					</Button>
 				</DrawerClose>
 			</DrawerFooter>

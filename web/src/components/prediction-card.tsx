@@ -4,10 +4,7 @@ import { createSignal, For, Show } from 'solid-js'
 import MatchCard from '~/components/match-card'
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import FootballScoreboard from '~/components/score-board'
-import { Link } from '~/components/link'
-import { IconChevronRight } from '~/components/icons'
 import MatchStats from '~/components/match-stats'
-
 
 const UserActivity = () => {
 	const query = createQuery(() => ({
@@ -20,6 +17,7 @@ const UserActivity = () => {
 	}
 
 	const [selectedPrediction, setSelectedPrediction] = createSignal<PredictionResponse>({} as any)
+	const [visibleCount, setVisibleCount] = createSignal(5)
 
 	return (
 		<div class="px-3">
@@ -29,7 +27,7 @@ const UserActivity = () => {
 			<div class="space-y-2">
 				<Show when={query.data && !query.isLoading}>
 					<Drawer>
-						<For each={query.data}>
+						<For each={query.data.slice(0, visibleCount())}>
 							{(prediction: PredictionResponse) => (
 								<DrawerTrigger class="w-full" onClick={() => {
 									setSelectedPrediction(prediction)
@@ -49,6 +47,16 @@ const UserActivity = () => {
 							<MatchStats match={selectedPrediction().match} />
 						</Show>
 					</Drawer>
+					<Show when={query.data.length > visibleCount()}>
+						<div class="text-center mt-2">
+							<button
+								class="px-4 text-sm font-medium h-10"
+								onClick={() => setVisibleCount(visibleCount() + 5)}
+							>
+								Show More
+							</button>
+						</div>
+					</Show>
 				</Show>
 			</div>
 		</div>
