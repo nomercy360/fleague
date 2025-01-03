@@ -94,7 +94,7 @@ export default function FeedPage() {
 					</Show>
 				</div>
 				<p class="text-sm font-medium text-muted-foreground">@{store.user?.username}</p>
-				<div class="flex flex-row items-center gap-1 mt-6 w-full px-2">
+				<div class="grid grid-cols-2 gap-2 mt-6 w-full px-2">
 					<ProfileStat
 						icon="check_circle"
 						value={store.user?.correct_predictions}

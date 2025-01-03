@@ -16,14 +16,15 @@ export function ProfileStat({ icon, value, label, color }: {
 	color: string
 }) {
 	return (
-		<div class="flex-grow bg-secondary flex flex-col items-start text-center rounded-2xl py-3 pl-3 pr-1">
-			<div class="flex flex-row items-center space-x-1 mb-1">
-				<span class="material-symbols-rounded text-[20px]" style={{ color }}>
+		<div class="space-x-2 flex-grow bg-background border flex flex-row items-start text-center rounded-2xl py-2 px-3">
+			<span class="py-1 material-symbols-rounded text-[20px]" style={{ color }}>
 					{icon}
 				</span>
-				<span class="font-semibold text-xl">{value}</span>
+			<div class="flex flex-col items-start justify-start">
+				<span class="font-extrabold text-lg">{value}</span>
+				<span class="text-xs text-muted-foreground text-nowrap">{label}</span>
 			</div>
-			<span class="text-xs text-muted-foreground text-nowrap">{label}</span>
+
 		</div>
 	)
 }
@@ -91,7 +92,7 @@ export default function UserProfilePage() {
 						</Show>
 					</div>
 					<p class="text-sm font-medium text-muted-foreground">@{userInfoQuery.data.user.username}</p>
-					<div class="flex flex-row items-center gap-1 mt-6 w-full px-2">
+					<div class="grid grid-cols-2 gap-2 mt-6 w-full px-2">
 						<ProfileStat
 							icon="check_circle"
 							value={userInfoQuery.data.user.correct_predictions}
