@@ -16,7 +16,7 @@ export function ProfileStat({ icon, value, label, color }: {
 	color: string
 }) {
 	return (
-		<div class="space-x-2 flex-grow bg-background border flex flex-row items-start text-center rounded-2xl py-2 px-3">
+		<div class="space-x-2 flex-grow bg-background flex flex-row items-start text-center rounded-2xl py-2 px-3">
 			<span class="py-1 material-symbols-rounded text-[20px]" style={{ color }}>
 					{icon}
 				</span>
@@ -70,21 +70,21 @@ export default function UserProfilePage() {
 						class="w-24 h-24 rounded-full object-cover mt-4"
 					/>
 					<div class="text-lg font-semibold mt-2 flex flex-row items-center">
-						<span>{store.user?.first_name}</span>
+						<span>{userInfoQuery.data.user.first_name}</span>
 						<Show
-							when={store.user?.favorite_team}
+							when={userInfoQuery.data.user.favorite_team}
 						>
 							<img
-								src={store.user?.favorite_team?.crest_url}
-								alt={store.user?.favorite_team?.short_name}
+								src={userInfoQuery.data.user.favorite_team.logo_url}
+								alt={userInfoQuery.data.user.favorite_team.name}
 								class="size-4 ml-1"
 							/>
 						</Show>
 						<Show
-							when={store.user?.current_win_streak}
+							when={userInfoQuery.data.user.current_win_streak >= 3}
 						>
 						<span class="text-xs text-orange-500 ml-1">
-							{store.user?.current_win_streak}
+							{userInfoQuery.data.user.current_win_streak}
 						</span>
 							<span class="-ml-0.5 material-symbols-rounded text-[16px] text-orange-500">
 							local_fire_department

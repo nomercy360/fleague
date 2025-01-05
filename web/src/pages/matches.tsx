@@ -12,7 +12,6 @@ import { Link } from '~/components/link'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
-	const [height, setHeight] = createSignal(0)
 	const query = createQuery(() => ({
 		queryKey: ['matches'],
 		queryFn: () => fetchMatches(),
@@ -135,7 +134,7 @@ export default function MatchesPage() {
 											/>
 										</Show>
 										<Show
-											when={entry.user?.current_win_streak}
+											when={entry.user?.current_win_streak >= 3}
 										>
 										<span class="text-xs text-orange-500 ml-1">
 											{entry.user?.current_win_streak}

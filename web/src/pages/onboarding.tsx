@@ -3,7 +3,6 @@ import { useNavigate } from '@solidjs/router'
 import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import { setIsOnboardingComplete } from '~/pages/feed'
-import { cn } from '~/lib/utils'
 
 
 function OnboardingPage() {
