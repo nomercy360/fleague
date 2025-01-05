@@ -75,7 +75,7 @@ export default function UserProfilePage() {
 							when={userInfoQuery.data.user.favorite_team}
 						>
 							<img
-								src={userInfoQuery.data.user.favorite_team.logo_url}
+								src={userInfoQuery.data.user.favorite_team.crest_url}
 								alt={userInfoQuery.data.user.favorite_team.name}
 								class="size-4 ml-1"
 							/>
