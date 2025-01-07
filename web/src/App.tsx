@@ -35,11 +35,17 @@ function transformStartParam(startParam?: string) {
 	}
 }
 
+export const [showCommunityPopup, setShowCommunityPopup] = createSignal(false)
+
 export default function App(props: any) {
 	const [isAuthenticated, setIsAuthenticated] = createSignal(false)
 	const [isLoading, setIsLoading] = createSignal(true)
 
 	const navigate = useNavigate()
+
+	const updateCommunityPopup = (err: unknown, value: unknown) => {
+		setShowCommunityPopup(value !== 'closed')
+	}
 
 	createEffect(async () => {
 		try {
@@ -76,6 +82,13 @@ export default function App(props: any) {
 			window.Telegram.WebApp.expand()
 			window.Telegram.WebApp.disableClosingConfirmation()
 			window.Telegram.WebApp.disableVerticalSwipes()
+
+			window.Telegram.WebApp.CloudStorage.getItem(
+				'fb_community_popup',
+				updateCommunityPopup,
+			)
+
+			// window.Telegram.WebApp.CloudStorage.removeItem('fb_community_popup')
 
 			setIsAuthenticated(true)
 			setIsLoading(false)

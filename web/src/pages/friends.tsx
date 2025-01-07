@@ -51,7 +51,7 @@ export default function FriendsPage() {
 	})
 
 	return (
-		<div class="p-3">
+		<div class="h-full p-3 overflow-y-scroll pb-[180px]">
 			<div class="bg-secondary p-3 rounded-2xl flex flex-col items-center justify-center">
 				<span class="material-symbols-rounded text-[48px]">
 					people
@@ -65,9 +65,8 @@ export default function FriendsPage() {
 			<div class="mt-6">
 				<div class="flex flex-row items-center justify-between w-full">
 					<p class="text-lg font-semibold">Your Referrals</p>
-					<p class="text-sm text-muted-foreground">+{points()} DPS</p>
+					<p class="text-sm text-primary font-bold">+{points()} DPS</p>
 				</div>
-
 				<Show
 					when={referrals.data?.length > 0}
 					fallback={
@@ -81,10 +80,10 @@ export default function FriendsPage() {
 				>
 					<For each={referrals.data}>
 						{(referral) => (
-							<div class="mt-4 flex items-center justify-between bg-card rounded-2xl p-3">
+							<div class="mt-1 flex items-center justify-between bg-card rounded-2xl p-3">
 								<div class="flex items-center">
 									<img
-										class="size-10 rounded-full"
+										class="size-6 rounded-full"
 										src={referral.avatar_url}
 										alt={referral.first_name}
 									/>
@@ -92,13 +91,13 @@ export default function FriendsPage() {
 										{referral.first_name} {referral.last_name}
 									</span>
 								</div>
-								<span class="font-bold text-blue-500">+10 DPS</span>
+								<span class="text-sm font-medium text-muted-foreground">+10 DPS</span>
 							</div>
 						)}
 					</For>
 				</Show>
 			</div>
-			<div class="p-3 flex flex-row items-center space-x-2 absolute bottom-[100px] w-full left-0 right-0">
+			<div class="bg-background p-3 flex flex-row items-center space-x-2 absolute bottom-[100px] w-full left-0 right-0">
 				<Button class="w-full" onClick={shareProfileURL}>
 					Invite a Friend
 				</Button>

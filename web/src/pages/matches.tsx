@@ -4,14 +4,16 @@ import { fetchActiveSeason, fetchLeaderboard, fetchMatches } from '~/lib/api'
 
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import { formatDate } from '~/lib/utils'
-import { queryClient } from '~/App'
+import { queryClient, setShowCommunityPopup, showCommunityPopup } from '~/App'
 import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
+import { Button } from '~/components/ui/button'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
+
 	const query = createQuery(() => ({
 		queryKey: ['matches'],
 		queryFn: () => fetchMatches(),
@@ -55,12 +57,60 @@ export default function MatchesPage() {
 		return `${days}d ${hours}h ${minutes}m`
 	}
 
+	const closePopup = () => {
+		setShowCommunityPopup(false)
+		window.Telegram.WebApp.CloudStorage.setItem('fb_community_popup', 'closed')
+	}
+
 	return (
 		<>
-			<div class="h-[180px] p-3 flex-col flex items-center justify-center">
-				<Show when={seasonQuery.data} fallback={<div class="w-full rounded-2xl bg-secondary" />}>
-					<InfoCard title={`Active Season ${seasonQuery.data.name}`}
-										text={`Ends in ${calculateDuration(seasonQuery.data.end_date)}`} />
+			<div class="p-3 flex-col flex items-center justify-center space-y-3">
+				<Show when={showCommunityPopup()}>
+					<div class="w-full bg-secondary p-3 rounded-2xl flex flex-col items-center relative">
+						<Button
+							size="icon"
+							variant="ghost"
+							class="absolute top-1 right-1"
+							onClick={closePopup}
+						>
+							<span class="material-symbols-rounded text-[20px] text-primary-foreground">
+								close
+							</span>
+						</Button>
+						<span class="material-symbols-rounded text-[40px] text-blue-400">
+							people
+						</span>
+						<h1 class="tracking-wider text-lg uppercase font-bold">
+							Join community
+						</h1>
+						<p class="text-sm text-secondary-foreground text-center">
+							To discuss matches and get the latest updates
+						</p>
+						<Button
+							class="w-full mt-3"
+							onClick={() => {
+								window.Telegram.WebApp.openTelegramLink(
+									'https://t.me/match_predict_league',
+								)
+							}}
+						>
+							Open in Telegram
+						</Button>
+					</div>
+				</Show>
+				<Show when={seasonQuery.data && !showCommunityPopup()}
+							fallback={<div class="w-full rounded-2xl bg-secondary" />}>
+					<div class="w-full bg-secondary p-3 rounded-2xl flex items-start justify-start flex-row space-x-1">
+						<span class="material-symbols-rounded text-[24px]">
+							sports_soccer
+						</span>
+						<div class="flex flex-col items-start justify-start space-y-2">
+							<h1 class="text-2xl font-bold leading-none">Active Season {seasonQuery.data.name}</h1>
+							<p class="text-sm text-secondary-foreground text-center">
+								Ends in {calculateDuration(seasonQuery.data.end_date)}
+							</p>
+						</div>
+					</div>
 				</Show>
 			</div>
 			<Tabs defaultValue="preview" class="flex flex-col relative mr-auto w-full h-full">
@@ -145,7 +195,7 @@ export default function MatchesPage() {
 										</Show>
 									</div>
 									<div class="flex items-center">
-										<p class="text-base font-semibold mr-2">{entry.points} DPS</p>
+										<p class="text-sm font-medium text-muted-foreground mr-2">{entry.points} DPS</p>
 									</div>
 								</Link>
 							)}
@@ -159,14 +209,16 @@ export default function MatchesPage() {
 
 function InfoCard({ title, text }: { title: string; text: string }) {
 	return (
-		<div class="w-full bg-secondary p-3 rounded-2xl flex items-center justify-center flex-col">
-			<span class="material-symbols-rounded text-[48px]">
+		<div class="w-full bg-secondary p-3 rounded-2xl flex items-start justify-start flex-row space-x-1">
+			<span class="material-symbols-rounded text-[24px]">
 				sports_soccer
 			</span>
-			<h1 class="text-xl font-bold text-center">{title}</h1>
-			<p class="text-sm text-secondary-foreground text-center mt-2">
-				{text}
-			</p>
+			<div class="flex flex-col items-start justify-start space-y-2">
+				<h1 class="text-2xl font-bold leading-none">{title}</h1>
+				<p class="text-sm text-secondary-foreground text-center">
+					{text}
+				</p>
+			</div>
 		</div>
 	)
 }
