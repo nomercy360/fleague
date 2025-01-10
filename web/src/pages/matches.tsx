@@ -11,6 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
 import { Button } from '~/components/ui/button'
 
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '~/components/ui/dialog'
+
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
 
@@ -100,17 +109,42 @@ export default function MatchesPage() {
 				</Show>
 				<Show when={seasonQuery.data && !showCommunityPopup()}
 							fallback={<div class="w-full rounded-2xl bg-secondary" />}>
-					<div class="w-full bg-secondary p-3 rounded-2xl flex items-start justify-start flex-row space-x-1">
-						<span class="material-symbols-rounded text-[24px]">
-							sports_soccer
-						</span>
-						<div class="flex flex-col items-start justify-start space-y-2">
-							<h1 class="text-2xl font-bold leading-none">Active Season {seasonQuery.data.name}</h1>
-							<p class="text-sm text-secondary-foreground text-center">
-								Ends in {calculateDuration(seasonQuery.data.end_date)}
+					<Dialog>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>🏅 Monthly Seasons!</DialogTitle>
+								<DialogDescription>
+									<img
+										class="mb-1 mt-4 rounded-xl h-[300px] w-full object-cover"
+										src="/preview.jpg"
+										alt="T-shirt Prize"
+									/>
+									<p class="mb-4 text-xs">
+										Season {seasonQuery.data.name} prize - "Ural" FC T-Shirt
+									</p>
+									<p class="text-sm">
+										Compete for the top spot each month! Points reset monthly, and the first-place winner gets a prize.
+										🏆 Make your predictions count!
+									</p>
+								</DialogDescription>
+							</DialogHeader>
+						</DialogContent>
+						<div class="relative w-full bg-secondary p-3 rounded-2xl flex items-center justify-start flex-col gap-1">
+							<DialogTrigger class="size-8 absolute top-1 right-1">
+								<span class="material-symbols-rounded text-[20px] text-secondary-foreground">
+									info
+								</span>
+							</DialogTrigger>
+							<span class="text-primary material-symbols-rounded text-[32px]">
+								sports_soccer
+							</span>
+							<h1 class="text-primary-foreground text-2xl font-extrabold leading-none">Active
+								Season {seasonQuery.data.name}</h1>
+							<p class="text-sm text-muted-foreground text-center">
+								Ends on <span class="text-primary">{formatDate(seasonQuery.data.end_date)}</span>
 							</p>
 						</div>
-					</div>
+					</Dialog>
 				</Show>
 			</div>
 			<Tabs defaultValue="preview" class="flex flex-col relative mr-auto w-full h-full">
