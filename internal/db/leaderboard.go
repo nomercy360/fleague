@@ -46,7 +46,10 @@ func (s *Storage) GetActiveSeason(ctx context.Context) (Season, error) {
 		WHERE is_active = 1`
 
 	var season Season
-	if err := s.db.QueryRowContext(ctx, query).Scan(&season.ID, &season.Name, &season.StartDate, &season.EndDate, &season.IsActive); err != nil {
+	err := s.db.QueryRowContext(ctx, query).Scan(&season.ID, &season.Name, &season.StartDate, &season.EndDate, &season.IsActive)
+	if err != nil && IsNoRowsError(err) {
+		return Season{}, ErrNotFound
+	} else if err != nil {
 		return Season{}, err
 	}
 

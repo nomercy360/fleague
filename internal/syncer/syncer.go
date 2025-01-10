@@ -26,6 +26,9 @@ type storager interface {
 	SaveTeam(ctx context.Context, team db.Team) error
 	GetUserByID(id string) (db.User, error)
 	UpdateUserStreak(ctx context.Context, userID string, currentStreak, longestStreak int) error
+	MarkSeasonInactive(ctx context.Context, seasonID string) error
+	CreateSeason(ctx context.Context, season db.Season) error
+	CountSeasons(ctx context.Context) (int, error)
 }
 
 type Syncer struct {
