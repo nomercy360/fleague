@@ -9,6 +9,8 @@ import { Button } from '~/components/ui/button'
 import { createSignal, onMount, Show } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 import { ProfileStat } from '~/pages/user'
+import { useLocale } from '@kobalte/core'
+import { useTranslations } from '~/lib/locale-context'
 
 export const [isOnboardingComplete, setIsOnboardingComplete] = createSignal(false)
 
@@ -42,28 +44,33 @@ export default function FeedPage() {
 		)
 	})
 
+	const { t } = useTranslations()
+
 	return (
 		<div class="h-full overflow-y-scroll bg-background text-foreground pb-[120px]">
 			<div class="relative w-full bg-card rounded-b-[10%] px-4 pt-6 pb-8 mb-8 flex flex-col items-center">
 				<div class="flex flex-row justify-between items-center w-full">
-					<div class="flex flex-row items-center justify-start gap-1">
-						<Button
-							onClick={shareProfileURL}
-							size="sm"
-							variant="secondary"
-						>
+					<Button
+						onClick={shareProfileURL}
+						size="sm"
+						variant="secondary"
+					>
 							<span class="material-symbols-rounded text-[16px] text-secondary-foreground">
 								ios_share
 							</span>
-							Share
-						</Button>
-					</div>
+						{t('share')}
+					</Button>
 					<Button
 						href="/edit-profile"
 						as={Link}
+						class="gap-0"
 						size="sm">
-						Edit profile
-						<IconChevronRight class="size-6" />
+						{t('edit_profile')}
+						<span
+							class="material-symbols-rounded text-[20px] text-primary-foreground"
+						>
+							chevron_right
+						</span>
 					</Button>
 				</div>
 				<img
@@ -98,48 +105,32 @@ export default function FeedPage() {
 					<ProfileStat
 						icon="check_circle"
 						value={store.user?.correct_predictions}
-						label="Correct"
 						color="#2ECC71"
+						label={t('correct')}
 					/>
 					<ProfileStat
 						icon="leaderboard"
 						value={`#${store.user?.global_rank}`}
-						label="Rank"
 						color="#3498DB"
+						label={t('rank')}
 					/>
 					<ProfileStat
 						icon="star"
 						value={store.user?.total_points}
-						label="Points Earned"
 						color="#F1C40F"
+						label={t('points_earned')}
 					/>
 					<Show when={store.user?.longest_win_streak || 0 > 3}>
 						<ProfileStat
 							icon="emoji_events"
 							value={store.user?.longest_win_streak}
-							label="Max Streak"
 							color="#FFC107"
+							label={t('max_streak')}
 						/>
 					</Show>
 				</div>
 			</div>
 			<UserActivity />
 		</div>
-	)
-}
-
-
-const GoToMatchesLink = () => {
-	return (
-		<Link class="bg-secondary w-full flex flex-row h-14 justify-between items-center rounded-2xl p-3 space-x-6"
-					href="/matches">
-			<div>
-				<p class="text-sm font-semibold">
-					Make your first prediction
-				</p>
-				<p class="text-xs text-muted-foreground font-normal">12 matches available</p>
-			</div>
-			<IconChevronRight class="size-6" />
-		</Link>
 	)
 }

@@ -65,7 +65,7 @@ export default function FriendsPage() {
 			<div class="mt-6">
 				<div class="flex flex-row items-center justify-between w-full">
 					<p class="text-lg font-semibold">Your Referrals</p>
-					<p class="text-sm text-primary font-bold">+{points()} DPS</p>
+					<p class="text-sm text-primary font-bold">+{points()} Points</p>
 				</div>
 				<Show
 					when={referrals.data?.length > 0}
@@ -91,7 +91,12 @@ export default function FriendsPage() {
 										{referral.first_name} {referral.last_name}
 									</span>
 								</div>
-								<span class="text-sm font-medium text-muted-foreground">+10 DPS</span>
+								<div class="flex items-center">
+									<p class="text-sm font-medium text-secondary-foreground mr-0.5">
+										+10
+									</p>
+									<span class="text-[12px] material-symbols-rounded text-yellow-200">star</span>
+								</div>
 							</div>
 						)}
 					</For>

@@ -5,12 +5,26 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateString: string, dateTime = false) {
-	const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+export function formatDate(dateString: string, dateTime = false, locale: 'en' | 'ru' = 'en') {
+	const daysOfWeek = {
+		en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+		ru: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+	}
+
+	const months = {
+		en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+		ru: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+	}
+
+	const localizedLabels = {
+		en: { today: 'Today', yesterday: 'Yesterday', tomorrow: 'Tomorrow' },
+		ru: { today: 'Сегодня', yesterday: 'Вчера', tomorrow: 'Завтра' },
+	}
 
 	const now = new Date()
 	const date = new Date(dateString)
+
+	const formatedLocale = locale === 'en' ? 'en-US' : 'ru-RU'
 
 	const isToday = now.toDateString() === date.toDateString()
 
@@ -22,26 +36,24 @@ export function formatDate(dateString: string, dateTime = false) {
 
 	// Prepare time string if needed
 	const timeOptions = { hour: '2-digit', minute: '2-digit' } as const
-	const time = date.toLocaleTimeString('en-US', timeOptions)
+	const time = date.toLocaleTimeString(formatedLocale, timeOptions)
 
 	let result: string
 
 	if (isToday) {
-		result = 'Today'
+		result = localizedLabels[locale].today
 	} else if (isYesterday) {
-		result = 'Yesterday'
+		result = localizedLabels[locale].yesterday
 	} else if (isTomorrow) {
-		result = 'Tomorrow'
+		result = localizedLabels[locale].tomorrow
 	} else {
 		const day = date.getDate()
-		const month = months[date.getMonth()]
-		const dayOfWeek = daysOfWeek[date.getDay()]
+		const month = months[locale][date.getMonth()]
+		const dayOfWeek = daysOfWeek[locale][date.getDay()]
 
 		if (date > now) {
-			// Future date beyond tomorrow: show day of week and date
 			result = `${dayOfWeek}, ${day} ${month}`
 		} else {
-			// Past date beyond yesterday: just show date
 			result = `${day} ${month}`
 		}
 	}
@@ -49,8 +61,10 @@ export function formatDate(dateString: string, dateTime = false) {
 	return dateTime ? `${result}, ${time}` : result
 }
 
-export function timeToLocaleString(dateString: string) {
+
+export function timeToLocaleString(dateString: string, locale = 'en') {
 	const date = new Date(dateString)
+	const formatedLocale = locale === 'en' ? 'en-US' : 'ru-RU'
 
 	const timeOptions: Intl.DateTimeFormatOptions = {
 		hour: '2-digit',
@@ -58,5 +72,5 @@ export function timeToLocaleString(dateString: string) {
 		hour12: false,
 	}
 
-	return date.toLocaleTimeString('en-US', timeOptions)
+	return date.toLocaleTimeString(formatedLocale, timeOptions)
 }

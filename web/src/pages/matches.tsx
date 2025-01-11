@@ -1,6 +1,6 @@
-import { createSignal, For, Show } from 'solid-js'
+import { createEffect, createSignal, For, Show } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchActiveSeason, fetchLeaderboard, fetchMatches } from '~/lib/api'
+import { fetchActiveSeasons, fetchLeaderboard, fetchMatches, Season } from '~/lib/api'
 
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import { formatDate } from '~/lib/utils'
@@ -19,9 +19,19 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '~/components/ui/dialog'
+import { useTranslations } from '~/lib/locale-context'
+import { store } from '~/store'
+import { useNavigate, useSearchParams } from '@solidjs/router'
 
 export default function MatchesPage() {
 	const [selectedMatch, setSelectedMatch] = createSignal({} as any)
+
+	const [activeSeason, setActiveSeason] = createSignal<Season | null>(null)
+
+	const [searchParams, setSearchParams] = useSearchParams()
+	const navigate = useNavigate()
+
+	const [activeTab, setActiveTab] = createSignal(searchParams.tab || 'matches')
 
 	const query = createQuery(() => ({
 		queryKey: ['matches'],
@@ -33,9 +43,9 @@ export default function MatchesPage() {
 		queryFn: () => fetchLeaderboard(),
 	}))
 
-	const seasonQuery = createQuery(() => ({
+	const seasonQuery = createQuery<Season[]>(() => ({
 		queryKey: ['season'],
-		queryFn: () => fetchActiveSeason(),
+		queryFn: () => fetchActiveSeasons(),
 	}))
 
 	const onPredictionUpdate = () => {
@@ -43,8 +53,9 @@ export default function MatchesPage() {
 		queryClient.invalidateQueries({ queryKey: ['predictions'] })
 	}
 
-	const getUserPosition = (id: number) => {
-		const idx = leaderboardQuery.data.findIndex((u: any) => u.user_id === id)
+	const getUserPosition = (id: number, type: 'monthly' | 'football') => {
+		const data = type === 'monthly' ? leaderboardQuery.data.monthly : leaderboardQuery.data.football
+		const idx = data.findIndex((entry: any) => entry.user_id === id)
 
 		if (idx === 0) return '🥇'
 		if (idx === 1) return '🥈'
@@ -52,28 +63,33 @@ export default function MatchesPage() {
 		return idx + 1
 	}
 
-	function calculateDuration(date: string) {
-		// until that date from now
-		// format: 2d 3h 4m
-		const now = new Date()
-		const endDate = new Date(date)
-		const diff = endDate.getTime() - now.getTime()
-
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-		const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-		return `${days}d ${hours}h ${minutes}m`
-	}
-
 	const closePopup = () => {
 		setShowCommunityPopup(false)
 		window.Telegram.WebApp.CloudStorage.setItem('fb_community_popup', 'closed')
 	}
 
+	const { t } = useTranslations()
+
+	createEffect(() => {
+		if (seasonQuery.data) {
+			if (activeTab() == 'big-season') {
+				const season = seasonQuery.data.find((season) => season.type === 'football')
+				setActiveSeason(season!)
+			} else {
+				const season = seasonQuery.data.find((season) => season.type === 'monthly')
+				setActiveSeason(season!)
+			}
+		}
+	})
+
+	const handleTabChange = (tab: string) => {
+		setActiveTab(tab)
+		setSearchParams({ tab }) // Update query parameter
+	}
+
 	return (
 		<>
-			<div class="p-3 flex-col flex items-center justify-center space-y-3">
+			<div class="min-h-[160px] p-3 flex-col flex items-center justify-center space-y-3">
 				<Show when={showCommunityPopup()}>
 					<div class="w-full bg-secondary p-3 rounded-2xl flex flex-col items-center relative">
 						<Button
@@ -90,80 +106,55 @@ export default function MatchesPage() {
 							people
 						</span>
 						<h1 class="tracking-wider text-lg uppercase font-bold">
-							Join community
+							{t('join_community')}
 						</h1>
 						<p class="text-sm text-secondary-foreground text-center">
-							To discuss matches and get the latest updates
+							{t('join_community_description')}
 						</p>
 						<Button
 							class="w-full mt-3"
 							onClick={() => {
-								window.Telegram.WebApp.openTelegramLink(
-									'https://t.me/match_predict_league',
-								)
+								window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
 							}}
 						>
-							Open in Telegram
+							{t('open_in_telegram')}
 						</Button>
 					</div>
 				</Show>
-				<Show when={seasonQuery.data && !showCommunityPopup()}
-							fallback={<div class="w-full rounded-2xl bg-secondary" />}>
-					<Dialog>
-						<DialogContent>
-							<DialogHeader>
-								<DialogTitle>🏅 Monthly Seasons!</DialogTitle>
-								<DialogDescription>
-									<img
-										class="mb-1 mt-4 rounded-xl h-[300px] w-full object-cover"
-										src="/preview.jpg"
-										alt="T-shirt Prize"
-									/>
-									<p class="mb-4 text-xs">
-										Season {seasonQuery.data.name} prize - "Ural" FC T-Shirt
-									</p>
-									<p class="text-sm">
-										Compete for the top spot each month! Points reset monthly, and the first-place winner gets a prize.
-										🏆 Make your predictions count!
-									</p>
-								</DialogDescription>
-							</DialogHeader>
-						</DialogContent>
-						<div class="relative w-full bg-secondary p-3 rounded-2xl flex items-center justify-start flex-col gap-1">
-							<DialogTrigger class="size-8 absolute top-1 right-1">
-								<span class="material-symbols-rounded text-[20px] text-secondary-foreground">
-									info
-								</span>
-							</DialogTrigger>
-							<span class="text-primary material-symbols-rounded text-[32px]">
-								sports_soccer
-							</span>
-							<h1 class="text-primary-foreground text-2xl font-extrabold leading-none">Active
-								Season {seasonQuery.data.name}</h1>
-							<p class="text-sm text-muted-foreground text-center">
-								Ends on <span class="text-primary">{formatDate(seasonQuery.data.end_date)}</span>
-							</p>
-						</div>
-					</Dialog>
+				<Show
+					when={activeSeason() && !showCommunityPopup()}
+					fallback={<div class="w-full rounded-2xl bg-secondary" />}
+				>
+					<SeasonCard season={activeSeason()!} type={activeSeason()?.type || 'monthly'} />
 				</Show>
 			</div>
-			<Tabs defaultValue="preview" class="flex flex-col relative mr-auto w-full h-full">
+			<Tabs
+				defaultValue={activeTab() as any}
+				onChange={handleTabChange}
+				class="flex flex-col relative mr-auto w-full h-full"
+			>
 				<TabsList class="flex-shrink-0 w-full justify-start rounded-none border-b bg-transparent p-0 h-[56px]">
 					<TabsTrigger
 						value="matches"
 						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
 					>
-						Matches
+						{t('matches')}
 					</TabsTrigger>
 					<TabsTrigger
 						value="leaderboard"
 						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
 					>
-						Leaderboard
+						{t('leaderboard')}
+					</TabsTrigger>
+					<TabsTrigger
+						value="big-season"
+						class="relative h-[56px] rounded-none border-b-2 border-b-transparent bg-transparent px-4 font-semibold text-muted-foreground shadow-none transition-none data-[selected]:border-b-primary data-[selected]:text-foreground data-[selected]:shadow-none"
+					>
+						{t('big_season')}
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="matches"
-										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
+
+				<TabsContent value="matches" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
 					<Drawer>
 						<Show when={!query.isLoading}>
 							{Object.entries(query.data).map(([date, matches]) => (
@@ -190,49 +181,20 @@ export default function MatchesPage() {
 						/>
 					</Drawer>
 				</TabsContent>
-				<TabsContent value="leaderboard"
-										 class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
+
+				<TabsContent value="leaderboard" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
 					<Show when={leaderboardQuery.data}>
-						<For each={leaderboardQuery.data}>
+						<For each={leaderboardQuery.data.monthly}>
 							{(entry) => (
-								<Link class="flex items-center justify-between h-12 px-3 bg-card rounded-2xl"
-											href={`/users/${entry.user.username}`} state={{ from: '/matches' }}>
-									<div class="flex items-center">
-										<span
-											class="w-4 text-center text-base font-semibold text-secondary-foreground">{getUserPosition(entry.user_id)}</span>
-										<img
-											src={entry.user.avatar_url}
-											alt="User avatar"
-											class="ml-4 size-6 rounded-full object-cover"
-										/>
-										<p class="text-base font-semibold ml-2">
-											{entry.user?.first_name}{' '}{entry.user?.last_name}
-										</p>
-										<Show
-											when={entry.user?.favorite_team}
-										>
-											<img
-												src={entry.user?.favorite_team?.crest_url}
-												alt={entry.user?.favorite_team?.short_name}
-												class="size-4 ml-1"
-											/>
-										</Show>
-										<Show
-											when={entry.user?.current_win_streak >= 3}
-										>
-										<span class="text-xs text-orange-500 ml-1">
-											{entry.user?.current_win_streak}
-										</span>
-											<span class="material-symbols-rounded text-[16px] text-orange-500">
-											local_fire_department
-										</span>
-										</Show>
-									</div>
-									<div class="flex items-center">
-										<p class="text-sm font-medium text-muted-foreground mr-2">{entry.points} DPS</p>
-									</div>
-								</Link>
-							)}
+								<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'monthly')} type="monthly" />)}
+						</For>
+					</Show>
+				</TabsContent>
+
+				<TabsContent value="big-season" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
+					<Show when={leaderboardQuery.data}>
+						<For each={leaderboardQuery.data.football}>
+							{(entry) => (<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'football')} type="football" />)}
 						</For>
 					</Show>
 				</TabsContent>
@@ -241,18 +203,104 @@ export default function MatchesPage() {
 	)
 }
 
-function InfoCard({ title, text }: { title: string; text: string }) {
+
+type LeaderBoardEntryProps = {
+	entry: any
+	position: number
+	type: string
+}
+
+function LeaderBoardEntry(props: LeaderBoardEntryProps) {
 	return (
-		<div class="w-full bg-secondary p-3 rounded-2xl flex items-start justify-start flex-row space-x-1">
-			<span class="material-symbols-rounded text-[24px]">
-				sports_soccer
-			</span>
-			<div class="flex flex-col items-start justify-start space-y-2">
-				<h1 class="text-2xl font-bold leading-none">{title}</h1>
-				<p class="text-sm text-secondary-foreground text-center">
-					{text}
+		<Link
+			class="flex items-center justify-between h-12 px-3 bg-card rounded-2xl"
+			href={`/users/${props.entry.user.username}`}
+			state={{ from: `/matches?tab=${props.type}` }}
+		>
+			<div class="flex items-center">
+				<span class="w-4 text-center text-base font-semibold text-secondary-foreground">
+					{props.position}
+				</span>
+				<img
+					src={props.entry.user.avatar_url}
+					alt="User avatar"
+					class="ml-4 size-6 rounded-full object-cover"
+				/>
+				<p class="text-base font-semibold ml-2">
+					{props.entry.user?.first_name} {props.entry.user?.last_name}
+				</p>
+				<Show when={props.entry.user?.favorite_team}>
+					<img
+						src={props.entry.user?.favorite_team?.crest_url}
+						alt={props.entry.user?.favorite_team?.short_name}
+						class="size-4 ml-1"
+					/>
+				</Show>
+				<Show when={props.entry.user?.current_win_streak >= 3}>
+					<span class="text-xs text-orange-500 ml-1">
+						{props.entry.user?.current_win_streak}
+					</span>
+					<span class="material-symbols-rounded text-[16px] text-orange-500">
+						local_fire_department
+					</span>
+				</Show>
+			</div>
+			<div class="flex items-center">
+				<p class="text-sm font-medium text-secondary-foreground mr-0.5">
+					{props.entry.points}
+				</p>
+				<span class="text-[12px] material-symbols-rounded text-yellow-200 icon-fill">star</span>
+			</div>
+		</Link>
+	)
+}
+
+type SeasonCardProps = {
+	season: Season
+	type: string
+}
+
+function SeasonCard(props: SeasonCardProps) {
+	return (
+		<Dialog>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>{props.type === 'monthly' ? 'Monthly Seasons' : 'Big Season'}</DialogTitle>
+					<DialogDescription>
+						<img
+							class="mb-1 mt-4 rounded-xl h-[300px] w-full object-cover"
+							src="/preview.jpg"
+							alt="Season Prize"
+						/>
+						<p class="mb-4 text-xs">
+							Season {props.season.name} prize - {props.type === 'monthly' ? '"Ural" FC T-Shirt' : 'Big Trophy'}
+						</p>
+						<p class="text-sm">
+							{props.type === 'monthly'
+								? 'Join our monthly challenges to win!'
+								: 'Compete for the ultimate glory!'}
+						</p>
+					</DialogDescription>
+				</DialogHeader>
+			</DialogContent>
+			<div class="relative w-full bg-secondary p-3 rounded-2xl flex items-center justify-start flex-col gap-1">
+				<DialogTrigger class="size-8 absolute top-1 right-1">
+					<span class="material-symbols-rounded text-[20px] text-secondary-foreground">
+						info
+					</span>
+				</DialogTrigger>
+				<span class="text-primary material-symbols-rounded text-[32px]">
+					sports_soccer
+				</span>
+				<h1 class="text-primary-foreground text-2xl font-extrabold leading-none">
+					{props.type === 'monthly' ? `Active Season: ${props.season.name}` : `Big Season: ${props.season.name}`}
+				</h1>
+				<p class="text-sm text-muted-foreground text-center">
+					{props.type === 'monthly' ?
+						`Season ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`
+						: `Big Season is the same as the football season, ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`}
 				</p>
 			</div>
-		</div>
+		</Dialog>
 	)
 }

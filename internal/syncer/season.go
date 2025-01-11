@@ -15,7 +15,7 @@ func (s *Syncer) ManageSeasons(ctx context.Context) error {
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	activeSeason, err := s.storage.GetActiveSeason(ctx)
+	activeSeason, err := s.storage.GetActiveSeason(ctx, db.SeasonTypeMonthly)
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		return fmt.Errorf("failed to get active season: %w", err)
 	}
@@ -37,7 +37,7 @@ func (s *Syncer) ManageSeasons(ctx context.Context) error {
 			}
 		}
 
-		seasonCount, err := s.storage.CountSeasons(ctx)
+		seasonCount, err := s.storage.CountSeasons(ctx, db.SeasonTypeMonthly)
 		if err != nil {
 			return fmt.Errorf("failed to count existing seasons: %w", err)
 		}
@@ -50,6 +50,7 @@ func (s *Syncer) ManageSeasons(ctx context.Context) error {
 			StartDate: firstOfMonth,
 			EndDate:   lastOfMonth,
 			IsActive:  true,
+			Type:      db.SeasonTypeMonthly,
 		}
 
 		if err := s.storage.CreateSeason(ctx, newSeason); err != nil {

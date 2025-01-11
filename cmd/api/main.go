@@ -34,6 +34,7 @@ type Config struct {
 	TelegramBotToken string `yaml:"telegram_bot_token"`
 	JWTSecret        string `yaml:"jwt_secret"`
 	MetaFetchURL     string `yaml:"meta_fetch_url"`
+	WebAppURL        string `yaml:"web_app_url"`
 	AWS              struct {
 		AccessKeyID     string `yaml:"access_key_id"`
 		SecretAccessKey string `yaml:"secret_access_key"`
@@ -45,6 +46,7 @@ type Config struct {
 		APIKey  string `yaml:"api_key"`
 		BaseURL string `yaml:"base_url"`
 	} `yaml:"football_api"`
+	OpenAIKey string `yaml:"openai_key"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -181,7 +183,7 @@ func gracefulShutdown(e *echo.Echo, done chan<- bool) {
 
 	log.Println("shutting down gracefully, press Ctrl+C again to force")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
 		log.Printf("Server forced to shutdown with error: %v", err)
@@ -222,6 +224,38 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 			}
 		case <-ctx.Done():
 			log.Println("Stopping syncer...")
+			return
+		}
+	}
+}
+
+func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+
+	if err := sync.SendWeeklyRecap(ctx); err != nil {
+		log.Printf("Failed to send weekly recaps: %v", err)
+	}
+
+	if err := sync.SendMatchNotification(ctx); err != nil {
+		log.Printf("Failed to send match notifications: %v", err)
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			log.Println("Starting notification job...")
+
+			// Example: Sending weekly recaps
+			if err := sync.SendWeeklyRecap(ctx); err != nil {
+				log.Printf("Failed to send weekly recaps: %v", err)
+			}
+
+			// Add other notification-related tasks here
+			// e.g., favorite team match notifications, leaderboard updates, etc.
+
+		case <-ctx.Done():
+			log.Println("Stopping notification job...")
 			return
 		}
 	}
@@ -270,6 +304,7 @@ func main() {
 		BotToken:  cfg.TelegramBotToken,
 		JWTSecret: cfg.JWTSecret,
 		AssetsURL: cfg.AssetsURL,
+		OpenAIKey: cfg.OpenAIKey,
 	}
 
 	s3Client, err := s3.NewS3Client(
@@ -301,10 +336,11 @@ func main() {
 	g.GET("/predictions", a.GetUserPredictions)
 	g.GET("/leaderboard", a.GetLeaderboard)
 	g.GET("/users/:username", a.GetUserInfo)
-	g.GET("/seasons/active", a.GetActiveSeason)
+	g.GET("/seasons/active", a.GetActiveSeasons)
 	g.GET("/referrals", a.ListMyReferrals)
 	g.GET("/teams", a.ListTeams)
 	g.PUT("/users", a.UpdateUser)
+	g.POST("/auto-predict/:matchID", a.AutoPredictMatch)
 
 	done := make(chan bool, 1)
 
@@ -318,11 +354,13 @@ func main() {
 
 	notifier := notification.NewTelegramNotifier(bot)
 
-	sync := syncer.NewSyncer(storage, notifier, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
+	sync := syncer.NewSyncer(storage, notifier, cfg.WebAppURL, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go startSyncer(ctx, sync)
+
+	// go startNotificationJob(ctx, sync)
 
 	if err := e.Start(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)); err != nil {
 		log.Fatalf("failed to start server: %v", err)

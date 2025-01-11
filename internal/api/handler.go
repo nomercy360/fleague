@@ -24,13 +24,14 @@ type storager interface {
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetMatchByID(ctx context.Context, matchID string) (db.Match, error)
 	GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]db.Prediction, error)
-	GetActiveSeason(ctx context.Context) (db.Season, error)
+	GetActiveSeasons(ctx context.Context) ([]db.Season, error)
 	UpdateUserPredictionCount(ctx context.Context, userID string) error
 	ListUserReferrals(ctx context.Context, userID string) ([]db.User, error)
 	UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error
 	ListTeams(ctx context.Context) ([]db.Team, error)
 	UpdateUserInformation(ctx context.Context, user db.User) error
 	GetUserRank(ctx context.Context, userID string) (int, error)
+	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 }
 
 type API struct {
@@ -43,6 +44,7 @@ type Config struct {
 	JWTSecret string
 	BotToken  string
 	AssetsURL string
+	OpenAIKey string
 }
 
 func New(storage storager, cfg Config, s3Client *s3.Client) *API {

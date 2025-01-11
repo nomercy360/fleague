@@ -1,21 +1,10 @@
 package db
 
-import "time"
-
 // LeaderboardEntry represents an entry in the leaderboard
 type LeaderboardEntry struct {
 	UserID   string `db:"user_id"`
 	Points   int    `db:"points"`
 	SeasonID string `db:"season_id"`
-}
-
-// Season represents a season in the competition
-type Season struct {
-	ID        string    `db:"id"`
-	Name      string    `db:"name"`
-	StartDate time.Time `db:"start_date"`
-	EndDate   time.Time `db:"end_date"`
-	IsActive  bool      `db:"is_active"`
 }
 
 // Team represents a sports team

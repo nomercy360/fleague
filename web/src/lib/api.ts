@@ -63,7 +63,7 @@ export const fetchLeaderboard = async () => {
 	return data
 }
 
-export const fetchActiveSeason = async () => {
+export const fetchActiveSeasons = async () => {
 	const { data } = await apiRequest('/seasons/active', {
 		method: 'GET',
 	})
@@ -143,6 +143,9 @@ export type MatchResponse = {
 	away_score: any
 	home_score: any
 	prediction: any
+	home_odds: any
+	away_odds: any
+	draw_odds: any
 }
 
 export type PredictionResponse = {
@@ -156,6 +159,15 @@ export type PredictionResponse = {
 	created_at: string
 	completed_at: string
 	match: MatchResponse
+}
+
+export type Season = {
+	id: string
+	name: string
+	start_date: string
+	end_date: string
+	is_active: boolean
+	type: 'monthly' | 'football'
 }
 
 

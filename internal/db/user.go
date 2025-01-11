@@ -250,3 +250,70 @@ func (s *Storage) UpdateUserStreak(ctx context.Context, userID string, currentSt
 	_, err := s.db.ExecContext(ctx, query, currentStreak, longestStreak, userID)
 	return err
 }
+
+func (s *Storage) GetAllUsers(ctx context.Context) ([]User, error) {
+	query := `
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, current_win_streak, longest_win_streak, favorite_team_id
+		FROM users
+		WHERE total_predictions > 0`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.FirstName,
+			&user.LastName,
+			&user.Username,
+			&user.LanguageCode,
+			&user.ChatID,
+			&user.CreatedAt,
+			&user.TotalPoints,
+			&user.TotalPredictions,
+			&user.CorrectPredictions,
+			&user.AvatarURL,
+			&user.ReferredBy,
+			&user.CurrentWinStreak,
+			&user.LongestWinStreak,
+			&user.FavoriteTeamID,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (s *Storage) GetAllUsersWithFavoriteTeam(ctx context.Context) ([]User, error) {
+	query := `
+        SELECT id, first_name, last_name, username, language_code, chat_id, favorite_team_id
+        FROM users
+        WHERE favorite_team_id IS NOT NULL
+    `
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username, &user.LanguageCode, &user.ChatID, &user.FavoriteTeamID); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}

@@ -34,28 +34,6 @@ func (s *Storage) GetLeaderboard(ctx context.Context, seasonID string) ([]Leader
 	return leaderboard, nil
 }
 
-func (s *Storage) GetActiveSeason(ctx context.Context) (Season, error) {
-	query := `
-		SELECT
-			id,
-			name,
-			start_date,
-			end_date,
-			is_active
-		FROM seasons
-		WHERE is_active = 1`
-
-	var season Season
-	err := s.db.QueryRowContext(ctx, query).Scan(&season.ID, &season.Name, &season.StartDate, &season.EndDate, &season.IsActive)
-	if err != nil && IsNoRowsError(err) {
-		return Season{}, ErrNotFound
-	} else if err != nil {
-		return Season{}, err
-	}
-
-	return season, nil
-}
-
 func (s *Storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID string, points int) error {
 	query := `
 		INSERT INTO leaderboards (season_id, user_id, points)

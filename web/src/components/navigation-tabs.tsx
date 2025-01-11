@@ -24,7 +24,7 @@ export default function NavigationTabs(props: any) {
 								'bg-blue-500 text-primary-foreground': location.pathname === activePath,
 							})}
 						>
-						<span class="material-symbols-rounded text-[24px]">
+						<span class="material-symbols-rounded icon-fill text-[24px]">
 							{icon}
 						</span>
 						</Link>

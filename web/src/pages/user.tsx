@@ -8,23 +8,27 @@ import { Button } from '~/components/ui/button'
 import {
 	IconShare,
 } from '~/components/icons'
+import { useTranslations } from '~/lib/locale-context'
 
-export function ProfileStat({ icon, value, label, color }: {
-	icon: string;
-	value: string;
-	label: string,
+type ProfileStatProps = {
+	icon: string
+	value?: any
+	label: string
 	color: string
-}) {
+}
+
+export function ProfileStat(props: ProfileStatProps) {
 	return (
 		<div class="space-x-2 flex-grow bg-background flex flex-row items-start text-center rounded-2xl py-2 px-3">
-			<span class="py-1 material-symbols-rounded text-[20px]" style={{ color }}>
-					{icon}
-				</span>
+			<span class="py-1 material-symbols-rounded text-[20px]" style={{ color: props.color }}>
+				{props.icon}
+			</span>
 			<div class="flex flex-col items-start justify-start">
-				<span class="font-extrabold text-lg">{value}</span>
-				<span class="text-xs text-muted-foreground text-nowrap">{label}</span>
+				<span class="font-extrabold text-lg">{props.value}</span>
+				<span class="text-xs text-muted-foreground text-nowrap">
+					{props.label}
+				</span>
 			</div>
-
 		</div>
 	)
 }
@@ -49,6 +53,8 @@ export default function UserProfilePage() {
 		queryFn: () => fetchUserInfo(username),
 	}))
 
+	const { t } = useTranslations()
+
 	return (
 		<div class="bg-background text-foreground pb-24 h-screen overflow-y-scroll">
 			<Show when={userInfoQuery.isLoading}>
@@ -61,7 +67,7 @@ export default function UserProfilePage() {
 					<div class="flex flex-row justify-between items-center w-full">
 						<Button onClick={shareProfileURL} size="sm" variant="secondary">
 							<IconShare class="size-6 mr-1" />
-							Share
+							{t('share')}
 						</Button>
 					</div>
 					<img
@@ -96,27 +102,27 @@ export default function UserProfilePage() {
 						<ProfileStat
 							icon="check_circle"
 							value={userInfoQuery.data.user.correct_predictions}
-							label="Correct"
 							color="#2ECC71"
+							label={t('correct')}
 						/>
 						<ProfileStat
 							icon="leaderboard"
 							value={`#${userInfoQuery.data.user.global_rank}`}
-							label="Rank"
 							color="#3498DB"
+							label={t('rank')}
 						/>
 						<ProfileStat
 							icon="star"
 							value={userInfoQuery.data.user.total_points}
-							label="Points Earned"
 							color="#F1C40F"
+							label={t('points')}
 						/>
 						<Show when={userInfoQuery.data.user.longest_win_streak > 3}>
 							<ProfileStat
 								icon="emoji_events"
 								value={userInfoQuery.data.user.longest_win_streak}
-								label="Max Streak"
 								color="#FFC107"
+								label={t('max_streak')}
 							/>
 						</Show>
 					</div>

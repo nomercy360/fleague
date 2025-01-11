@@ -9,6 +9,8 @@ import { createQuery } from '@tanstack/solid-query'
 import { fetchTeams, fetchUpdateUser } from '~/lib/api'
 import { cn } from '~/lib/utils'
 import { useNavigate } from '@solidjs/router'
+import { useTranslations } from '~/lib/locale-context'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 
 type Team = {
 	id: number
@@ -25,6 +27,7 @@ export default function EditUserPage() {
 		first_name: '',
 		last_name: '',
 		favorite_team_id: '',
+		language_code: '',
 	})
 
 	const [showTeamSelector, setShowTeamSelector] = createSignal(false)
@@ -49,6 +52,7 @@ export default function EditUserPage() {
 			setEditUser({
 				first_name: store.user.first_name,
 				last_name: store.user.last_name,
+				language_code: store.user.language_code,
 			})
 
 			if (store.user.favorite_team) {
@@ -86,6 +90,9 @@ export default function EditUserPage() {
 		mainButton.hide()
 	})
 
+	const { t } = useTranslations()
+
+
 	return (
 		<div class="flex flex-col items-center justify-center bg-background text-foreground px-2 py-3 gap-3">
 			<Show when={!showTeamSelector()}>
@@ -96,21 +103,40 @@ export default function EditUserPage() {
 				/>
 				<TextField>
 					<TextFieldInput
-						placeholder="First name"
+						placeholder={t('first_name')}
 						value={editUser.first_name}
 						onInput={(e) => setEditUser('first_name', e.currentTarget.value)}
 					/>
 				</TextField>
 				<TextField>
 					<TextFieldInput
-						placeholder="Last name"
+						placeholder={t('last_name')}
 						value={editUser.last_name}
 						onInput={(e) => setEditUser('last_name', e.currentTarget.value)}
 					/>
 				</TextField>
-				<div class="mt-4 w-full">
+				<div class="flex-col w-full">
+					<p class="px-2 py-1 text-sm text-muted-foreground">
+						App & Notifications Language
+					</p>
+					<Select
+						value={editUser.language_code}
+						onChange={(value) => setEditUser('language_code', value as string)}
+						options={['ru', 'en']}
+						placeholder="App language"
+						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
+					>
+						<SelectTrigger class="w-full">
+							<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+						</SelectTrigger>
+						<SelectContent />
+					</Select>
+
+				</div>
+
+				<div class="mt-2 w-full">
 					<p class="px-2 text-sm text-muted-foreground">
-						Your favorite team. Extra <span class="text-primary">3 points</span> for correct prediction.
+						{t('favorite_team', { points: 3 })}
 					</p>
 					<Button
 						size="sm"
@@ -122,7 +148,9 @@ export default function EditUserPage() {
             <Show
 							when={selectedTeam().id}
 							fallback={
-								<span class="text-muted-foreground">Select your favorite team</span>
+								<span class="text-muted-foreground">
+									{t('select_favorite_team')}
+								</span>
 							}
 						>
 							<>
@@ -145,7 +173,7 @@ export default function EditUserPage() {
 					<div class="w-full flex items-center relative">
 						<TextField class="flex-grow">
 							<TextFieldInput
-								placeholder="Search team"
+								placeholder={t('search_team')}
 								value={searchTerm()}
 								onInput={(e) => setSearchTerm(e.currentTarget.value)}
 							/>

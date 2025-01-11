@@ -21,11 +21,13 @@
   "dependencies": {
     "@corvu/drawer": "^0.2.2",
     "@kobalte/core": "^0.13.7",
+    "@solid-primitives/i18n": "^2.1.1",
     "@solidjs/router": "^0.15.1",
     "@tanstack/solid-query": "^5.62.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "solid-js": "^1.9.3",
+    "solid-transition-group": "^0.2.3",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   }

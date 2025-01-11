@@ -5,6 +5,7 @@ import { NavigationProvider } from './lib/useNavigation'
 import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import { Toaster } from '~/components/ui/toast'
+import { LocaleContextProvider } from '~/lib/locale-context'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -104,27 +105,28 @@ export default function App(props: any) {
 		}
 	})
 	return (
-
-		<NavigationProvider>
-			<QueryClientProvider client={queryClient}>
-				<Switch>
-					<Match when={isAuthenticated()}>
-						{props.children}
-					</Match>
-					<Match when={!isAuthenticated() && isLoading()}>
-						<div class="min-h-screen w-full flex-col items-start justify-center bg-main" />
-					</Match>
-					<Match when={!isAuthenticated() && !isLoading()}>
-						<div
-							class="flex text-center h-screen w-full flex-col items-center justify-center text-3xl">
-							<p>
-								Today nothing is gonna work
-							</p>
-						</div>
-					</Match>
-				</Switch>
-				<Toaster />
-			</QueryClientProvider>
-		</NavigationProvider>
+		<LocaleContextProvider>
+			<NavigationProvider>
+				<QueryClientProvider client={queryClient}>
+					<Switch>
+						<Match when={isAuthenticated()}>
+							{props.children}
+						</Match>
+						<Match when={!isAuthenticated() && isLoading()}>
+							<div class="min-h-screen w-full flex-col items-start justify-center bg-main" />
+						</Match>
+						<Match when={!isAuthenticated() && !isLoading()}>
+							<div
+								class="flex text-center h-screen w-full flex-col items-center justify-center text-3xl">
+								<p>
+									Today nothing is gonna work
+								</p>
+							</div>
+						</Match>
+					</Switch>
+					<Toaster />
+				</QueryClientProvider>
+			</NavigationProvider>
+		</LocaleContextProvider>
 	)
 }

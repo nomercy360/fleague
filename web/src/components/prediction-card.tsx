@@ -5,6 +5,7 @@ import MatchCard from '~/components/match-card'
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import FootballScoreboard from '~/components/score-board'
 import MatchStats from '~/components/match-stats'
+import { useTranslations } from '~/lib/locale-context'
 
 const UserActivity = () => {
 	const query = createQuery(() => ({
@@ -18,6 +19,8 @@ const UserActivity = () => {
 
 	const [selectedPrediction, setSelectedPrediction] = createSignal<PredictionResponse>({} as any)
 	const [visibleCount, setVisibleCount] = createSignal(5)
+
+	const { t } = useTranslations()
 
 	return (
 		<div class="px-3">
@@ -53,7 +56,7 @@ const UserActivity = () => {
 								class="px-4 text-sm font-medium h-10"
 								onClick={() => setVisibleCount(visibleCount() + 5)}
 							>
-								Show More
+								{t('show_more')}
 							</button>
 						</div>
 					</Show>

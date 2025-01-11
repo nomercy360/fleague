@@ -50,13 +50,18 @@ CREATE TABLE teams
 CREATE TABLE matches
 (
     id           TEXT PRIMARY KEY,
-    tournament   TEXT     NOT NULL,        -- Турнир, к которому относится матч
-    home_team_id TEXT,                     -- ID домашней команды
-    away_team_id TEXT,                     -- ID гостевой команды
+    tournament   TEXT     NOT NULL,            -- Турнир, к которому относится матч
+    home_team_id TEXT,                         -- ID домашней команды
+    away_team_id TEXT,                         -- ID гостевой команды
     match_date   DATETIME NOT NULL,
-    status       TEXT DEFAULT 'scheduled', -- Статусы: scheduled, ongoing, completed
-    home_score   INTEGER,                  -- Заполняется после завершения
-    away_score   INTEGER,                  -- Заполняется после завершения
+    status       TEXT     DEFAULT 'scheduled', -- Статусы: scheduled, ongoing, completed
+    home_score   INTEGER,                      -- Заполняется после завершения
+    away_score   INTEGER,                      -- Заполняется после завершения
+    home_odds    REAL,                         -- Коэффициенты на победу домашней команды
+    draw_odds    REAL,                         -- Коэффициенты на ничью
+    away_odds    REAL,                         -- Коэффициенты на победу гостевой команды
+    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (home_team_id) REFERENCES teams (id) ON DELETE CASCADE,
     FOREIGN KEY (away_team_id) REFERENCES teams (id) ON DELETE CASCADE
 );
@@ -84,7 +89,8 @@ CREATE TABLE seasons
     name       TEXT     NOT NULL, -- Название сезона
     start_date DATETIME NOT NULL,
     end_date   DATETIME NOT NULL,
-    is_active  BOOLEAN DEFAULT 1  -- Активен ли сезон
+    is_active  BOOLEAN DEFAULT 1, -- Активен ли сезон
+    type       TEXT               -- Тип сезона (e.g., monthly, football)
 );
 
 -- Таблица лидербордов
@@ -98,5 +104,18 @@ CREATE TABLE leaderboards
     PRIMARY KEY (user_id, season_id)
 );
 
-INSERT INTO seasons (id, name, start_date, end_date)
-VALUES ('s1', '2024/25', '2024-08-01', '2025-05-31');
+CREATE TABLE notifications
+(
+    id                TEXT PRIMARY KEY,
+    user_id           TEXT NOT NULL,
+    notification_type TEXT NOT NULL, -- could be weekly_summary, match_reminder, etc.
+    related_id        TEXT,          -- e.g., match_id or weekly summary id
+    sent_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+
+-- ALTER TABLE matches
+--     ADD COLUMN updated_at DATETIME;
+-- ALTER TABLE matches
+--     ADD COLUMN created_at DATETIME;

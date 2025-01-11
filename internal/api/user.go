@@ -2,15 +2,21 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/invopop/jsonschema"
 	"github.com/labstack/echo/v4"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
 	"net/http"
 	"sort"
+	"strings"
+	"time"
 )
 
 func getUserID(c echo.Context) string {
@@ -76,6 +82,9 @@ func toMatchResponse(match db.Match, homeTeam db.Team, awayTeam db.Team) contrac
 		AwayTeam:   awayTeam,
 		HomeScore:  match.HomeScore,
 		AwayScore:  match.AwayScore,
+		HomeOdds:   match.HomeOdds,
+		DrawOdds:   match.DrawOdds,
+		AwayOdds:   match.AwayOdds,
 	}
 }
 
@@ -214,10 +223,134 @@ func (a API) UpdateUser(c echo.Context) error {
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
 	user.FavoriteTeamID = req.FavoriteTeamID
+	if req.LanguageCode != nil {
+		user.LanguageCode = req.LanguageCode
+	}
 
 	if err := a.storage.UpdateUserInformation(ctx, user); err != nil {
 		return terrors.InternalServer(err, "could not update user")
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "ok"})
+}
+
+func (a API) AutoPredictMatch(c echo.Context) error {
+	ctx := c.Request().Context()
+	id := c.Param("id")
+	match, err := a.storage.GetMatchByID(ctx, id)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to fetch matches")
+	}
+
+	homeTeam, err := a.storage.GetTeamByID(ctx, match.HomeTeamID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get home team")
+	}
+
+	awayTeam, err := a.storage.GetTeamByID(ctx, match.AwayTeamID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get away team")
+	}
+
+	homeLastMatches, err := a.storage.GetLastMatchesByTeamID(ctx, match.HomeTeamID, 5)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to fetch home team last matches")
+	}
+
+	awayLastMatches, err := a.storage.GetLastMatchesByTeamID(ctx, match.AwayTeamID, 5)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to fetch away team last matches")
+	}
+
+	formatMatches := func(matches []db.Match) string {
+		var results []string
+		for _, m := range matches {
+			var result string
+			if m.HomeTeamID == match.HomeTeamID {
+				result = fmt.Sprintf("vs %s: %d-%d", m.AwayTeamID, *m.HomeScore, *m.AwayScore)
+			} else {
+				result = fmt.Sprintf("@ %s: %d-%d", m.HomeTeamID, *m.AwayScore, *m.HomeScore)
+			}
+			results = append(results, result)
+		}
+		return strings.Join(results, ", ")
+	}
+
+	homeStats := formatMatches(homeLastMatches)
+	awayStats := formatMatches(awayLastMatches)
+
+	prompt := fmt.Sprintf(`
+			Predict the outcome of the following match:
+			Home Team: %s, Away Team: %s.
+			Odds: Home - %.2f, Draw - %.2f, Away - %.2f.
+			Date: %s.
+			Home Team Last Matches: %s.
+			Away Team Last Matches: %s.
+		`, homeTeam.Name, awayTeam.Name, *match.HomeOdds, *match.DrawOdds, *match.AwayOdds, match.MatchDate.Format(time.RFC3339), homeStats, awayStats)
+
+	client := openai.NewClient(
+		option.WithAPIKey(a.cfg.OpenAIKey),
+	)
+
+	prediction, err := callChatGPT(ctx, client, prompt)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get prediction")
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"prediction": prediction, "match": toMatchResponse(match, homeTeam, awayTeam)})
+}
+
+type MatchPrediction struct {
+	Outcome    string `json:"outcome" jsonschema_description:"The predicted outcome: 'home', 'away', or 'draw'"`
+	HomeScore  int    `json:"home_score" jsonschema_description:"Predicted score for the home team"`
+	AwayScore  int    `json:"away_score" jsonschema_description:"Predicted score for the away team"`
+	Confidence string `json:"confidence" jsonschema_description:"Confidence level or short reasoning for the prediction"`
+}
+
+func GenerateSchema[T any]() interface{} {
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
+}
+
+var MatchPredictionResponseSchema = GenerateSchema[MatchPrediction]()
+
+func callChatGPT(ctx context.Context, client *openai.Client, prompt string) (MatchPrediction, error) {
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        openai.F("match_prediction"),
+		Description: openai.F("Predicted outcome of a football match"),
+		Schema:      openai.F(MatchPredictionResponseSchema),
+		Strict:      openai.Bool(true),
+	}
+
+	chat, err := client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage("You are a sports prediction assistant. Predict match outcomes based on provided details."),
+			openai.UserMessage(prompt),
+		}),
+		Model: openai.F(openai.ChatModelGPT4o2024_08_06),
+		ResponseFormat: openai.F[openai.ChatCompletionNewParamsResponseFormatUnion](
+			openai.ResponseFormatJSONSchemaParam{
+				Type:       openai.F(openai.ResponseFormatJSONSchemaTypeJSONSchema),
+				JSONSchema: openai.F(schemaParam),
+			},
+		),
+	})
+
+	if err != nil {
+		return MatchPrediction{}, err
+	}
+
+	// Extract the response into the MatchPrediction struct
+	var prediction MatchPrediction
+	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &prediction)
+	if err != nil {
+		return MatchPrediction{}, err
+	}
+
+	return prediction, nil
 }

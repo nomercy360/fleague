@@ -84,6 +84,9 @@ type MatchResponse struct {
 	AwayScore  *int           `json:"away_score"`
 	HomeScore  *int           `json:"home_score"`
 	Prediction *db.Prediction `json:"prediction"`
+	HomeOdds   *float64       `json:"home_odds"`
+	DrawOdds   *float64       `json:"draw_odds"`
+	AwayOdds   *float64       `json:"away_odds"`
 }
 
 type UserProfile struct {
@@ -119,6 +122,7 @@ type SeasonResponse struct {
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	IsActive  bool      `json:"is_active"`
+	Type      string    `json:"type"`
 }
 
 type JWTClaims struct {
@@ -149,18 +153,26 @@ type UpdateUserRequest struct {
 	FirstName      *string `json:"first_name"`
 	LastName       *string `json:"last_name"`
 	FavoriteTeamID *string `json:"favorite_team_id"`
+	LanguageCode   *string `json:"language_code"`
 }
 
 func (u UpdateUserRequest) Validate() error {
 	if u.FirstName != nil && *u.FirstName == "" {
 		return fmt.Errorf("first name cannot be empty")
 	}
+
 	if u.LastName != nil && *u.LastName == "" {
 		return fmt.Errorf("last name cannot be empty")
 	}
+
 	if u.FavoriteTeamID != nil && *u.FavoriteTeamID == "" {
 		return fmt.Errorf("favorite team id cannot be empty")
 	}
+
+	if u.LanguageCode != nil && *u.LanguageCode != "ru" && *u.LanguageCode != "en" {
+		return fmt.Errorf("language code must be ru or en")
+	}
+
 	return nil
 }
 

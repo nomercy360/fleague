@@ -9,7 +9,7 @@ type User = {
 	username: string
 	avatar_url: string
 	chat_id: number
-	language_code: string
+	language_code: 'en' | 'ru'
 	created_at: string
 	token: string
 	total_points: number
