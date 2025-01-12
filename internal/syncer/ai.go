@@ -156,7 +156,7 @@ func callChatGPT(ctx context.Context, client *openai.Client, prompt string) (Mat
 			openai.SystemMessage("You are a sports prediction assistant. Predict match outcomes based on provided details."),
 			openai.UserMessage(prompt),
 		}),
-		Model: openai.F(openai.ChatModelGPT4o2024_08_06),
+		Model: openai.F(openai.ChatModelGPT4oMini2024_07_18),
 		ResponseFormat: openai.F[openai.ChatCompletionNewParamsResponseFormatUnion](
 			openai.ResponseFormatJSONSchemaParam{
 				Type:       openai.F(openai.ResponseFormatJSONSchemaTypeJSONSchema),
