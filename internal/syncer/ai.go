@@ -87,6 +87,12 @@ func (s *Syncer) predictMatch(ctx context.Context, match db.Match) error {
 	homeStats := formatMatches(homeLastMatches)
 	awayStats := formatMatches(awayLastMatches)
 
+	// skip if there is no odds
+	if match.HomeOdds == nil || match.DrawOdds == nil || match.AwayOdds == nil {
+		log.Printf("Skipping match %s as odds are not available", match.ID)
+		return nil
+	}
+
 	prompt := fmt.Sprintf(`
 			Predict the outcome of the following match:
 			Home Team: %s, Away Team: %s.
