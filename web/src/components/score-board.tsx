@@ -212,7 +212,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 							variant="outline"
 							onClick={() => updateSwitch(!isExactScore())}
 						>
-							Exact Score
+							{t('exact_score')}
 						</Button>
 					</div>
 				</div>
@@ -225,7 +225,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
 						onClick={onPredictionSave}
 					>
-						Save & Close
+						{t('save')}
 					</Button>
 				</DrawerClose>
 			</DrawerFooter>

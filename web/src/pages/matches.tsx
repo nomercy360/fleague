@@ -301,9 +301,12 @@ function SeasonCard(props: SeasonCardProps) {
 					{props.type === 'monthly' ? t('active_season', { name: props.season.name }) : `${t('big_season')} ${props.season.name}`}
 				</h1>
 				<p class="text-sm text-secondary-foreground text-center">
-					{props.type === 'monthly' ?
-						`Season ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`
-						: `Big Season is the same as the football season, ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`}
+					<Show when={props.type === 'monthly'}>
+						{t('season_ends_on', formatDate(props.season.end_date, false, store.user?.language_code))}
+					</Show>
+					<Show when={props.type === 'football'}>
+						{t('big_season_ends_on', formatDate(props.season.end_date, false, store.user?.language_code))}
+					</Show>
 				</p>
 			</div>
 		</Dialog>

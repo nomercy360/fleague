@@ -18,7 +18,8 @@ export const dict = {
 	'open_in_telegram': 'Open in Telegram',
 	'monthly_seasons': '🏅 Monthly Seasons!',
 	'monthly_seasons_description': 'Compete for the top spot each month! Points reset monthly, and the first-place winner gets a prize. 🏆 Make your predictions count!',
-	'season_ends_on': 'Ends on {date}',
+	'season_ends_on': (date: any) => <>Ends on <span class="text-primary">{date}</span></>,
+	'big_season_ends_on': (date: any) => <>Big Season is the same as the football season, ends on <span class="text-primary">{date}</span></>,
 	'matches': 'Matches',
 	'leaderboard': 'Leaderboard',
 	'user_position': 'Position',
@@ -32,4 +33,34 @@ export const dict = {
 	'win_1': 'Team 1',
 	'win_2': 'Team 2',
 	'draw': 'Draw',
+	'exact_score': 'Exact score',
+	'save': 'Save & close',
+	'onboarding': [
+		{
+			title: 'Welcome to MatchPredict!',
+			description: 'Make predictions on upcoming match scores or outcomes and earn points.',
+		},
+		{
+			title: 'Earn Points',
+			description: <span>Guess the exact score to earn <span class="text-primary font-semibold">+7 points</span> or predict the outcome for <span
+				class="text-primary font-semibold">+3 points.</span> Points are locked once the match starts.</span>,
+		},
+		{
+			title: 'Bonus Streaks',
+			description: 'Maintain a streak of correct predictions to earn bonus points. The longer your streak, the higher your bonus!',
+		},
+		{
+			title: 'Invite Friends',
+			description: <span>Invite friends to join MatchPredict and receive <span
+				class="text-primary font-semibold">10%</span> of their prediction points. Grow your network and your rewards!</span>,
+		},
+		{
+			title: 'Climb the Leaderboard',
+			description: 'Compete with others and climb the leaderboard each season. Top players will receive exciting prizes!',
+		},
+		{
+			title: 'Get Started!',
+			description: 'Let’s dive in and start predicting matches. Good luck!',
+		},
+	],
 }
