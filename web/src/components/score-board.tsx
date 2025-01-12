@@ -202,7 +202,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'away' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('away')}
 								>
-									{t('win_2')}
+									<span>{t('win_2')}</span> {props.match.away_odds}
 								</Button>
 							</div>
 						</div>
