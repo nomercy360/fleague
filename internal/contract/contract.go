@@ -75,18 +75,20 @@ func (p PredictionRequest) Validate() error {
 }
 
 type MatchResponse struct {
-	ID         string         `json:"id"`
-	Tournament string         `json:"tournament"`
-	HomeTeam   db.Team        `json:"home_team"`
-	AwayTeam   db.Team        `json:"away_team"`
-	MatchDate  time.Time      `json:"match_date"`
-	Status     string         `json:"status"`
-	AwayScore  *int           `json:"away_score"`
-	HomeScore  *int           `json:"home_score"`
-	Prediction *db.Prediction `json:"prediction"`
-	HomeOdds   *float64       `json:"home_odds"`
-	DrawOdds   *float64       `json:"draw_odds"`
-	AwayOdds   *float64       `json:"away_odds"`
+	ID              string         `json:"id"`
+	Tournament      string         `json:"tournament"`
+	HomeTeam        db.Team        `json:"home_team"`
+	AwayTeam        db.Team        `json:"away_team"`
+	MatchDate       time.Time      `json:"match_date"`
+	Status          string         `json:"status"`
+	AwayScore       *int           `json:"away_score"`
+	HomeScore       *int           `json:"home_score"`
+	Prediction      *db.Prediction `json:"prediction"`
+	HomeOdds        *float64       `json:"home_odds"`
+	DrawOdds        *float64       `json:"draw_odds"`
+	AwayOdds        *float64       `json:"away_odds"`
+	HomeTeamResults []string       `json:"home_team_results"`
+	AwayTeamResults []string       `json:"away_team_results"`
 }
 
 type UserProfile struct {

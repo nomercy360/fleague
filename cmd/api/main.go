@@ -208,6 +208,10 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 		log.Printf("Initial prediction processing failed: %v", err)
 	}
 
+	if err := sync.PredictWeeklyMatches(ctx); err != nil {
+		log.Printf("Initial team sync failed: %v", err)
+	}
+
 	ticker := time.NewTicker(3 * time.Minute)
 	defer ticker.Stop()
 
@@ -340,7 +344,6 @@ func main() {
 	g.GET("/referrals", a.ListMyReferrals)
 	g.GET("/teams", a.ListTeams)
 	g.PUT("/users", a.UpdateUser)
-	g.POST("/auto-predict/:matchID", a.AutoPredictMatch)
 
 	done := make(chan bool, 1)
 
@@ -354,7 +357,7 @@ func main() {
 
 	notifier := notification.NewTelegramNotifier(bot)
 
-	sync := syncer.NewSyncer(storage, notifier, cfg.WebAppURL, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey)
+	sync := syncer.NewSyncer(storage, notifier, cfg.WebAppURL, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey, cfg.OpenAIKey)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

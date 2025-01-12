@@ -2,22 +2,27 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
 // Match represents a sports match
 type Match struct {
-	ID         string    `db:"id"`
-	Tournament string    `db:"tournament"`
-	HomeTeamID string    `db:"home_team_id"`
-	AwayTeamID string    `db:"away_team_id"`
-	MatchDate  time.Time `db:"match_date"`
-	Status     string    `db:"status"`
-	HomeScore  *int      `db:"home_score"` // Nullable, set after match completion
-	AwayScore  *int      `db:"away_score"` // Nullable, set after match completion
-	HomeOdds   *float64  `db:"home_odds"`
-	DrawOdds   *float64  `db:"draw_odds"`
-	AwayOdds   *float64  `db:"away_odds"`
+	ID         string      `db:"id" json:"id"`
+	Tournament string      `db:"tournament" json:"tournament"`
+	HomeTeamID string      `db:"home_team_id" json:"home_team_id"`
+	AwayTeamID string      `db:"away_team_id" json:"away_team_id"`
+	MatchDate  time.Time   `db:"match_date" json:"match_date"`
+	Status     string      `db:"status" json:"status"`
+	HomeScore  *int        `db:"home_score" json:"home_score"` // Nullable, set after match completion
+	AwayScore  *int        `db:"away_score" json:"away_score"` // Nullable, set after match completion
+	HomeOdds   *float64    `db:"home_odds" json:"home_odds"`
+	DrawOdds   *float64    `db:"draw_odds" json:"draw_odds"`
+	AwayOdds   *float64    `db:"away_odds" json:"away_odds"`
+	HomeTeam   Team        `db:"-" json:"home_team"`
+	AwayTeam   Team        `db:"-" json:"away_team"`
+	Prediction *Prediction `db:"-" json:"prediction,omitempty"`
 }
 
 const (
@@ -26,10 +31,37 @@ const (
 	MatchStatusOngoing   = "ongoing"
 )
 
+func UnmarshalJSONToStruct[T any](src interface{}) (T, error) {
+	var source []byte
+	var zeroValue T
+
+	switch s := src.(type) {
+	case []byte:
+		source = s
+	case string:
+		source = []byte(s)
+	case nil:
+		return zeroValue, nil
+	default:
+		return zeroValue, fmt.Errorf("unsupported type: %T", s)
+	}
+
+	var result T
+	if err := json.Unmarshal(source, &result); err != nil {
+		return zeroValue, fmt.Errorf("error unmarshalling JSON: %w", err)
+	}
+
+	return result, nil
+}
+
 func (s *Storage) GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]Match, error) {
 	query := `
-        SELECT id, tournament, home_team_id, away_team_id, match_date, status, home_score, away_score
-        FROM matches
+        SELECT m.id, m.tournament, m.home_team_id, m.away_team_id, m.match_date, m.status, m.home_score, m.away_score,
+               json_object('id', home_team.id, 'name', home_team.name, 'short_name', home_team.short_name, 'crest_url', home_team.crest_url, 'country', home_team.country, 'abbreviation', home_team.abbreviation) as home_team,
+               json_object('id', away_team.id, 'name', away_team.name, 'short_name', away_team.short_name, 'crest_url', away_team.crest_url, 'country', away_team.country, 'abbreviation', away_team.abbreviation) as away_team
+        FROM matches m
+        JOIN teams home_team ON home_team.id = home_team_id
+        JOIN teams away_team ON away_team.id = away_team_id
         WHERE (home_team_id = ? OR away_team_id = ?)
         AND status = ?
         ORDER BY match_date DESC
@@ -44,11 +76,38 @@ func (s *Storage) GetLastMatchesByTeamID(ctx context.Context, teamID string, lim
 	var matches []Match
 	for rows.Next() {
 		var match Match
-		if err := rows.Scan(&match.ID, &match.Tournament, &match.HomeTeamID, &match.AwayTeamID, &match.MatchDate, &match.Status, &match.HomeScore, &match.AwayScore); err != nil {
+		var homeTeam, awayTeam interface{}
+		if err := rows.Scan(
+			&match.ID,
+			&match.Tournament,
+			&match.HomeTeamID,
+			&match.AwayTeamID,
+			&match.MatchDate,
+			&match.Status,
+			&match.HomeScore,
+			&match.AwayScore,
+			&homeTeam,
+			&awayTeam,
+		); err != nil {
 			return nil, err
 		}
+
+		homeTeamStruct, err := UnmarshalJSONToStruct[Team](homeTeam)
+		if err != nil {
+			return nil, err
+		}
+
+		awayTeamStruct, err := UnmarshalJSONToStruct[Team](awayTeam)
+		if err != nil {
+			return nil, err
+		}
+
+		match.HomeTeam = homeTeamStruct
+		match.AwayTeam = awayTeamStruct
+
 		matches = append(matches, match)
 	}
+
 	return matches, nil
 }
 
@@ -84,7 +143,7 @@ func (s *Storage) SaveMatch(ctx context.Context, match Match) error {
 	return err
 }
 
-func (s *Storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
+func (s *Storage) GetActiveMatches(ctx context.Context, userID string) ([]Match, error) {
 	var query string
 	var args []interface{}
 
@@ -98,9 +157,32 @@ func (s *Storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 			m.status,
 			m.home_odds,
 			m.draw_odds,
-			m.away_odds
-		FROM matches m WHERE m.status = 'scheduled' AND m.match_date BETWEEN datetime('now') AND datetime('now', '+7 days')
+			m.away_odds,
+			json_object('id', t1.id, 'name', t1.name, 'short_name', t1.short_name, 'crest_url', t1.crest_url, 'country', t1.country, 'abbreviation', t1.abbreviation) as home_team,
+			json_object('id', t2.id, 'name', t2.name, 'short_name', t2.short_name, 'crest_url', t2.crest_url, 'country', t2.country, 'abbreviation', t2.abbreviation) as away_team,
+			CASE
+				WHEN p.user_id IS NOT NULL THEN
+					json_object(
+						'user_id', p.user_id,
+						'match_id', p.match_id,
+						'predicted_outcome', p.predicted_outcome,
+						'predicted_home_score', p.predicted_home_score,
+						'predicted_away_score', p.predicted_away_score,
+						'points_awarded', p.points_awarded,
+						'created_at', CASE WHEN p.created_at IS NOT NULL THEN strftime('%Y-%m-%dT%H:%M:%SZ', p.created_at) ELSE NULL END,
+						'updated_at', CASE WHEN p.updated_at IS NOT NULL THEN strftime('%Y-%m-%dT%H:%M:%SZ', p.updated_at) ELSE NULL END,
+						'completed_at', CASE WHEN p.completed_at IS NOT NULL THEN strftime('%Y-%m-%dT%H:%M:%SZ', p.completed_at) ELSE NULL END
+					)
+				ELSE NULL
+			END as prediction
+		FROM matches m
+		JOIN teams t1 ON m.home_team_id = t1.id
+		JOIN teams t2 ON m.away_team_id = t2.id
+		LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
+		WHERE m.status = 'scheduled' AND m.match_date BETWEEN datetime('now') AND datetime('now', '+7 days')
 		ORDER BY m.match_date ASC`
+
+	args = append(args, userID)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -111,6 +193,7 @@ func (s *Storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 	var matches []Match
 	for rows.Next() {
 		var match Match
+		var homeTeam, awayTeam, prediction interface{}
 		if err := rows.Scan(
 			&match.ID,
 			&match.Tournament,
@@ -121,9 +204,36 @@ func (s *Storage) GetActiveMatches(ctx context.Context) ([]Match, error) {
 			&match.HomeOdds,
 			&match.DrawOdds,
 			&match.AwayOdds,
+			&homeTeam,
+			&awayTeam,
+			&prediction,
 		); err != nil {
 			return nil, err
 		}
+
+		homeTeamStruct, err := UnmarshalJSONToStruct[Team](homeTeam)
+		if err != nil {
+			return nil, err
+		}
+
+		awayTeamStruct, err := UnmarshalJSONToStruct[Team](awayTeam)
+		if err != nil {
+			return nil, err
+		}
+
+		match.HomeTeam = homeTeamStruct
+		match.AwayTeam = awayTeamStruct
+
+		if prediction != nil {
+			predictionStruct, err := UnmarshalJSONToStruct[Prediction](prediction)
+			if err != nil {
+				return nil, err
+			}
+			match.Prediction = &predictionStruct
+		} else {
+			match.Prediction = nil
+		}
+
 		matches = append(matches, match)
 	}
 
@@ -147,10 +257,16 @@ func (s *Storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 			m.away_score,
 			m.home_odds,
 			m.draw_odds,
-			m.away_odds
-		FROM matches m WHERE m.id = ?`
+			m.away_odds,
+			json_object('id', t1.id, 'name', t1.name, 'short_name', t1.short_name, 'crest_url', t1.crest_url, 'country', t1.country, 'abbreviation', t1.abbreviation) as home_team,
+			json_object('id', t2.id, 'name', t2.name, 'short_name', t2.short_name, 'crest_url', t2.crest_url, 'country', t2.country, 'abbreviation', t2.abbreviation) as away_team
+		FROM matches m
+		JOIN teams t1 ON m.home_team_id = t1.id
+		JOIN teams t2 ON m.away_team_id = t2.id
+		WHERE m.id = ?`
 
 	var match Match
+	var homeTeam, awayTeam interface{}
 	row := s.db.QueryRowContext(ctx, query, id)
 
 	if err := row.Scan(
@@ -165,11 +281,26 @@ func (s *Storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 		&match.HomeOdds,
 		&match.DrawOdds,
 		&match.AwayOdds,
+		&homeTeam,
+		&awayTeam,
 	); err != nil && IsNoRowsError(err) {
 		return Match{}, ErrNotFound
 	} else if err != nil {
 		return Match{}, err
 	}
+
+	homeTeamStruct, err := UnmarshalJSONToStruct[Team](homeTeam)
+	if err != nil {
+		return Match{}, err
+	}
+
+	awayTeamStruct, err := UnmarshalJSONToStruct[Team](awayTeam)
+	if err != nil {
+		return Match{}, err
+	}
+
+	match.HomeTeam = homeTeamStruct
+	match.AwayTeam = awayTeamStruct
 
 	return match, nil
 }

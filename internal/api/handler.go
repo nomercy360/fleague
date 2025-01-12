@@ -14,7 +14,7 @@ type storager interface {
 	Health() (db.HealthStats, error)
 	GetLeaderboard(ctx context.Context, seasonID string) ([]db.LeaderboardEntry, error)
 	AddPrediction(ctx context.Context, prediction db.Prediction) error
-	GetActiveMatches(ctx context.Context) ([]db.Match, error)
+	GetActiveMatches(ctx context.Context, userID string) ([]db.Match, error)
 	GetUserByChatID(chatID int64) (db.User, error)
 	GetUserByID(id string) (db.User, error)
 	GetUserByUsername(uname string) (db.User, error)
@@ -31,7 +31,6 @@ type storager interface {
 	ListTeams(ctx context.Context) ([]db.Team, error)
 	UpdateUserInformation(ctx context.Context, user db.User) error
 	GetUserRank(ctx context.Context, userID string) (int, error)
-	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 }
 
 type API struct {

@@ -35,6 +35,10 @@ type storager interface {
 	HasNotificationBeenSent(ctx context.Context, userID, notificationType, relatedID string) (bool, error)
 	LogNotification(ctx context.Context, userID, notificationType, relatedID string) error
 	GetAllUsersWithFavoriteTeam(ctx context.Context) ([]db.User, error)
+	GetActiveMatches(ctx context.Context, userID string) ([]db.Match, error)
+	CreateUser(user db.User) error
+	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
+	SavePrediction(ctx context.Context, prediction db.Prediction) error
 }
 
 type Syncer struct {
@@ -43,6 +47,7 @@ type Syncer struct {
 	apiBaseURL string
 	apiKey     string
 	webAppURL  string
+	openAIKey  string
 }
 
 type APIMatch struct {
@@ -121,13 +126,14 @@ type APIResponse struct {
 }
 
 // NewSyncer creates a new instance of the syncer
-func NewSyncer(storage storager, notifier noifier, webAppURL, apiBaseURL, apiKey string) *Syncer {
+func NewSyncer(storage storager, notifier noifier, webAppURL, apiBaseURL, apiKey, openAIKey string) *Syncer {
 	return &Syncer{
 		storage:    storage,
 		notifier:   notifier,
 		apiBaseURL: apiBaseURL,
 		apiKey:     apiKey,
 		webAppURL:  webAppURL,
+		openAIKey:  openAIKey,
 	}
 }
 
