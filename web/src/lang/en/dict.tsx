@@ -28,4 +28,8 @@ export const dict = {
 	'active_season': 'Active season {name}',
 	'show_more': 'Show more',
 	'big_season': 'Big Season',
+	'your_predictions': 'Your Predictions',
+	'win_1': 'Team 1',
+	'win_2': 'Team 2',
+	'draw': 'Draw',
 }

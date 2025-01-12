@@ -134,23 +134,17 @@ export default function MatchCard(props: MatchCardProps) {
 						 class="size-9 object-contain"
 				/>
 				<p class="max-w-20 text-xs text-foreground">{home_team.short_name}</p>
-				<Show when={status === 'scheduled' && home_odds}>
-					<div class="flex flex-row items-center space-x-1 text-xs text-muted-foreground">
-						<IconTrophy class="size-4 text-primary-foreground" />
-						<span>{home_odds.toFixed(2)}</span>
-					</div>
-				</Show>
 			</div>
 
 			<Show when={status === 'scheduled'}>
 				<div class="mb-1 flex flex-col items-center text-center justify-end self-stretch">
-					<span class="text-2xl font-bold text-center">
+					<span class="leading-none text-2xl font-bold text-center">
 						{timeToLocaleString(match_date, store.user?.language_code)}
 					</span>
 					<span class="text-xs text-center">
 						{formatDate(match_date, false, store.user?.language_code)}
 					</span>
-					<p class="mt-2 text-xs text-muted-foreground">
+					<p class="mt-1 text-xs text-muted-foreground">
 						{match.tournament}
 					</p>
 				</div>
@@ -186,12 +180,6 @@ export default function MatchCard(props: MatchCardProps) {
 					class="size-9 object-contain"
 				/>
 				<p class="text-xs text-foreground">{away_team.short_name}</p>
-				<Show when={status === 'scheduled' && away_odds}>
-					<div class="flex flex-row items-center space-x-1 text-xs text-muted-foreground">
-						<span class="material-symbols-rounded text-primary-foreground text-[16px]">trophy</span>
-						<span>{away_odds.toFixed(2)}</span>
-					</div>
-				</Show>
 			</div>
 		</div>
 	)

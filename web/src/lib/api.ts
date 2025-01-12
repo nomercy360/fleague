@@ -146,6 +146,8 @@ export type MatchResponse = {
 	home_odds: any
 	away_odds: any
 	draw_odds: any
+	away_team_results: string[]
+	home_team_results: string[]
 }
 
 export type PredictionResponse = {
@@ -207,4 +209,12 @@ export const fetchUpdateUser = async (user: any) => {
 		method: 'PUT',
 		body: JSON.stringify(user),
 	})
+}
+
+export const fetchMatchStats = async (matchId: number) => {
+	const { data } = await apiRequest(`/matches/${matchId}`, {
+		method: 'GET',
+	})
+
+	return data
 }

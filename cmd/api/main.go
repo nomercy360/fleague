@@ -336,6 +336,7 @@ func main() {
 	g.Use(echojwt.WithConfig(authCfg))
 
 	g.GET("/matches", a.ListMatches)
+	g.GET("/matches/:id", a.GetMatchByID)
 	g.POST("/predictions", a.SavePrediction)
 	g.GET("/predictions", a.GetUserPredictions)
 	g.GET("/leaderboard", a.GetLeaderboard)

@@ -25,7 +25,7 @@ const UserActivity = () => {
 	return (
 		<div class="px-3">
 			<p class="mb-1 px-2 text-lg font-semibold">
-				Your Predictions
+				{t('your_predictions')}
 			</p>
 			<div class="space-y-2">
 				<Show when={query.data && !query.isLoading}>

@@ -18,57 +18,6 @@ func getUserID(c echo.Context) string {
 	return claims.UID
 }
 
-func calculateWinLoss(matches []db.Match, teamID string) []string {
-	var results []string
-	for _, match := range matches {
-		if match.HomeTeamID == teamID {
-			if *match.HomeScore > *match.AwayScore {
-				results = append(results, "win")
-			} else {
-				results = append(results, "loss")
-			}
-		} else if match.AwayTeamID == teamID {
-			if *match.AwayScore > *match.HomeScore {
-				results = append(results, "win")
-			} else {
-				results = append(results, "loss")
-			}
-		}
-	}
-	return results
-}
-
-func (a API) ListMatches(c echo.Context) error {
-	ctx := c.Request().Context()
-	uid := getUserID(c)
-	matches, err := a.storage.GetActiveMatches(ctx, uid)
-
-	if err != nil {
-		return terrors.InternalServer(err, "failed to get active matches")
-	}
-
-	return c.JSON(http.StatusOK, matches)
-}
-
-func toMatchResponse(match db.Match, homeResults, awayResults []string) contract.MatchResponse {
-	return contract.MatchResponse{
-		ID:              match.ID,
-		Tournament:      match.Tournament,
-		HomeTeam:        match.HomeTeam,
-		AwayTeam:        match.AwayTeam,
-		MatchDate:       match.MatchDate,
-		Status:          match.Status,
-		AwayScore:       match.AwayScore,
-		HomeScore:       match.HomeScore,
-		Prediction:      match.Prediction,
-		HomeOdds:        match.HomeOdds,
-		DrawOdds:        match.DrawOdds,
-		AwayOdds:        match.AwayOdds,
-		HomeTeamResults: homeResults,
-		AwayTeamResults: awayResults,
-	}
-}
-
 func (a API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]contract.PredictionResponse, error) {
 	predictions, err := a.storage.GetPredictionsByUserID(ctx, uid, onlyCompleted)
 	if err != nil {

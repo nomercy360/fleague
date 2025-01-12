@@ -1,10 +1,11 @@
-import { createEffect, createSignal, Show } from 'solid-js'
-import { MatchResponse, PredictionRequest, PredictionResponse, saveMatchPrediction } from '~/lib/api'
+import { createEffect, createSignal, For, Show } from 'solid-js'
+import { fetchMatchStats, MatchResponse, PredictionRequest, PredictionResponse, saveMatchPrediction } from '~/lib/api'
 import { DrawerClose, DrawerContent, DrawerFooter } from '~/components/ui/drawer'
-import { Switch, SwitchControl, SwitchLabel, SwitchThumb } from '~/components/ui/switch'
 import { Button } from '~/components/ui/button'
 import { IconMinus, IconPlus } from '~/components/icons'
 import { cn, formatDate } from '~/lib/utils'
+import { useTranslations } from '~/lib/locale-context'
+import { createQuery } from '@tanstack/solid-query'
 
 
 interface ScoreboardProps {
@@ -44,6 +45,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setTeam2Score(null)
 		setIsExactScore(false)
 	}
+
+	const statsQuery = createQuery<MatchResponse>(() => ({
+		queryKey: ['match_stats', props.match.id],
+		queryFn: () => fetchMatchStats(props.match.id),
+		enabled: !!props.match.id,
+	}))
 
 	const onPredictionSave = async () => {
 		const prediction: PredictionRequest = {
@@ -89,17 +96,22 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setOutcome(null)
 	}
 
+	const { t } = useTranslations()
+
 	return (
-		<DrawerContent class="pb-3">
+		<DrawerContent class="pb-3 bg-card">
 			<div class="mx-auto w-full px-4">
 				<div class="flex flex-col items-center gap-4">
 					<div class="w-full justify-between flex flex-col items-start gap-2">
 						<div class="flex flex-row w-full justify-between items-center h-10">
-							<div class="flex flex-row items-center space-x-2">
-								<img src={props.match.home_team.crest_url} alt="" class="w-6" />
-								<p class="mt-2 text-base mb-2">
-									{props.match.home_team.short_name}
-								</p>
+							<div class="flex flex-row w-full justify-between items-center">
+								<div class="flex flex-row items-center space-x-2">
+									<img src={props.match.home_team.crest_url} alt="" class="w-6" />
+									<p class="mt-2 text-base mb-2">
+										{props.match.home_team.short_name}
+									</p>
+								</div>
+								<WinLoseStats results={statsQuery.data?.home_team_results ?? []} />
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
@@ -127,11 +139,14 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 							</Show>
 						</div>
 						<div class="flex flex-row w-full justify-between items-center h-10">
-							<div class="flex flex-row items-center space-x-2">
-								<img src={props.match.away_team.crest_url} alt="" class="w-6" />
-								<p class="mt-2 text-base mb-2">
-									{props.match.away_team.short_name}
-								</p>
+							<div class="flex flex-row w-full justify-between items-center">
+								<div class="flex flex-row items-center space-x-2">
+									<img src={props.match.away_team.crest_url} alt="" class="w-6" />
+									<p class="mt-2 text-base mb-2">
+										{props.match.away_team.short_name}
+									</p>
+								</div>
+								<WinLoseStats results={statsQuery.data?.away_team_results ?? []} />
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
@@ -168,32 +183,32 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'home' && 'bg-muted text-muted-foreground')}
+									class={cn(outcome() === 'home' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('home')}
 								>
-									Team 1
+									<span>{t('win_1')}</span>{props.match.home_odds}
 								</Button>
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'draw' && 'bg-muted text-muted-foreground')}
+									class={cn(outcome() === 'draw' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('draw')}
 								>
-									Draw
+									<span>{t('draw')}</span>{props.match.draw_odds}
 								</Button>
 								<Button
 									size="sm"
 									variant="outline"
-									class={cn(outcome() === 'away' && 'bg-muted text-muted-foreground')}
+									class={cn(outcome() === 'away' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('away')}
 								>
-									Team 2
+									{t('win_2')}
 								</Button>
 							</div>
 						</div>
 						<Button
 							size="sm"
-							class={cn(isExactScore() && 'bg-muted text-muted-foreground')}
+							class={cn(isExactScore() && 'bg-primary text-primary-foreground')}
 							variant="outline"
 							onClick={() => updateSwitch(!isExactScore())}
 						>
@@ -206,7 +221,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 				<DrawerClose>
 					<Button
 						size="default"
-						class="w-full"
+						class="w-full bg-accent text-accent-foreground"
 						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
 						onClick={onPredictionSave}
 					>
@@ -218,3 +233,21 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 	)
 }
 
+function WinLoseStats(props: { results: string[] }) {
+	return (
+		<div class="flex flex-row items-center justify-start gap-1">
+			<For each={props.results}>
+				{(result) => (
+					<div
+						class={cn('size-6 flex items-center justify-center rounded bg-primary-foreground text-primary-foreground text-xs font-medium', {
+							'bg-green-500': result === 'W',
+							'bg-red-500': result === 'L',
+						})}
+					>
+						{result}
+					</div>
+				)}
+			</For>
+		</div>
+	)
+}

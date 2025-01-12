@@ -29,6 +29,8 @@ export default function MatchesPage() {
 	const [activeSeason, setActiveSeason] = createSignal<Season | null>(null)
 
 	const [searchParams, setSearchParams] = useSearchParams()
+
+	console.log('Search params', searchParams.tab)
 	const navigate = useNavigate()
 
 	const [activeTab, setActiveTab] = createSignal(searchParams.tab || 'matches')
@@ -186,7 +188,8 @@ export default function MatchesPage() {
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data.monthly}>
 							{(entry) => (
-								<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'monthly')} type="monthly" />)}
+								<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'monthly')}
+																	tab="leaderboard" />)}
 						</For>
 					</Show>
 				</TabsContent>
@@ -194,7 +197,8 @@ export default function MatchesPage() {
 				<TabsContent value="big-season" class="pt-4 px-3 space-y-2 w-full overflow-y-scroll pb-[300px]">
 					<Show when={leaderboardQuery.data}>
 						<For each={leaderboardQuery.data.football}>
-							{(entry) => (<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'football')} type="football" />)}
+							{(entry) => (<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'football')}
+																						 tab="big-season" />)}
 						</For>
 					</Show>
 				</TabsContent>
@@ -207,7 +211,7 @@ export default function MatchesPage() {
 type LeaderBoardEntryProps = {
 	entry: any
 	position: number
-	type: string
+	tab: string
 }
 
 function LeaderBoardEntry(props: LeaderBoardEntryProps) {
@@ -215,7 +219,7 @@ function LeaderBoardEntry(props: LeaderBoardEntryProps) {
 		<Link
 			class="flex items-center justify-between h-12 px-3 bg-card rounded-2xl"
 			href={`/users/${props.entry.user.username}`}
-			state={{ from: `/matches?tab=${props.type}` }}
+			state={{ from: `/matches?tab=${props.tab}` }}
 		>
 			<div class="flex items-center">
 				<span class="w-4 text-center text-base font-semibold text-secondary-foreground">
@@ -261,6 +265,7 @@ type SeasonCardProps = {
 }
 
 function SeasonCard(props: SeasonCardProps) {
+	const { t } = useTranslations()
 	return (
 		<Dialog>
 			<DialogContent>
@@ -292,10 +297,10 @@ function SeasonCard(props: SeasonCardProps) {
 				<span class="text-primary material-symbols-rounded text-[32px]">
 					sports_soccer
 				</span>
-				<h1 class="text-primary-foreground text-2xl font-extrabold leading-none">
-					{props.type === 'monthly' ? `Active Season: ${props.season.name}` : `Big Season: ${props.season.name}`}
+				<h1 class="text-foreground text-2xl font-extrabold leading-none">
+					{props.type === 'monthly' ? t('active_season', { name: props.season.name }) : `${t('big_season')} ${props.season.name}`}
 				</h1>
-				<p class="text-sm text-muted-foreground text-center">
+				<p class="text-sm text-secondary-foreground text-center">
 					{props.type === 'monthly' ?
 						`Season ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`
 						: `Big Season is the same as the football season, ends on ${formatDate(props.season.end_date, false, store.user?.language_code)}`}

@@ -28,5 +28,9 @@ export const dict = {
 	'active_season': 'Активный сезон {{name}}',
 	'show_more': 'Показать больше',
 	'big_season': 'Большой сезон',
+	'your_predictions': 'Ваши прогнозы',
+	'win_1': 'П1',
+	'win_2': 'П2',
+	'draw': 'Ничья',
 }
 
