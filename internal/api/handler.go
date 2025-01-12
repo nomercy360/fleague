@@ -31,6 +31,7 @@ type storager interface {
 	ListTeams(ctx context.Context) ([]db.Team, error)
 	UpdateUserInformation(ctx context.Context, user db.User) error
 	GetUserRank(ctx context.Context, userID string) (int, error)
+	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 }
 
 type API struct {

@@ -111,7 +111,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 										{props.match.home_team.short_name}
 									</p>
 								</div>
-								<WinLoseStats results={statsQuery.data?.home_team_results ?? []} />
+								{/*<WinLoseStats results={statsQuery.data?.home_team_results ?? []} />*/}
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
@@ -146,7 +146,7 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 										{props.match.away_team.short_name}
 									</p>
 								</div>
-								<WinLoseStats results={statsQuery.data?.away_team_results ?? []} />
+								{/*<WinLoseStats results={statsQuery.data?.away_team_results ?? []} />*/}
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
