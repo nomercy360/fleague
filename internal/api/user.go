@@ -91,6 +91,7 @@ func (a API) GetUserInfo(c echo.Context) error {
 			FavoriteTeam:       user.FavoriteTeam,
 			CurrentWinStreak:   user.CurrentWinStreak,
 			LongestWinStreak:   user.LongestWinStreak,
+			Badges:             user.Badges,
 		},
 		Predictions: userPredictions,
 	}

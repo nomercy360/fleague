@@ -115,7 +115,20 @@ CREATE TABLE notifications
 );
 
 
--- ALTER TABLE matches
---     ADD COLUMN updated_at DATETIME;
--- ALTER TABLE matches
---     ADD COLUMN created_at DATETIME;
+CREATE TABLE badges
+(
+    id    TEXT PRIMARY KEY,
+    name  TEXT NOT NULL UNIQUE,
+    color TEXT,
+    icon  TEXT
+);
+
+CREATE TABLE user_badges
+(
+    user_id    TEXT NOT NULL,
+    badge_id   TEXT NOT NULL,
+    awarded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, badge_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (badge_id) REFERENCES badges (id) ON DELETE CASCADE
+);

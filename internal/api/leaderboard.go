@@ -37,8 +37,8 @@ func (a API) GetLeaderboard(c echo.Context) error {
 			return nil, terrors.InternalServer(err, "failed to get leaderboard")
 		}
 
-		var leaderboard []contract.LeaderboardEntry
-		for _, entry := range res {
+		leaderboard := make([]contract.LeaderboardEntry, len(res))
+		for idx, entry := range res {
 			user, err := a.storage.GetUserByID(entry.UserID)
 			if err != nil && !errors.Is(err, db.ErrNotFound) {
 				return nil, terrors.InternalServer(err, "failed to get user")
@@ -55,14 +55,15 @@ func (a API) GetLeaderboard(c echo.Context) error {
 				FavoriteTeam:     user.FavoriteTeam,
 				CurrentWinStreak: user.CurrentWinStreak,
 				LongestWinStreak: user.LongestWinStreak,
+				Badges:           user.Badges,
 			}
 
-			leaderboard = append(leaderboard, contract.LeaderboardEntry{
+			leaderboard[idx] = contract.LeaderboardEntry{
 				User:     userProfile,
 				UserID:   entry.UserID,
 				Points:   entry.Points,
 				SeasonID: entry.SeasonID,
-			})
+			}
 		}
 
 		// Sort leaderboard by points

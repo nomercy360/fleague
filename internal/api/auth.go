@@ -153,6 +153,7 @@ func (a API) TelegramAuth(c echo.Context) error {
 		FavoriteTeam:       user.FavoriteTeam,
 		CurrentWinStreak:   user.CurrentWinStreak,
 		LongestWinStreak:   user.LongestWinStreak,
+		Badges:             user.Badges,
 	}
 
 	resp := &contract.UserAuthResponse{

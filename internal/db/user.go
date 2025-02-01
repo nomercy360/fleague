@@ -12,48 +12,53 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID                 string        `db:"id"`
-	FirstName          *string       `db:"first_name"`
-	LastName           *string       `db:"last_name"`
-	Username           string        `db:"username"`
-	AvatarURL          *string       `db:"avatar_url"`
-	LanguageCode       *string       `db:"language_code"`
-	ChatID             int64         `db:"chat_id"`
-	ReferredBy         *string       `db:"referred_by"`
-	CreatedAt          time.Time     `db:"created_at"`
-	TotalPoints        int           `db:"total_points"`
-	TotalPredictions   int           `db:"total_predictions"`
-	CorrectPredictions int           `db:"correct_predictions"`
-	CurrentWinStreak   int           `db:"current_win_streak"`
-	LongestWinStreak   int           `db:"longest_win_streak"`
-	FavoriteTeamID     *string       `db:"favorite_team_id"`
-	FavoriteTeam       *FavoriteTeam `db:"favorite_team"`
+	ID                 string    `db:"id"`
+	FirstName          *string   `db:"first_name"`
+	LastName           *string   `db:"last_name"`
+	Username           string    `db:"username"`
+	AvatarURL          *string   `db:"avatar_url"`
+	LanguageCode       *string   `db:"language_code"`
+	ChatID             int64     `db:"chat_id"`
+	ReferredBy         *string   `db:"referred_by"`
+	CreatedAt          time.Time `db:"created_at"`
+	TotalPoints        int       `db:"total_points"`
+	TotalPredictions   int       `db:"total_predictions"`
+	CorrectPredictions int       `db:"correct_predictions"`
+	CurrentWinStreak   int       `db:"current_win_streak"`
+	LongestWinStreak   int       `db:"longest_win_streak"`
+	FavoriteTeamID     *string   `db:"favorite_team_id"`
+	FavoriteTeam       *Team     `db:"favorite_team"`
+	Badges             []Badge   `db:"badges"`
 }
 
-type FavoriteTeam Team
+type Badge struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	Icon      string    `json:"icon"`
+	AwardedAt time.Time `json:"awarded_at"`
+}
 
-func (ft *FavoriteTeam) Scan(src interface{}) error {
+func UnmarshalJSONToSlice[T any](src interface{}) ([]T, error) {
 	var source []byte
-	switch src := src.(type) {
+
+	switch s := src.(type) {
 	case []byte:
-		source = src
+		source = s
 	case string:
-		source = []byte(src)
+		source = []byte(s)
 	case nil:
-		return nil
+		return []T{}, nil
 	default:
-		return errors.New("unsupported type")
+		return nil, fmt.Errorf("unsupported type: %T", s)
 	}
 
-	if len(source) == 0 {
-		return nil
+	var result []T
+	if err := json.Unmarshal(source, &result); err != nil {
+		return nil, fmt.Errorf("error unmarshalling JSON: %w", err)
 	}
 
-	if err := json.Unmarshal(source, ft); err != nil {
-		return err
-	}
-
-	return nil
+	return result, nil
 }
 
 func IsNoRowsError(err error) bool {
@@ -86,38 +91,51 @@ func (s *Storage) CreateUser(user User) error {
 }
 
 func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
-	query := fmt.Sprintf(`
-			SELECT u.id,
-				 u.first_name,
-				 u.last_name,
-				 u.username,
-				 u.language_code,
-				 u.chat_id,
-				 u.created_at,
-				 u.total_points,
-				 u.total_predictions,
-				 u.correct_predictions,
-				 u.avatar_url,
-				 u.referred_by,
-				 u.current_win_streak,
-				 u.longest_win_streak,
-				 CASE
-					 WHEN u.favorite_team_id IS NOT NULL THEN
-						 json_object(
-								 'id', t.id,
-								 'name', t.name,
-								 'short_name', t.short_name,
-								 'crest_url', t.crest_url,
-								 'country', t.country,
-								 'abbreviation', t.abbreviation
-						 )
-				 END                                  AS favorite_team
-			  FROM users u
-					   LEFT JOIN teams t ON u.favorite_team_id = t.id
-			WHERE %s`, condition)
+	query := `SELECT 
+				u.id,
+				u.first_name,
+				u.last_name,
+				u.username,
+				u.language_code,
+				u.chat_id,
+				u.created_at,
+				u.total_points,
+				u.total_predictions,
+				u.correct_predictions,
+				u.avatar_url,
+				u.referred_by,
+				u.current_win_streak,
+				u.longest_win_streak,
+				CASE 
+					WHEN u.favorite_team_id IS NOT NULL THEN 
+						json_object(
+							'id', t.id,
+							'name', t.name,
+							'short_name', t.short_name,
+							'crest_url', t.crest_url,
+							'country', t.country,
+							'abbreviation', t.abbreviation
+						)
+				END AS favorite_team,
+				json_group_array(
+					DISTINCT json_object(
+						'id', b.id,
+						'name', b.name,
+						'awarded_at', strftime('%Y-%m-%dT%H:%M:%SZ', ub.awarded_at),
+						'color', b.color,
+						'icon', b.icon
+					)
+				) FILTER (WHERE b.id IS NOT NULL) AS badges
+			FROM users u
+			LEFT JOIN teams t ON u.favorite_team_id = t.id
+			LEFT JOIN user_badges ub ON u.id = ub.user_id
+			LEFT JOIN badges b ON ub.badge_id = b.id
+			WHERE ` + fmt.Sprintf("%s GROUP BY u.id", condition)
 
 	var user User
 	row := s.db.QueryRowContext(context.Background(), query, value)
+	var badgeJSON string
+	var favoriteTeamJSON *string
 
 	if err := row.Scan(
 		&user.ID,
@@ -134,11 +152,26 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 		&user.ReferredBy,
 		&user.CurrentWinStreak,
 		&user.LongestWinStreak,
-		&user.FavoriteTeam,
+		&favoriteTeamJSON,
+		&badgeJSON,
 	); err != nil && IsNoRowsError(err) {
 		return User{}, ErrNotFound
 	} else if err != nil {
 		return User{}, err
+	}
+
+	var err error
+	user.Badges, err = UnmarshalJSONToSlice[Badge](badgeJSON)
+	if err != nil {
+		return user, err
+	}
+
+	if favoriteTeamJSON != nil {
+		var team Team
+		if err := json.Unmarshal([]byte(*favoriteTeamJSON), &team); err != nil {
+			return user, err
+		}
+		user.FavoriteTeam = &team
 	}
 
 	return user, nil

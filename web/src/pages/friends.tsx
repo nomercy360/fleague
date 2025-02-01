@@ -45,7 +45,7 @@ export default function FriendsPage() {
 
 	createEffect(() => {
 		if (referrals.data) {
-			const totalPoints = referrals.data.reduce((acc) => acc + 10, 0)
+			const totalPoints = referrals.data.reduce((acc: any) => acc + 10, 0)
 			setPoints(totalPoints)
 		}
 	})

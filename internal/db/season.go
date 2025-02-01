@@ -31,7 +31,7 @@ func (s *Storage) MarkSeasonInactive(ctx context.Context, seasonID string) error
 func (s *Storage) CreateSeason(ctx context.Context, season Season) error {
 	query := `
 		INSERT INTO seasons (id, name, start_date, end_date, is_active, type)
-		VALUES (?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := s.db.ExecContext(ctx, query, season.ID, season.Name, season.StartDate, season.EndDate, season.IsActive, season.Type)
 	return err
 }
@@ -39,7 +39,7 @@ func (s *Storage) CreateSeason(ctx context.Context, season Season) error {
 func (s *Storage) CountSeasons(ctx context.Context, t string) (int, error) {
 	query := "SELECT COUNT(*) FROM seasons WHERE type = ?"
 	var count int
-	err := s.db.QueryRowContext(ctx, query).Scan(&count)
+	err := s.db.QueryRowContext(ctx, query, t).Scan(&count)
 	return count, err
 }
 

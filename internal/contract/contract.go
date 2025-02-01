@@ -17,22 +17,23 @@ type UserAuthResponse struct {
 }
 
 type UserResponse struct {
-	ID                 string           `json:"id"`
-	FirstName          *string          `json:"first_name"`
-	LastName           *string          `json:"last_name"`
-	Username           string           `json:"username"`
-	ChatID             int64            `json:"chat_id"`
-	LanguageCode       *string          `json:"language_code"`
-	CreatedAt          time.Time        `json:"created_at"`
-	TotalPoints        int              `json:"total_points"`
-	TotalPredictions   int              `json:"total_predictions"`
-	CorrectPredictions int              `json:"correct_predictions"`
-	AvatarURL          *string          `json:"avatar_url"`
-	ReferredBy         *string          `json:"referred_by"`
-	GlobalRank         int              `json:"global_rank"`
-	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
-	CurrentWinStreak   int              `json:"current_win_streak"`
-	LongestWinStreak   int              `json:"longest_win_streak"`
+	ID                 string     `json:"id"`
+	FirstName          *string    `json:"first_name"`
+	LastName           *string    `json:"last_name"`
+	Username           string     `json:"username"`
+	ChatID             int64      `json:"chat_id"`
+	LanguageCode       *string    `json:"language_code"`
+	CreatedAt          time.Time  `json:"created_at"`
+	TotalPoints        int        `json:"total_points"`
+	TotalPredictions   int        `json:"total_predictions"`
+	CorrectPredictions int        `json:"correct_predictions"`
+	AvatarURL          *string    `json:"avatar_url"`
+	ReferredBy         *string    `json:"referred_by"`
+	GlobalRank         int        `json:"global_rank"`
+	FavoriteTeam       *db.Team   `json:"favorite_team"`
+	CurrentWinStreak   int        `json:"current_win_streak"`
+	LongestWinStreak   int        `json:"longest_win_streak"`
+	Badges             []db.Badge `json:"badges"`
 }
 
 type PredictionResponse struct {
@@ -92,18 +93,19 @@ type MatchResponse struct {
 }
 
 type UserProfile struct {
-	ID                 string           `json:"id"`
-	FirstName          *string          `json:"first_name"`
-	LastName           *string          `json:"last_name"`
-	Username           string           `json:"username"`
-	AvatarURL          *string          `json:"avatar_url"`
-	TotalPoints        int              `json:"total_points"`
-	TotalPredictions   int              `json:"total_predictions"`
-	CorrectPredictions int              `json:"correct_predictions"`
-	GlobalRank         int              `json:"global_rank"`
-	FavoriteTeam       *db.FavoriteTeam `json:"favorite_team"`
-	CurrentWinStreak   int              `json:"current_win_streak"`
-	LongestWinStreak   int              `json:"longest_win_streak"`
+	ID                 string     `json:"id"`
+	FirstName          *string    `json:"first_name"`
+	LastName           *string    `json:"last_name"`
+	Username           string     `json:"username"`
+	AvatarURL          *string    `json:"avatar_url"`
+	TotalPoints        int        `json:"total_points"`
+	TotalPredictions   int        `json:"total_predictions"`
+	CorrectPredictions int        `json:"correct_predictions"`
+	GlobalRank         int        `json:"global_rank"`
+	FavoriteTeam       *db.Team   `json:"favorite_team"`
+	CurrentWinStreak   int        `json:"current_win_streak"`
+	LongestWinStreak   int        `json:"longest_win_streak"`
+	Badges             []db.Badge `json:"badges"`
 }
 
 type LeaderboardEntry struct {
