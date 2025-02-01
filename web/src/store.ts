@@ -26,6 +26,13 @@ type User = {
 	}
 	current_win_streak: number
 	longest_win_streak: number
+	badges: {
+		id: number
+		name: string
+		icon: string
+		color: string
+		awarded_at: string
+	}[]
 }
 
 export const [store, setStore] = createStore<{

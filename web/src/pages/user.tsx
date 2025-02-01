@@ -98,6 +98,21 @@ export default function UserProfilePage() {
 						</Show>
 					</div>
 					<p class="text-sm font-medium text-muted-foreground">@{userInfoQuery.data.user.username}</p>
+					<Show when={userInfoQuery.data.user?.badges}>
+						<div class="mt-3 flex flex-row flex-wrap gap-2 items-center justify-center">
+							<For each={userInfoQuery.data.user.badges}>
+								{(badge) => (
+									<div class="bg-secondary rounded-2xl h-7 px-2 flex items-center gap-1">
+										<span style={{ color: badge.color }}
+													class="material-symbols-rounded text-[16px] text-primary-foreground">
+											{badge.icon}
+										</span>
+										<span class="text-xs text-muted-foreground">{badge.name}</span>
+									</div>
+								)}
+							</For>
+						</div>
+					</Show>
 					<div class="grid grid-cols-2 gap-2 mt-6 w-full px-2">
 						<ProfileStat
 							icon="check_circle"

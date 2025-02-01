@@ -233,14 +233,22 @@ function LeaderBoardEntry(props: LeaderBoardEntryProps) {
 				<p class="text-base font-semibold ml-2">
 					{props.entry.user?.first_name} {props.entry.user?.last_name}
 				</p>
-				<Show when={props.entry.user?.favorite_team}>
+				<Show when={props.entry.user?.badges?.length > 0}>
+					<div class="ml-1 flex items-center justify-center size-6 rounded-full bg-secondary"
+							 style={{ color: props.entry.user?.badges[0].color }}>
+						<span class="material-symbols-rounded text-[16px]">
+							{props.entry.user?.badges[0].icon}
+						</span>
+					</div>
+				</Show>
+				<Show when={!props.entry.user?.badges?.length && props.entry.user?.favorite_team}>
 					<img
 						src={props.entry.user?.favorite_team?.crest_url}
 						alt={props.entry.user?.favorite_team?.short_name}
 						class="size-4 ml-1"
 					/>
 				</Show>
-				<Show when={props.entry.user?.current_win_streak >= 3}>
+				<Show when={!props.entry.user?.badges?.length && props.entry.user?.current_win_streak >= 3}>
 					<span class="text-xs text-orange-500 ml-1">
 						{props.entry.user?.current_win_streak}
 					</span>

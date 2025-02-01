@@ -26,7 +26,7 @@ export const dict = {
 	'points': 'Points',
 	'favorite_team_icon': 'Favorite team',
 	'match_duration': '{days}d {hours}h {minutes}m',
-	'active_season': 'Active season {name}',
+	'active_season': 'Active season {{ name }}',
 	'show_more': 'Show more',
 	'big_season': 'Big Season',
 	'your_predictions': 'Your Predictions',
