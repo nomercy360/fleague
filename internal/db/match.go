@@ -330,15 +330,16 @@ func (s *Storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Con
 	return matches, nil
 }
 
-func (s *Storage) GetTodayMatchesForTeam(ctx context.Context, teamID string) ([]Match, error) {
+func (s *Storage) GetMatchesForTeam(ctx context.Context, teamID string, hoursAhead int) ([]Match, error) {
 	query := `
         SELECT id, tournament, home_team_id, away_team_id, match_date, status
         FROM matches
         WHERE (home_team_id = ? OR away_team_id = ?)
         AND status = ?
-        AND DATE(match_date) = DATE('now')
+        AND match_date BETWEEN DATETIME('now') AND DATETIME('now', ? || ' hours')
     `
-	rows, err := s.db.QueryContext(ctx, query, teamID, teamID, MatchStatusScheduled)
+
+	rows, err := s.db.QueryContext(ctx, query, teamID, teamID, MatchStatusScheduled, hoursAhead)
 	if err != nil {
 		return nil, err
 	}
@@ -353,4 +354,37 @@ func (s *Storage) GetTodayMatchesForTeam(ctx context.Context, teamID string) ([]
 		matches = append(matches, match)
 	}
 	return matches, nil
+}
+
+type PredictionStats struct {
+	Home float64 `json:"home"`
+	Draw float64 `json:"draw"`
+	Away float64 `json:"away"`
+}
+
+func (s *Storage) GetPredictionStats(ctx context.Context, matchID string) (PredictionStats, error) {
+	query := `
+        SELECT
+            SUM(CASE WHEN predicted_outcome = 'home' THEN 1 ELSE 0 END) AS home,
+            SUM(CASE WHEN predicted_outcome = 'draw' THEN 1 ELSE 0 END) AS draw,
+            SUM(CASE WHEN predicted_outcome = 'away' THEN 1 ELSE 0 END) AS away,
+            COUNT(*) AS total
+        FROM predictions
+        WHERE match_id = ?
+    `
+	var home, draw, away, total float64
+	err := s.db.QueryRowContext(ctx, query, matchID).Scan(&home, &draw, &away, &total)
+	if err != nil {
+		return PredictionStats{}, err
+	}
+
+	if total == 0 {
+		return PredictionStats{}, nil
+	}
+
+	return PredictionStats{
+		Home: (home / total) * 100,
+		Draw: (draw / total) * 100,
+		Away: (away / total) * 100,
+	}, nil
 }

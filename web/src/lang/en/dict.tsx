@@ -2,7 +2,7 @@ export const dict = {
 	'share': 'Share',
 	'edit_profile': 'Edit profile',
 	'correct': 'Correct',
-	'rank': 'Rank',
+	'rank': 'Monthly Rank',
 	'points_earned': 'Points Earned',
 	'max_streak': 'Max Streak',
 	'check_out_profile': 'Check out {first_name}\'s profile',

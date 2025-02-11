@@ -2,7 +2,7 @@ export const dict = {
 	'share': 'Поделиться',
 	'edit_profile': 'Профиль',
 	'correct': 'Правильные',
-	'rank': 'Ранг',
+	'rank': 'Место в рейтинге',
 	'points_earned': 'Заработанные очки',
 	'max_streak': 'Макс. серия',
 	'check_out_profile': 'Посмотрите профиль {first_name}',

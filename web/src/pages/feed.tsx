@@ -125,7 +125,7 @@ export default function FeedPage() {
 					/>
 					<ProfileStat
 						icon="leaderboard"
-						value={`#${store.user?.global_rank}`}
+						value={`#${store.user?.ranks.find((r) => r.season_type === 'monthly')?.position}`}
 						color="#3498DB"
 						label={t('rank')}
 					/>

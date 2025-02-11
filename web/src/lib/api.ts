@@ -148,6 +148,11 @@ export type MatchResponse = {
 	draw_odds: any
 	away_team_results: string[]
 	home_team_results: string[]
+	prediction_stats: {
+		home: number
+		draw: number
+		away: number
+	}
 }
 
 export type PredictionResponse = {
@@ -212,6 +217,14 @@ export const fetchUpdateUser = async (user: any) => {
 }
 
 export const fetchMatchStats = async (matchId: number) => {
+	const { data } = await apiRequest(`/matches/${matchId}`, {
+		method: 'GET',
+	})
+
+	return data
+}
+
+export const fetchMatchByID = async (matchId: string) => {
 	const { data } = await apiRequest(`/matches/${matchId}`, {
 		method: 'GET',
 	})

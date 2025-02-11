@@ -1,9 +1,9 @@
-import { createEffect, createSignal, For, Show } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, Show } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { fetchActiveSeasons, fetchLeaderboard, fetchMatches, Season } from '~/lib/api'
 
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
-import { formatDate } from '~/lib/utils'
+import { cn, formatDate } from '~/lib/utils'
 import { queryClient, setShowCommunityPopup, showCommunityPopup } from '~/App'
 import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
@@ -20,7 +20,7 @@ import {
 	DialogTrigger,
 } from '~/components/ui/dialog'
 import { useTranslations } from '~/lib/locale-context'
-import { store } from '~/store'
+import { getUserLeaderboardPoints, getUserLeaderboardPosition, store } from '~/store'
 import { useNavigate, useSearchParams } from '@solidjs/router'
 
 export default function MatchesPage() {
@@ -87,6 +87,11 @@ export default function MatchesPage() {
 	const handleTabChange = (tab: string) => {
 		setActiveTab(tab)
 		setSearchParams({ tab }) // Update query parameter
+	}
+
+	const isUserInLeaderboard = (userId: string, type: 'monthly' | 'football') => {
+		const leaderboard = type === 'monthly' ? leaderboardQuery.data.monthly : leaderboardQuery.data.football
+		return leaderboard.some((entry: any) => entry.user_id === userId)
 	}
 
 	return (
@@ -191,6 +196,13 @@ export default function MatchesPage() {
 								<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'monthly')}
 																	tab="leaderboard" />)}
 						</For>
+						<Show when={!isUserInLeaderboard(store.user.id, 'monthly')}>
+							<LeaderBoardEntry entry={{ user: store.user, points: getUserLeaderboardPoints('monthly') }}
+																position={getUserLeaderboardPosition('monthly')}
+																tab="leaderboard"
+																type="virtual" />
+
+						</Show>
 					</Show>
 				</TabsContent>
 
@@ -200,6 +212,12 @@ export default function MatchesPage() {
 							{(entry) => (<LeaderBoardEntry entry={entry} position={getUserPosition(entry.user_id, 'football')}
 																						 tab="big-season" />)}
 						</For>
+						<Show when={!isUserInLeaderboard(store.user.id, 'football')}>
+							<LeaderBoardEntry entry={{ user: store.user, points: getUserLeaderboardPoints('football') }}
+																position={getUserLeaderboardPosition('football')}
+																tab="big-season"
+																type="virtual" />
+						</Show>
 					</Show>
 				</TabsContent>
 			</Tabs>
@@ -212,6 +230,7 @@ type LeaderBoardEntryProps = {
 	entry: any
 	position: number
 	tab: string
+	type?: string
 }
 
 function LeaderBoardEntry(props: LeaderBoardEntryProps) {
@@ -222,13 +241,14 @@ function LeaderBoardEntry(props: LeaderBoardEntryProps) {
 			state={{ from: `/matches?tab=${props.tab}` }}
 		>
 			<div class="flex items-center">
-				<span class="w-4 text-center text-base font-semibold text-secondary-foreground">
+				<span
+					class={cn('w-4 text-center text-base font-semibold', props.type === 'virtual' ? 'text-primary-foreground' : 'text-muted-foreground')}>
 					{props.position}
 				</span>
 				<img
 					src={props.entry.user.avatar_url}
 					alt="User avatar"
-					class="ml-4 size-6 rounded-full object-cover"
+					class={cn('ml-3 rounded-full object-cover', props.type === 'virtual' ? 'size-7' : 'size-6')}
 				/>
 				<p class="text-base font-semibold ml-2">
 					{props.entry.user?.first_name} {props.entry.user?.last_name}

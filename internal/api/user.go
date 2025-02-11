@@ -42,7 +42,7 @@ func (a API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted 
 			PointsAwarded:      prediction.PointsAwarded,
 			CreatedAt:          prediction.CreatedAt,
 			CompletedAt:        prediction.CompletedAt,
-			Match:              toMatchResponse(match, nil, nil),
+			Match:              toMatchResponse(match),
 		})
 	}
 
@@ -72,7 +72,7 @@ func (a API) GetUserInfo(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get user predictions")
 	}
 
-	rank, err := a.storage.GetUserRank(ctx, user.ID)
+	ranks, err := a.storage.GetUserRank(ctx, user.ID)
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user rank")
 	}
@@ -87,7 +87,7 @@ func (a API) GetUserInfo(c echo.Context) error {
 			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
-			GlobalRank:         rank,
+			Ranks:              ranks,
 			FavoriteTeam:       user.FavoriteTeam,
 			CurrentWinStreak:   user.CurrentWinStreak,
 			LongestWinStreak:   user.LongestWinStreak,

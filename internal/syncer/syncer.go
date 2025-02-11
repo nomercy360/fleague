@@ -29,7 +29,7 @@ type storager interface {
 	MarkSeasonInactive(ctx context.Context, seasonID string) error
 	CreateSeason(ctx context.Context, season db.Season) error
 	CountSeasons(ctx context.Context, seasonType string) (int, error)
-	GetTodayMatchesForTeam(ctx context.Context, teamID string) ([]db.Match, error)
+	GetMatchesForTeam(ctx context.Context, teamID string, hoursAhead int) ([]db.Match, error)
 	GetAllUsers(ctx context.Context) ([]db.User, error)
 	GetWeeklyRecap(ctx context.Context, userID string) (db.WeeklyRecap, error)
 	HasNotificationBeenSent(ctx context.Context, userID, notificationType, relatedID string) (bool, error)
@@ -40,14 +40,17 @@ type storager interface {
 	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 }
-
+type Config struct {
+	APIBaseURL      string
+	APIKey          string
+	WebAppURL       string
+	OpenAIKey       string
+	ImagePreviewURL string
+}
 type Syncer struct {
-	storage    storager
-	notifier   noifier
-	apiBaseURL string
-	apiKey     string
-	webAppURL  string
-	openAIKey  string
+	storage  storager
+	notifier noifier
+	cfg      Config
 }
 
 type APIMatch struct {
@@ -119,6 +122,7 @@ type APIMatch struct {
 
 type noifier interface {
 	SendTextNotification(params contract.SendNotificationParams) error
+	SendPhotoNotification(params contract.SendNotificationParams) error
 }
 
 type APIResponse struct {
@@ -126,14 +130,11 @@ type APIResponse struct {
 }
 
 // NewSyncer creates a new instance of the syncer
-func NewSyncer(storage storager, notifier noifier, webAppURL, apiBaseURL, apiKey, openAIKey string) *Syncer {
+func NewSyncer(storage storager, notifier noifier, cfg Config) *Syncer {
 	return &Syncer{
-		storage:    storage,
-		notifier:   notifier,
-		apiBaseURL: apiBaseURL,
-		apiKey:     apiKey,
-		webAppURL:  webAppURL,
-		openAIKey:  openAIKey,
+		storage:  storage,
+		notifier: notifier,
+		cfg:      cfg,
 	}
 }
 
@@ -197,11 +198,11 @@ func executeWithRateLimit(ctx context.Context, client *http.Client, req *http.Re
 
 func (s *Syncer) fetchAPIData(ctx context.Context, endpoint string, lastRequestTime *time.Time, result interface{}) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s%s", s.apiBaseURL, endpoint), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s%s", s.cfg.APIBaseURL, endpoint), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("X-Auth-Token", s.apiKey)
+	req.Header.Set("X-Auth-Token", s.cfg.APIKey)
 
 	resp, err := executeWithRateLimit(ctx, client, req, 10, lastRequestTime)
 	if err != nil {

@@ -1,10 +1,17 @@
 package syncer
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-telegram/bot"
+	"github.com/user/project/internal/db"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/user/project/internal/contract"
@@ -61,6 +68,27 @@ func (s *Syncer) SendWeeklyRecap(ctx context.Context) error {
 	return nil
 }
 
+func generateMatchReminderText(user db.User, homeTeam db.Team, awayTeam db.Team) string {
+	messages := map[string]string{
+		"ru": fmt.Sprintf(
+			"⚽ Играет ваш любимый клуб!\n\nСделайте прогноз и зарабатывайте очки! 🎯",
+		),
+		"en": fmt.Sprintf(
+			"⚽ Your favorite team is playing!\n\nMake your prediction and earn points! 🎯",
+		),
+	}
+
+	lang := "en"
+	if user.LanguageCode != nil {
+		lang = *user.LanguageCode
+	}
+
+	if text, exists := messages[lang]; exists {
+		return text
+	}
+	return messages["en"]
+}
+
 func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 	users, err := s.storage.GetAllUsersWithFavoriteTeam(ctx)
 	if err != nil {
@@ -72,7 +100,7 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 			continue
 		}
 
-		matches, err := s.storage.GetTodayMatchesForTeam(ctx, *user.FavoriteTeamID)
+		matches, err := s.storage.GetMatchesForTeam(ctx, *user.FavoriteTeamID, 6)
 		if err != nil {
 			log.Printf("Failed to fetch matches for user %s: %v", user.ID, err)
 			continue
@@ -94,14 +122,18 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 				return err
 			}
 
-			message := fmt.Sprintf("📅 Your favorite team %s is playing today against %s at %s.",
-				homeTeam.Name, awayTeam.Name, match.MatchDate.Format("15:04"))
+			imgData, err := fetchPreviewImage(s.cfg.ImagePreviewURL, match, homeTeam, awayTeam)
+			if err != nil {
+				log.Printf("Failed to fetch preview image for match %s: %v", match.ID, err)
+				continue
+			}
 
-			err = s.notifier.SendTextNotification(contract.SendNotificationParams{
+			err = s.notifier.SendPhotoNotification(contract.SendNotificationParams{
+				Image:      imgData,
 				ChatID:     user.ChatID,
-				Message:    bot.EscapeMarkdown(message),
-				WebAppURL:  fmt.Sprintf("%s/m_%s", s.webAppURL, match.ID),
-				ButtonText: "Make Prediction",
+				Message:    bot.EscapeMarkdown(generateMatchReminderText(user, homeTeam, awayTeam)),
+				WebAppURL:  fmt.Sprintf("%s/matches/%s", s.cfg.WebAppURL, match.ID),
+				ButtonText: "Make your prediction",
 			})
 
 			if err == nil {
@@ -116,4 +148,68 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type ImageRequest struct {
+	Tournament string    `json:"tournament"`
+	HomeTeam   string    `json:"homeTeam"`
+	AwayTeam   string    `json:"awayTeam"`
+	MatchDate  time.Time `json:"matchDate"`
+	HomeCrest  string    `json:"homeCrest"`
+	AwayCrest  string    `json:"awayCrest"`
+}
+
+func fetchPreviewImage(baseUrl string, match db.Match, homeTeam db.Team, awayTeam db.Team) ([]byte, error) {
+	u, err := url.Parse(baseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Path += "/api/football-card"
+
+	body := ImageRequest{
+		Tournament: match.Tournament,
+		HomeTeam:   homeTeam.ShortName,
+		AwayTeam:   awayTeam.ShortName,
+		MatchDate:  match.MatchDate,
+		HomeCrest:  homeTeam.CrestURL,
+		AwayCrest:  awayTeam.CrestURL,
+	}
+
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	httpClient := http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Printf("Failed to download image: %s", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to download image, got status code: %d", resp.StatusCode)
+		return nil, errors.New(fmt.Sprintf("failed to download image, status code: %d", resp.StatusCode))
+	}
+
+	imgData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read image data: %s", err)
+		return nil, err
+	}
+
+	return imgData, nil
 }

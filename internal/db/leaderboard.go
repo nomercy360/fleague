@@ -10,7 +10,7 @@ func (s *Storage) GetLeaderboard(ctx context.Context, seasonID string) ([]Leader
             points
         FROM leaderboards
         WHERE season_id = ?
-        ORDER BY points DESC LIMIT 100`
+        ORDER BY points DESC LIMIT 10`
 
 	rows, err := s.db.QueryContext(ctx, query, seasonID)
 	if err != nil {
@@ -45,31 +45,54 @@ func (s *Storage) UpdateUserLeaderboardPoints(ctx context.Context, userID, seaso
 	return err
 }
 
-func (s *Storage) GetUserRank(ctx context.Context, userID string) (int, error) {
+type Rank struct {
+	SeasonID   string `db:"season_id" json:"season_id"`
+	Position   int    `db:"position" json:"position"`
+	Points     int    `db:"points" json:"points"`
+	SeasonType string `db:"season_type" json:"season_type"`
+}
+
+func (s *Storage) GetUserRank(ctx context.Context, userID string) ([]Rank, error) {
 	query := `
-		WITH ranked_leaderboard AS (
+		WITH active_seasons AS (
+			SELECT id, type FROM seasons WHERE is_active = 1
+		), ranked_leaderboard AS (
 			SELECT
-				user_id,
-				points,
-				RANK() OVER (ORDER BY points DESC) AS position
-			FROM leaderboards
-			WHERE season_id = (
-				SELECT id
-				FROM seasons
-				WHERE is_active = 1
-				LIMIT 1
-			)
+				l.season_id,
+				l.user_id,
+				l.points,
+				RANK() OVER (PARTITION BY l.season_id ORDER BY l.points DESC) AS position,
+				s.type
+			FROM leaderboards l
+			JOIN active_seasons s ON l.season_id = s.id
 		)
-		SELECT position
+		SELECT season_id, position, points, type AS season_type
 		FROM ranked_leaderboard
 		WHERE user_id = ?`
 
-	var rank int
-	if err := s.db.QueryRowContext(ctx, query, userID).Scan(&rank); err != nil && IsNoRowsError(err) {
-		return 0, nil
-	} else if err != nil {
-		return 0, err
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ranks []Rank
+	for rows.Next() {
+		var rank Rank
+		if err := rows.Scan(
+			&rank.SeasonID,
+			&rank.Position,
+			&rank.Points,
+			&rank.SeasonType,
+		); err != nil {
+			return nil, err
+		}
+		ranks = append(ranks, rank)
 	}
 
-	return rank, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return ranks, nil
 }

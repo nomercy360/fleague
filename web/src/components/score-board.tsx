@@ -22,6 +22,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 
 	const [isExactScore, setIsExactScore] = createSignal(false)
 
+	const predictionStats = () => props.match.prediction_stats ?? { home: 0, draw: 0, away: 0 }
+
 	const increment = (setScore: (value: number) => void) => {
 		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 		setScore((prev) => prev + 1)
@@ -45,12 +47,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setTeam2Score(null)
 		setIsExactScore(false)
 	}
-
-	const statsQuery = createQuery<MatchResponse>(() => ({
-		queryKey: ['match_stats', props.match.id],
-		queryFn: () => fetchMatchStats(props.match.id),
-		enabled: !!props.match.id,
-	}))
 
 	const onPredictionSave = async () => {
 		const prediction: PredictionRequest = {
@@ -102,6 +98,31 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		<DrawerContent class="pb-3 bg-card">
 			<div class="mx-auto w-full px-4">
 				<div class="flex flex-col items-center gap-4">
+					{/*<div class="mx-auto w-full px-4">*/}
+					{/*	<div class="flex flex-col items-center gap-4">*/}
+					{/*		<div class="w-full">*/}
+					{/*			<div class="h-2 bg-gray-200 rounded-lg overflow-hidden relative">*/}
+					{/*				<div*/}
+					{/*					class="absolute left-0 h-2 bg-blue-500"*/}
+					{/*					style={{ width: `${predictionStats().home}%` }}*/}
+					{/*				/>*/}
+					{/*				<div*/}
+					{/*					class="absolute left-[${predictionStats().home}%] h-2 bg-yellow-500"*/}
+					{/*					style={{ width: `${predictionStats().draw}%` }}*/}
+					{/*				/>*/}
+					{/*				<div*/}
+					{/*					class="absolute right-0 h-2 bg-red-500"*/}
+					{/*					style={{ width: `${predictionStats().away}%` }}*/}
+					{/*				/>*/}
+					{/*			</div>*/}
+					{/*			<div class="flex justify-between text-xs mt-1">*/}
+					{/*				<span>{t('win_1')}: {predictionStats().home}%</span>*/}
+					{/*				<span>{t('draw')}: {predictionStats().draw}%</span>*/}
+					{/*				<span>{t('win_2')}: {predictionStats().away}%</span>*/}
+					{/*			</div>*/}
+					{/*		</div>*/}
+					{/*	</div>*/}
+					{/*</div>*/}
 					<div class="w-full justify-between flex flex-col items-start gap-2">
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row w-full justify-between items-center">
@@ -111,7 +132,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 										{props.match.home_team.short_name}
 									</p>
 								</div>
-								{/*<WinLoseStats results={statsQuery.data?.home_team_results ?? []} />*/}
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
@@ -146,7 +166,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 										{props.match.away_team.short_name}
 									</p>
 								</div>
-								{/*<WinLoseStats results={statsQuery.data?.away_team_results ?? []} />*/}
 							</div>
 							<Show when={isExactScore()}>
 								<div class="space-x-2 flex items-center">
@@ -186,7 +205,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'home' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('home')}
 								>
-									<span>{t('win_1')}</span>{props.match.home_odds}
+									<span>{t('win_1')}</span>
+									<span class="opacity-60">{props.match.home_odds}</span>
 								</Button>
 								<Button
 									size="sm"
@@ -194,7 +214,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'draw' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('draw')}
 								>
-									<span>{t('draw')}</span>{props.match.draw_odds}
+									<span>{t('draw')}</span>
+									<span class="opacity-60">{props.match.draw_odds}</span>
 								</Button>
 								<Button
 									size="sm"
@@ -202,7 +223,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 									class={cn(outcome() === 'away' && 'bg-primary text-primary-foreground')}
 									onClick={() => updateOutcome('away')}
 								>
-									<span>{t('win_2')}</span> {props.match.away_odds}
+									<span>{t('win_2')}</span>
+									<span class="opacity-60">{props.match.away_odds}</span>
 								</Button>
 							</div>
 						</div>
@@ -230,24 +252,5 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 				</DrawerClose>
 			</DrawerFooter>
 		</DrawerContent>
-	)
-}
-
-function WinLoseStats(props: { results: string[] }) {
-	return (
-		<div class="flex flex-row items-center justify-start gap-1">
-			<For each={props.results}>
-				{(result) => (
-					<div
-						class={cn('size-6 flex items-center justify-center rounded bg-primary-foreground text-primary-foreground text-xs font-medium', {
-							'bg-green-500': result === 'W',
-							'bg-red-500': result === 'L',
-						})}
-					>
-						{result}
-					</div>
-				)}
-			</For>
-		</div>
 	)
 }

@@ -28,14 +28,14 @@ import (
 )
 
 type Config struct {
-	Host             string `yaml:"host"`
-	Port             int    `yaml:"port"`
-	DBPath           string `yaml:"db_path"`
-	TelegramBotToken string `yaml:"telegram_bot_token"`
-	JWTSecret        string `yaml:"jwt_secret"`
-	MetaFetchURL     string `yaml:"meta_fetch_url"`
-	WebAppURL        string `yaml:"web_app_url"`
-	AWS              struct {
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	DBPath            string `yaml:"db_path"`
+	TelegramBotToken  string `yaml:"telegram_bot_token"`
+	JWTSecret         string `yaml:"jwt_secret"`
+	OGImagePreviewSVC string `yaml:"og_img_preview_svc"`
+	WebAppURL         string `yaml:"web_app_url"`
+	AWS               struct {
 		AccessKeyID     string `yaml:"access_key_id"`
 		SecretAccessKey string `yaml:"secret_access_key"`
 		Endpoint        string `yaml:"endpoint"`
@@ -208,10 +208,6 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 		log.Printf("Initial prediction processing failed: %v", err)
 	}
 
-	if err := sync.PredictWeeklyMatches(ctx); err != nil {
-		log.Printf("Initial team sync failed: %v", err)
-	}
-
 	ticker := time.NewTicker(3 * time.Minute)
 	defer ticker.Stop()
 
@@ -237,10 +233,6 @@ func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
 	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
 
-	if err := sync.SendWeeklyRecap(ctx); err != nil {
-		log.Printf("Failed to send weekly recaps: %v", err)
-	}
-
 	if err := sync.SendMatchNotification(ctx); err != nil {
 		log.Printf("Failed to send match notifications: %v", err)
 	}
@@ -250,14 +242,9 @@ func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
 		case <-ticker.C:
 			log.Println("Starting notification job...")
 
-			// Example: Sending weekly recaps
-			if err := sync.SendWeeklyRecap(ctx); err != nil {
-				log.Printf("Failed to send weekly recaps: %v", err)
+			if err := sync.SendMatchNotification(ctx); err != nil {
+				log.Printf("Failed to send match notifications: %v", err)
 			}
-
-			// Add other notification-related tasks here
-			// e.g., favorite team match notifications, leaderboard updates, etc.
-
 		case <-ctx.Done():
 			log.Println("Stopping notification job...")
 			return
@@ -358,7 +345,15 @@ func main() {
 
 	notifier := notification.NewTelegramNotifier(bot)
 
-	sync := syncer.NewSyncer(storage, notifier, cfg.WebAppURL, cfg.FootballAPI.BaseURL, cfg.FootballAPI.APIKey, cfg.OpenAIKey)
+	syncerCfg := syncer.Config{
+		APIBaseURL:      cfg.FootballAPI.BaseURL,
+		APIKey:          cfg.FootballAPI.APIKey,
+		WebAppURL:       cfg.WebAppURL,
+		OpenAIKey:       cfg.OpenAIKey,
+		ImagePreviewURL: cfg.OGImagePreviewSVC,
+	}
+
+	sync := syncer.NewSyncer(storage, notifier, syncerCfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

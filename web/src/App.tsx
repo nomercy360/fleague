@@ -31,6 +31,9 @@ function transformStartParam(startParam?: string) {
 	} else if (startParam.startsWith('r_')) {
 		const referrer = startParam.slice('r_'.length)
 		return { redirect: null, referrer }
+	} else if (startParam.startsWith('m_')) {
+		const path = startParam.slice('m_'.length)
+		return { redirect: '/matches/' + path, referrer: null }
 	} else {
 		return { redirect: null, referrer: null }
 	}

@@ -16,7 +16,12 @@ type User = {
 	total_predictions: number
 	correct_predictions: number
 	referred_by: string
-	global_rank: number
+	ranks: {
+		season_id: string
+		position: number
+		points: number
+		season_type: string
+	}[]
 	favorite_team: {
 		id: number
 		name: string
@@ -35,12 +40,20 @@ type User = {
 	}[]
 }
 
+export const getUserLeaderboardPosition = (season: 'monthly' | 'football') => {
+	return store.user?.ranks.find((r) => r.season_type === season)?.position || 0
+}
+
+export const getUserLeaderboardPoints = (season: 'monthly' | 'football') => {
+	return store.user?.ranks.find((r) => r.season_type === season)?.points || 0
+}
+
 export const [store, setStore] = createStore<{
-	user: User | null
+	user: User
 	token: string
 	following: number[]
 }>({
-	user: null as any,
+	user: {} as User,
 	token: null as any,
 	following: [],
 })

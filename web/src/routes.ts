@@ -6,6 +6,7 @@ import MatchesPage from '~/pages/matches'
 import NavigationTabs from '~/components/navigation-tabs'
 import FriendsPage from '~/pages/friends'
 import OnboardingPage from '~/pages/onboarding'
+import MatchPage from '~/pages/match'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -37,6 +38,10 @@ export const routes: RouteDefinition[] = [
 	{
 		'path': '/onboarding',
 		'component': OnboardingPage,
+	},
+	{
+		'path': '/matches/:id',
+		'component': MatchPage,
 	},
 	{
 		path: '**',

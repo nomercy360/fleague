@@ -122,7 +122,7 @@ export default function UserProfilePage() {
 						/>
 						<ProfileStat
 							icon="leaderboard"
-							value={`#${userInfoQuery.data.user.global_rank}`}
+							value={`#${userInfoQuery.data.user.ranks.find((r: any) => r.season_type === 'monthly')?.position}`}
 							color="#3498DB"
 							label={t('rank')}
 						/>

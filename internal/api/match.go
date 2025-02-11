@@ -2,33 +2,12 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
 	"net/http"
 )
-
-func calculateWinLoss(matches []db.Match, teamID string) []string {
-	var results []string
-	for _, match := range matches {
-		if match.HomeTeamID == teamID {
-			if *match.HomeScore > *match.AwayScore {
-				results = append(results, "W")
-			} else {
-				results = append(results, "L")
-			}
-		} else if match.AwayTeamID == teamID {
-			if *match.AwayScore > *match.HomeScore {
-				results = append(results, "W")
-			} else {
-				results = append(results, "L")
-			}
-		}
-	}
-	return results
-}
 
 func (a API) GetMatchByID(c echo.Context) error {
 	matchID := c.Param("id")
@@ -41,19 +20,15 @@ func (a API) GetMatchByID(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get match")
 	}
 
-	homeLastMatches, err := a.storage.GetLastMatchesByTeamID(ctx, match.HomeTeamID, 5)
+	stats, err := a.storage.GetPredictionStats(ctx, matchID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch last matches for home team: %w", err)
+		return terrors.InternalServer(err, "failed to get prediction stats")
 	}
 
-	awayLastMatches, err := a.storage.GetLastMatchesByTeamID(ctx, match.AwayTeamID, 5)
-	if err != nil {
-		return fmt.Errorf("failed to fetch last matches for away team: %w", err)
-	}
+	response := toMatchResponse(match)
+	response.PredictionStats = stats
 
-	homeResults, awayResults := calculateWinLoss(homeLastMatches, match.HomeTeamID), calculateWinLoss(awayLastMatches, match.AwayTeamID)
-
-	return c.JSON(http.StatusOK, toMatchResponse(match, homeResults, awayResults))
+	return c.JSON(http.StatusOK, toMatchResponse(match))
 }
 
 func (a API) ListMatches(c echo.Context) error {
@@ -68,21 +43,19 @@ func (a API) ListMatches(c echo.Context) error {
 	return c.JSON(http.StatusOK, matches)
 }
 
-func toMatchResponse(match db.Match, homeResults, awayResults []string) contract.MatchResponse {
+func toMatchResponse(match db.Match) contract.MatchResponse {
 	return contract.MatchResponse{
-		ID:              match.ID,
-		Tournament:      match.Tournament,
-		HomeTeam:        match.HomeTeam,
-		AwayTeam:        match.AwayTeam,
-		MatchDate:       match.MatchDate,
-		Status:          match.Status,
-		AwayScore:       match.AwayScore,
-		HomeScore:       match.HomeScore,
-		Prediction:      match.Prediction,
-		HomeOdds:        match.HomeOdds,
-		DrawOdds:        match.DrawOdds,
-		AwayOdds:        match.AwayOdds,
-		HomeTeamResults: homeResults,
-		AwayTeamResults: awayResults,
+		ID:         match.ID,
+		Tournament: match.Tournament,
+		HomeTeam:   match.HomeTeam,
+		AwayTeam:   match.AwayTeam,
+		MatchDate:  match.MatchDate,
+		Status:     match.Status,
+		AwayScore:  match.AwayScore,
+		HomeScore:  match.HomeScore,
+		Prediction: match.Prediction,
+		HomeOdds:   match.HomeOdds,
+		DrawOdds:   match.DrawOdds,
+		AwayOdds:   match.AwayOdds,
 	}
 }

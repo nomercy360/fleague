@@ -103,7 +103,7 @@ func (s *Syncer) predictMatch(ctx context.Context, match db.Match) error {
 		`, match.HomeTeam.Name, match.AwayTeam.Name, *match.HomeOdds, *match.DrawOdds, *match.AwayOdds, match.MatchDate.Format(time.RFC3339), homeStats, awayStats)
 
 	client := openai.NewClient(
-		option.WithAPIKey(s.openAIKey),
+		option.WithAPIKey(s.cfg.OpenAIKey),
 	)
 
 	prediction, err := callChatGPT(ctx, client, prompt)
