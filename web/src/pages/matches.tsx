@@ -4,7 +4,7 @@ import { fetchActiveSeasons, fetchLeaderboard, fetchMatches, Season } from '~/li
 
 import { Drawer, DrawerTrigger } from '~/components/ui/drawer'
 import { cn, formatDate } from '~/lib/utils'
-import { queryClient, setShowCommunityPopup, showCommunityPopup } from '~/App'
+import { queryClient } from '~/App'
 import MatchCard from '~/components/match-card'
 import FootballScoreboard from '~/components/score-board'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
@@ -30,7 +30,6 @@ export default function MatchesPage() {
 
 	const [searchParams, setSearchParams] = useSearchParams()
 
-	console.log('Search params', searchParams.tab)
 	const navigate = useNavigate()
 
 	const [activeTab, setActiveTab] = createSignal(searchParams.tab || 'matches')
@@ -65,11 +64,6 @@ export default function MatchesPage() {
 		return idx + 1
 	}
 
-	const closePopup = () => {
-		setShowCommunityPopup(false)
-		window.Telegram.WebApp.CloudStorage.setItem('fb_community_popup', 'closed')
-	}
-
 	const { t } = useTranslations()
 
 	createEffect(() => {
@@ -97,42 +91,11 @@ export default function MatchesPage() {
 	return (
 		<>
 			<div class="min-h-[160px] p-3 flex-col flex items-center justify-center space-y-3">
-				<Show when={showCommunityPopup()}>
-					<div class="w-full bg-secondary p-3 rounded-2xl flex flex-col items-center relative">
-						<Button
-							size="icon"
-							variant="ghost"
-							class="absolute top-1 right-1"
-							onClick={closePopup}
-						>
-							<span class="material-symbols-rounded text-[20px] text-primary-foreground">
-								close
-							</span>
-						</Button>
-						<span class="material-symbols-rounded text-[40px] text-blue-400">
-							people
-						</span>
-						<h1 class="tracking-wider text-lg uppercase font-bold">
-							{t('join_community')}
-						</h1>
-						<p class="text-sm text-secondary-foreground text-center">
-							{t('join_community_description')}
-						</p>
-						<Button
-							class="w-full mt-3"
-							onClick={() => {
-								window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
-							}}
-						>
-							{t('open_in_telegram')}
-						</Button>
-					</div>
-				</Show>
 				<Show
-					when={activeSeason() && !showCommunityPopup()}
+					when={activeSeason()}
 					fallback={<div class="w-full rounded-2xl bg-secondary" />}
 				>
-					<div class="flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-4">
+					<div class="shadow-md flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-4">
 						<div class="flex flex-col gap-2">
 							<p class="text-lg font-extrabold">
 								{t('contest.win_tshirt')}
@@ -141,11 +104,12 @@ export default function MatchesPage() {
 								{t('contest.results_announcement', { date: formatDate(activeSeason()!.end_date, false, store.user?.language_code) })}
 							</p>
 							<Button
-								as={Link}
-								href={`/seasons/${activeSeason()?.id}`}
-								class="text-foreground bg-background mt-2 max-w-[150px]"
+								class="w-full mt-3"
+								onClick={() => {
+									window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
+								}}
 							>
-								{t('contest.make_prediction')}
+								{t('contest.join_channel')}
 							</Button>
 						</div>
 						<img src="/football-tshirt.png" class="shrink-0 w-32 rounded-xl" />

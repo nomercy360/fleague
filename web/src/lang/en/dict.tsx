@@ -66,7 +66,7 @@ export const dict = {
 	],
 	contest: {
 		win_tshirt: 'Win a football t-shirt worth $50',
-		results_announcement: 'Results will be announced on {{ date }}',
-		make_prediction: 'Make a prediction',
+		results_announcement: 'Results will be announced on {{ date }} in the Telegram channel',
+		join_channel: 'Join the channel',
 	},
 }

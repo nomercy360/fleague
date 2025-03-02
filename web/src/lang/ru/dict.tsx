@@ -66,8 +66,8 @@ export const dict = {
 	],
 	contest: {
 		win_tshirt: 'Выиграйте футбольную форму стоимостью 50$',
-		results_announcement: 'Результаты будут объявлены {{ date }}',
-		make_prediction: 'Сделать прогноз',
+		results_announcement: 'Результаты будут объявлены {{ date }} в Telegram канале',
+		join_channel: 'Вступить в канал',
 	},
 }
 
