@@ -106,7 +106,7 @@ export default function MatchesPage() {
 							<Button
 								class="mt-2 h-9 text-sm"
 								onClick={() => {
-									window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
+									window.Telegram.WebApp.openTelegramLink('https://t.me/mpl_footbal_analyst')
 								}}
 							>
 								{t('contest.join_channel')}
