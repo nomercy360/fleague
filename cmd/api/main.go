@@ -196,10 +196,6 @@ func gracefulShutdown(e *echo.Echo, done chan<- bool) {
 
 func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 	log.Println("Starting initial sync process...")
-	if err := sync.ManageSeasons(ctx); err != nil {
-		log.Printf("Initial season sync failed: %v", err)
-	}
-
 	if err := sync.SyncTeams(ctx); err != nil {
 		log.Printf("Initial team sync failed: %v", err)
 	}
@@ -221,6 +217,10 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 
 			if err := sync.ProcessPredictions(ctx); err != nil {
 				log.Printf("Failed to process predictions: %v", err)
+			}
+
+			if err := sync.ManageSeasons(ctx); err != nil {
+				log.Printf("Initial season sync failed: %v", err)
 			}
 		case <-ctx.Done():
 			log.Println("Stopping syncer...")
