@@ -123,12 +123,14 @@ export default function FeedPage() {
 						color="#2ECC71"
 						label={t('correct')}
 					/>
-					<ProfileStat
-						icon="leaderboard"
-						value={`#${store.user?.ranks.find((r) => r.season_type === 'monthly')?.position}`}
-						color="#3498DB"
-						label={t('rank')}
-					/>
+					<Show when={store.user?.ranks.find((r) => r.season_type === 'monthly')?.position || 0 > 0}>
+						<ProfileStat
+							icon="leaderboard"
+							value={`#${store.user?.ranks.find((r) => r.season_type === 'monthly')?.position}`}
+							color="#3498DB"
+							label={t('rank')}
+						/>
+					</Show>
 					<ProfileStat
 						icon="star"
 						value={store.user?.total_points}

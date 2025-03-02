@@ -64,5 +64,10 @@ export const dict = {
 			description: 'Давайте начнем предсказывать результаты матчей. Удачи!',
 		},
 	],
+	contest: {
+		win_tshirt: 'Выиграйте футбольную форму стоимостью 50$',
+		results_announcement: 'Результаты будут объявлены {{ date }}',
+		make_prediction: 'Сделать прогноз',
+	},
 }
 

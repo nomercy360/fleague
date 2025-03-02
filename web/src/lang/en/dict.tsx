@@ -19,7 +19,8 @@ export const dict = {
 	'monthly_seasons': '🏅 Monthly Seasons!',
 	'monthly_seasons_description': 'Compete for the top spot each month! Points reset monthly, and the first-place winner gets a prize. 🏆 Make your predictions count!',
 	'season_ends_on': (date: any) => <>Ends on <span class="text-primary">{date}</span></>,
-	'big_season_ends_on': (date: any) => <>Big Season is the same as the football season, ends on <span class="text-primary">{date}</span></>,
+	'big_season_ends_on': (date: any) => <>Big Season is the same as the football season, ends on <span
+		class="text-primary">{date}</span></>,
 	'matches': 'Matches',
 	'leaderboard': 'Leaderboard',
 	'user_position': 'Position',
@@ -63,4 +64,9 @@ export const dict = {
 			description: 'Let’s dive in and start predicting matches. Good luck!',
 		},
 	],
+	contest: {
+		win_tshirt: 'Win a football t-shirt worth $50',
+		results_announcement: 'Results will be announced on {{ date }}',
+		make_prediction: 'Make a prediction',
+	},
 }

@@ -132,7 +132,24 @@ export default function MatchesPage() {
 					when={activeSeason() && !showCommunityPopup()}
 					fallback={<div class="w-full rounded-2xl bg-secondary" />}
 				>
-					<SeasonCard season={activeSeason()!} type={activeSeason()?.type || 'monthly'} />
+					<div class="flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-4">
+						<div class="flex flex-col gap-2">
+							<p class="text-lg font-extrabold">
+								{t('contest.win_tshirt')}
+							</p>
+							<p class="text-sm text-secondary-foreground">
+								{t('contest.results_announcement', { date: formatDate(activeSeason()!.end_date, false, store.user?.language_code) })}
+							</p>
+							<Button
+								as={Link}
+								href={`/seasons/${activeSeason()?.id}`}
+								class="text-foreground bg-background mt-2 max-w-[150px]"
+							>
+								{t('contest.make_prediction')}
+							</Button>
+						</div>
+						<img src="/football-tshirt.png" class="shrink-0 w-32 rounded-xl" />
+					</div>
 				</Show>
 			</div>
 			<Tabs

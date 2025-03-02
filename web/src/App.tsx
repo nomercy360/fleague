@@ -86,6 +86,7 @@ export default function App(props: any) {
 			window.Telegram.WebApp.expand()
 			window.Telegram.WebApp.disableClosingConfirmation()
 			window.Telegram.WebApp.disableVerticalSwipes()
+			window.Telegram.WebApp.requestWriteAccess()
 
 			window.Telegram.WebApp.CloudStorage.getItem(
 				'fb_community_popup',
