@@ -96,7 +96,7 @@ export default function MatchesPage() {
 					fallback={<div class="w-full rounded-2xl bg-secondary" />}
 				>
 					<div class="shadow-md flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-3">
-						<div class="flex flex-col gap-1">
+						<div class="flex flex-col gap-1 mr-6">
 							<p class="text-base font-bold">
 								{t('contest.win_tshirt')}
 							</p>
@@ -104,7 +104,7 @@ export default function MatchesPage() {
 								{t('contest.results_announcement', { date: formatDate(activeSeason()!.end_date, false, store.user?.language_code) })}
 							</p>
 							<Button
-								class="w-full mt-2 h-9 text-sm"
+								class="mt-2 h-9 text-sm"
 								onClick={() => {
 									window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
 								}}
