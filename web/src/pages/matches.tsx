@@ -95,16 +95,16 @@ export default function MatchesPage() {
 					when={activeSeason()}
 					fallback={<div class="w-full rounded-2xl bg-secondary" />}
 				>
-					<div class="shadow-md flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-4">
-						<div class="flex flex-col gap-2">
-							<p class="text-lg font-extrabold">
+					<div class="shadow-md flex flex-row items-start justify-between w-full bg-secondary rounded-xl p-3">
+						<div class="flex flex-col gap-1">
+							<p class="text-base font-bold">
 								{t('contest.win_tshirt')}
 							</p>
-							<p class="text-sm text-secondary-foreground">
+							<p class="text-xs text-secondary-foreground">
 								{t('contest.results_announcement', { date: formatDate(activeSeason()!.end_date, false, store.user?.language_code) })}
 							</p>
 							<Button
-								class="w-full mt-3"
+								class="w-full mt-2 h-9 text-sm"
 								onClick={() => {
 									window.Telegram.WebApp.openTelegramLink('https://t.me/match_predict_league')
 								}}
@@ -112,7 +112,7 @@ export default function MatchesPage() {
 								{t('contest.join_channel')}
 							</Button>
 						</div>
-						<img src="/football-tshirt.png" class="shrink-0 w-32 rounded-xl" />
+						<img src="/football-tshirt.png" class="shrink-0 w-24 rounded-lg" />
 					</div>
 				</Show>
 			</div>
