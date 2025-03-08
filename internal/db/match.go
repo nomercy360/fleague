@@ -185,7 +185,7 @@ func (s *Storage) GetActiveMatches(ctx context.Context, userID string) ([]Match,
 		JOIN teams t2 ON m.away_team_id = t2.id
 		LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
 		WHERE m.status = 'scheduled' AND m.match_date BETWEEN datetime('now') AND datetime('now', '+7 days')
-		ORDER BY m.popularity DESC`
+		ORDER BY m.match_date ASC`
 
 	args = append(args, userID)
 
@@ -414,7 +414,7 @@ func (s *Storage) GetTodayMostPopularMatch(ctx context.Context) (Match, error) {
 		JOIN teams home_team ON home_team.id = home_team_id
 		JOIN teams away_team ON away_team.id = away_team_id
 		WHERE datetime(m.match_date) BETWEEN datetime('now', 'localtime') AND datetime('now', '+24 hours', 'localtime')
-		ORDER BY m.match_date ASC
+		ORDER BY m.popularity DESC
 		LIMIT 1
 	`
 
