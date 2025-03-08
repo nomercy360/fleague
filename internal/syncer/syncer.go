@@ -371,11 +371,11 @@ func ComputePopularityScore(match APIMatch) float64 {
 func getPopularityBonus(homeTeam, awayTeam *string) int {
 	bonus := 0
 	if homeTeam != nil && popularTeams[*homeTeam] {
-		bonus += 15
+		bonus += 100
 	}
 
 	if awayTeam != nil && popularTeams[*awayTeam] {
-		bonus += 15
+		bonus += 100
 	}
 
 	return bonus
