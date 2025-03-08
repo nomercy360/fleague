@@ -23,7 +23,8 @@ RUN apk add --no-cache \
     ca-certificates \
     curl \
     bash \
-    sqlite
+    sqlite \
+    tzdata
 
 COPY --from=build /go/bin/main /app/main
 
