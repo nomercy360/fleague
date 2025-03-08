@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/user/project/internal/contract"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -39,6 +40,7 @@ type storager interface {
 	CreateUser(user db.User) error
 	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
+	GetTodayMostPopularMatch(ctx context.Context) (db.Match, error)
 }
 type Config struct {
 	APIBaseURL      string
@@ -46,13 +48,18 @@ type Config struct {
 	WebAppURL       string
 	OpenAIKey       string
 	ImagePreviewURL string
+	ChannelChatID   int64
 }
 type Syncer struct {
 	storage  storager
 	notifier noifier
 	cfg      Config
 }
-
+type Odds struct {
+	HomeWin *float64 `json:"homeWin"`
+	Draw    *float64 `json:"draw"`
+	AwayWin *float64 `json:"awayWin"`
+}
 type APIMatch struct {
 	Area struct {
 		Id   int    `json:"id"`
@@ -82,18 +89,20 @@ type APIMatch struct {
 	Group       *string   `json:"group"`
 	LastUpdated time.Time `json:"lastUpdated"`
 	HomeTeam    struct {
-		Id        *int    `json:"id"`
-		Name      *string `json:"name"`
-		ShortName *string `json:"shortName"`
-		Tla       *string `json:"tla"`
-		Crest     *string `json:"crest"`
+		Id         *int    `json:"id"`
+		Name       *string `json:"name"`
+		ShortName  *string `json:"shortName"`
+		Tla        *string `json:"tla"`
+		Crest      *string `json:"crest"`
+		LeagueRank *int    `json:"leagueRank"`
 	} `json:"homeTeam"`
 	AwayTeam struct {
-		Id        *int    `json:"id"`
-		Name      *string `json:"name"`
-		ShortName *string `json:"shortName"`
-		Tla       *string `json:"tla"`
-		Crest     *string `json:"crest"`
+		Id         *int    `json:"id"`
+		Name       *string `json:"name"`
+		ShortName  *string `json:"shortName"`
+		Tla        *string `json:"tla"`
+		Crest      *string `json:"crest"`
+		LeagueRank *int    `json:"leagueRank"`
 	} `json:"awayTeam"`
 	Score struct {
 		Winner   *string `json:"winner"`
@@ -107,11 +116,7 @@ type APIMatch struct {
 			Away *int `json:"away"`
 		} `json:"halfTime"`
 	} `json:"score"`
-	Odds struct {
-		HomeWin *float64 `json:"homeWin"`
-		Draw    *float64 `json:"draw"`
-		AwayWin *float64 `json:"awayWin"`
-	} `json:"odds"`
+	Odds     *Odds `json:"odds"`
 	Referees []struct {
 		Id          int    `json:"id"`
 		Name        string `json:"name"`
@@ -279,7 +284,6 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 
 		for _, match := range apiResp.Matches {
 			if match.HomeTeam.Name == nil || match.AwayTeam.Name == nil {
-				log.Printf("Skipping match with missing team names in competition %s", competition)
 				continue
 			}
 
@@ -296,6 +300,7 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 			}
 
 			matchDate := match.UtcDate // Assume valid date parsing here
+			popularityScore := ComputePopularityScore(match)
 			err = s.storage.SaveMatch(ctx, db.Match{
 				ID:         fmt.Sprintf("%d", match.Id),
 				Tournament: match.Competition.Name,
@@ -308,13 +313,99 @@ func (s *Syncer) SyncMatches(ctx context.Context) error {
 				HomeOdds:   match.Odds.HomeWin,
 				DrawOdds:   match.Odds.Draw,
 				AwayOdds:   match.Odds.AwayWin,
+				Popularity: popularityScore,
 			})
 
 			if err != nil {
 				log.Printf("Failed to save match %d in competition %s: %v", match.Id, competition, err)
 			}
 		}
+
 	}
 
 	return nil
+}
+
+var popularTeams = map[string]bool{
+	"FCB": true,
+	"ATL": true,
+	"ATH": true,
+	"RMA": true,
+	"INT": true,
+	"NAP": true,
+	"ATA": true,
+	"JUV": true,
+	"LAZ": true,
+	"ROM": true,
+	"MIL": true,
+	"B04": true,
+	"BVB": true,
+	"PSG": true,
+	"MCI": true,
+	"MUN": true,
+	"TOT": true,
+	"CHE": true,
+	"LIV": true,
+	"ARS": true,
+}
+
+func ComputePopularityScore(match APIMatch) float64 {
+	// 1. Team Ranking Score (lower rank is better, so we invert)
+	rankScore := 100 - getLeagueRankScore(match.HomeTeam.LeagueRank) - getLeagueRankScore(match.AwayTeam.LeagueRank)
+
+	// 2. Odds Competitiveness Score (closer odds = more competitive = higher score)
+	oddsScore := 50 - getOddsSpread(match.Odds)
+
+	// 3. Match Timing Bonus (later matches get extra points)
+	timeBonus := getTimeBonus(match.UtcDate)
+
+	// 4. Popularity Bonus (if either team is in the popular list)
+	popularityBonus := getPopularityBonus(match.HomeTeam.Name, match.AwayTeam.Name)
+
+	// Calculate final score
+	finalScore := float64(rankScore) + float64(oddsScore) + float64(timeBonus) + float64(popularityBonus)
+	return finalScore
+}
+
+// getPopularityBonus checks if a team is in the popular list and assigns extra points
+func getPopularityBonus(homeTeam, awayTeam *string) int {
+	bonus := 0
+	if homeTeam != nil && popularTeams[*homeTeam] {
+		bonus += 15
+	}
+
+	if awayTeam != nil && popularTeams[*awayTeam] {
+		bonus += 15
+	}
+
+	return bonus
+}
+
+// getLeagueRankScore handles cases where leagueRank is nil
+func getLeagueRankScore(rank *int) int {
+	if rank == nil {
+		return 50 // Assign a mid-value if no rank is available
+	}
+	return *rank
+}
+
+// getOddsSpread calculates the odds spread or assigns a high default if odds are missing
+func getOddsSpread(odds *Odds) float64 {
+	if odds == nil || odds.HomeWin == nil || odds.AwayWin == nil {
+		return 50.0 // High value to deprioritize matches without odds
+	}
+	return math.Abs(*odds.HomeWin - *odds.AwayWin)
+}
+
+// getTimeBonus gives extra points for prime-time matches
+func getTimeBonus(utcDate time.Time) int {
+	hour := utcDate.Hour()
+
+	// Assign bonuses based on match timing
+	if hour >= 19 {
+		return 20 // Prime-time evening matches
+	} else if hour >= 16 {
+		return 10 // Late afternoon matches
+	}
+	return 0 // Earlier matches get no bonus
 }

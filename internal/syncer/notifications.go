@@ -100,7 +100,7 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 			continue
 		}
 
-		matches, err := s.storage.GetMatchesForTeam(ctx, *user.FavoriteTeamID, 6)
+		matches, err := s.storage.GetMatchesForTeam(ctx, *user.FavoriteTeamID, 12)
 		if err != nil {
 			log.Printf("Failed to fetch matches for user %s: %v", user.ID, err)
 			continue
@@ -144,6 +144,42 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 			} else {
 				log.Printf("Failed to send notification to user %s: %v", user.ID, err)
 			}
+		}
+	}
+
+	// special notification for chanel about the most popular match
+	mostPopularMatch, err := s.storage.GetTodayMostPopularMatch(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch most popular match: %w", err)
+	}
+
+	// check if the match is not already sent
+	alreadySent, err := s.storage.HasNotificationBeenSent(ctx, fmt.Sprintf("channel:%d", s.cfg.ChannelChatID), "match", mostPopularMatch.ID)
+	if err != nil || alreadySent {
+		log.Printf("Match %s already sent to channel", mostPopularMatch.ID)
+		return nil
+	}
+
+	imgData, err := fetchPreviewImage(s.cfg.ImagePreviewURL, mostPopularMatch, mostPopularMatch.HomeTeam, mostPopularMatch.AwayTeam)
+	if err != nil {
+		log.Printf("Failed to fetch preview image for most popular match: %v", err)
+	}
+
+	text := fmt.Sprintf("%s vs %s сегодня в %s, не забудьте сделать прогноз!", mostPopularMatch.HomeTeam.ShortName, mostPopularMatch.AwayTeam.ShortName, mostPopularMatch.MatchDate.Format("15:04"))
+	if err = s.notifier.SendPhotoNotification(contract.SendNotificationParams{
+		Image:      imgData,
+		ChatID:     s.cfg.ChannelChatID,
+		Message:    bot.EscapeMarkdown(text),
+		WebAppURL:  fmt.Sprintf("%s/matches/%s", s.cfg.WebAppURL, mostPopularMatch.ID),
+		ButtonText: "Make your prediction",
+	}); err != nil {
+		log.Printf("Failed to send notification to channel: %v", err)
+	}
+
+	if err == nil {
+		err := s.storage.LogNotification(ctx, fmt.Sprintf("channel:%d", s.cfg.ChannelChatID), "match", mostPopularMatch.ID)
+		if err != nil {
+			return err
 		}
 	}
 

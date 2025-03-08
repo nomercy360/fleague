@@ -20,20 +20,20 @@ func (a API) GetMatchByID(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get match")
 	}
 
-	stats, err := a.storage.GetPredictionStats(ctx, matchID)
-	if err != nil {
-		return terrors.InternalServer(err, "failed to get prediction stats")
-	}
+	//stats, err := a.storage.GetPredictionStats(ctx, matchID)
+	//if err != nil {
+	//	return terrors.InternalServer(err, "failed to get prediction stats")
+	//}
 
-	response := toMatchResponse(match)
-	response.PredictionStats = stats
+	//response := toMatchResponse(match)
+	//response.PredictionStats = stats
 
 	return c.JSON(http.StatusOK, toMatchResponse(match))
 }
 
 func (a API) ListMatches(c echo.Context) error {
 	ctx := c.Request().Context()
-	uid := getUserID(c)
+	uid := GetContextUserID(c)
 	matches, err := a.storage.GetActiveMatches(ctx, uid)
 
 	if err != nil {
@@ -58,4 +58,17 @@ func toMatchResponse(match db.Match) contract.MatchResponse {
 		DrawOdds:   match.DrawOdds,
 		AwayOdds:   match.AwayOdds,
 	}
+}
+
+//GetTodayMostPopularMatch
+
+func (a API) GetTodayMostPopularMatch(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	match, err := a.storage.GetTodayMostPopularMatch(ctx)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get most popular match")
+	}
+
+	return c.JSON(http.StatusOK, toMatchResponse(match))
 }

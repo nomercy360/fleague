@@ -12,9 +12,17 @@ import (
 	"sort"
 )
 
-func getUserID(c echo.Context) string {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*contract.JWTClaims)
+func GetContextUserID(c echo.Context) string {
+	user, ok := c.Get("user").(*jwt.Token)
+	if !ok || user == nil {
+		return "" // or handle the error appropriately
+	}
+
+	claims, ok := user.Claims.(*contract.JWTClaims)
+	if !ok || claims == nil {
+		return "" // or handle the error appropriately
+	}
+
 	return claims.UID
 }
 
@@ -100,7 +108,7 @@ func (a API) GetUserInfo(c echo.Context) error {
 }
 
 func (a API) ListMyReferrals(c echo.Context) error {
-	res, err := a.storage.ListUserReferrals(c.Request().Context(), getUserID(c))
+	res, err := a.storage.ListUserReferrals(c.Request().Context(), GetContextUserID(c))
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user referrals")
 	}
@@ -132,7 +140,7 @@ func (a API) UpdateUser(c echo.Context) error {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
 
-	uid := getUserID(c)
+	uid := GetContextUserID(c)
 	ctx := c.Request().Context()
 
 	user, err := a.storage.GetUserByID(uid)

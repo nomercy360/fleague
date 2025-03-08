@@ -22,8 +22,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 
 	const [isExactScore, setIsExactScore] = createSignal(false)
 
-	const predictionStats = () => props.match.prediction_stats ?? { home: 0, draw: 0, away: 0 }
-
 	const increment = (setScore: (value: number) => void) => {
 		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 		setScore((prev) => prev + 1)

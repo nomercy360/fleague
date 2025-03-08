@@ -46,7 +46,8 @@ type Config struct {
 		APIKey  string `yaml:"api_key"`
 		BaseURL string `yaml:"base_url"`
 	} `yaml:"football_api"`
-	OpenAIKey string `yaml:"openai_key"`
+	OpenAIKey         string `yaml:"openai_key"`
+	TelegramChannelID int64  `yaml:"telegram_channel_id"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -76,18 +77,21 @@ func getLoggerMiddleware(logger *slog.Logger) middleware.RequestLoggerConfig {
 		LogURI:      true,
 		LogError:    true,
 		HandleError: true,
-		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
-			if v.Error == nil {
-				logger.LogAttrs(context.Background(), slog.LevelInfo, "REQUEST",
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-				)
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			attrs := []slog.Attr{
+				slog.String("uri", v.URI),
+				slog.Int("status", v.Status),
+			}
+
+			if uid := api.GetContextUserID(c); uid != "" {
+				attrs = append(attrs, slog.String("uid", uid))
+			}
+
+			if v.Error != nil {
+				attrs = append(attrs, slog.String("err", v.Error.Error()))
+				logger.LogAttrs(context.Background(), slog.LevelError, "REQUEST_ERROR", attrs...)
 			} else {
-				logger.LogAttrs(context.Background(), slog.LevelError, "REQUEST_ERROR",
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-					slog.String("err", v.Error.Error()),
-				)
+				logger.LogAttrs(context.Background(), slog.LevelInfo, "REQUEST", attrs...)
 			}
 			return nil
 		},
@@ -200,10 +204,6 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 		log.Printf("Initial team sync failed: %v", err)
 	}
 
-	if err := sync.ProcessPredictions(ctx); err != nil {
-		log.Printf("Initial prediction processing failed: %v", err)
-	}
-
 	ticker := time.NewTicker(3 * time.Minute)
 	defer ticker.Stop()
 
@@ -230,23 +230,40 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 }
 
 func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
-	ticker := time.NewTicker(30 * time.Minute)
-	defer ticker.Stop()
-
+	//send when app starts
 	if err := sync.SendMatchNotification(ctx); err != nil {
 		log.Printf("Failed to send match notifications: %v", err)
 	}
 
+	location, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		log.Fatalf("Failed to load Moscow timezone: %v", err)
+	}
+
 	for {
+		now := time.Now().In(location) // Get current time in Moscow timezone
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 06, 02, 0, 0, location)
+
+		// If it's already past 10 AM MSK today, schedule for tomorrow
+		if now.After(nextRun) {
+			nextRun = nextRun.Add(24 * time.Hour)
+		}
+
+		waitDuration := time.Until(nextRun)
+		log.Printf("Next notification job scheduled at: %v (Moscow Time)", nextRun)
+
+		timer := time.NewTimer(waitDuration)
+
 		select {
-		case <-ticker.C:
-			log.Println("Starting notification job...")
+		case <-timer.C:
+			log.Println("Running notification job at 10 AM Moscow Time...")
 
 			if err := sync.SendMatchNotification(ctx); err != nil {
 				log.Printf("Failed to send match notifications: %v", err)
 			}
 		case <-ctx.Done():
 			log.Println("Stopping notification job...")
+			timer.Stop()
 			return
 		}
 	}
@@ -332,6 +349,7 @@ func main() {
 	g.GET("/referrals", a.ListMyReferrals)
 	g.GET("/teams", a.ListTeams)
 	g.PUT("/users", a.UpdateUser)
+	g.GET("/match/popular", a.GetTodayMostPopularMatch)
 
 	done := make(chan bool, 1)
 
@@ -351,6 +369,7 @@ func main() {
 		WebAppURL:       cfg.WebAppURL,
 		OpenAIKey:       cfg.OpenAIKey,
 		ImagePreviewURL: cfg.OGImagePreviewSVC,
+		ChannelChatID:   cfg.TelegramChannelID,
 	}
 
 	sync := syncer.NewSyncer(storage, notifier, syncerCfg)

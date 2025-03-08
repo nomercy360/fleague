@@ -23,6 +23,7 @@ type Match struct {
 	HomeTeam   Team        `db:"-" json:"home_team"`
 	AwayTeam   Team        `db:"-" json:"away_team"`
 	Prediction *Prediction `db:"-" json:"prediction,omitempty"`
+	Popularity float64     `db:"popularity" json:"popularity"`
 }
 
 const (
@@ -56,7 +57,7 @@ func UnmarshalJSONToStruct[T any](src interface{}) (T, error) {
 
 func (s *Storage) GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]Match, error) {
 	query := `
-        SELECT m.id, m.tournament, m.home_team_id, m.away_team_id, m.match_date, m.status, m.home_score, m.away_score,
+        SELECT m.id, m.tournament, m.home_team_id, m.away_team_id, m.match_date, m.status, m.home_score, m.away_score, m.popularity,
                json_object('id', home_team.id, 'name', home_team.name, 'short_name', home_team.short_name, 'crest_url', home_team.crest_url, 'country', home_team.country, 'abbreviation', home_team.abbreviation) as home_team,
                json_object('id', away_team.id, 'name', away_team.name, 'short_name', away_team.short_name, 'crest_url', away_team.crest_url, 'country', away_team.country, 'abbreviation', away_team.abbreviation) as away_team
         FROM matches m
@@ -86,6 +87,7 @@ func (s *Storage) GetLastMatchesByTeamID(ctx context.Context, teamID string, lim
 			&match.Status,
 			&match.HomeScore,
 			&match.AwayScore,
+			&match.Popularity,
 			&homeTeam,
 			&awayTeam,
 		); err != nil {
@@ -113,8 +115,8 @@ func (s *Storage) GetLastMatchesByTeamID(ctx context.Context, teamID string, lim
 
 func (s *Storage) SaveMatch(ctx context.Context, match Match) error {
 	query := `
-        INSERT INTO matches (id, tournament, home_team_id, away_team_id, match_date, status, away_score, home_score, home_odds, draw_odds, away_odds)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO matches (id, tournament, home_team_id, away_team_id, match_date, status, away_score, home_score, home_odds, draw_odds, away_odds, popularity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
         tournament = excluded.tournament,
         home_team_id = excluded.home_team_id,
@@ -125,7 +127,8 @@ func (s *Storage) SaveMatch(ctx context.Context, match Match) error {
         home_score = excluded.home_score,
         home_odds = excluded.home_odds,
         draw_odds = excluded.draw_odds,
-        away_odds = excluded.away_odds`
+        away_odds = excluded.away_odds,
+        popularity = excluded.popularity`
 
 	_, err := s.db.ExecContext(ctx, query,
 		match.ID,
@@ -139,6 +142,7 @@ func (s *Storage) SaveMatch(ctx context.Context, match Match) error {
 		match.HomeOdds,
 		match.DrawOdds,
 		match.AwayOdds,
+		match.Popularity,
 	)
 	return err
 }
@@ -158,6 +162,7 @@ func (s *Storage) GetActiveMatches(ctx context.Context, userID string) ([]Match,
 			m.home_odds,
 			m.draw_odds,
 			m.away_odds,
+			m.popularity,
 			json_object('id', t1.id, 'name', t1.name, 'short_name', t1.short_name, 'crest_url', t1.crest_url, 'country', t1.country, 'abbreviation', t1.abbreviation) as home_team,
 			json_object('id', t2.id, 'name', t2.name, 'short_name', t2.short_name, 'crest_url', t2.crest_url, 'country', t2.country, 'abbreviation', t2.abbreviation) as away_team,
 			CASE
@@ -180,7 +185,7 @@ func (s *Storage) GetActiveMatches(ctx context.Context, userID string) ([]Match,
 		JOIN teams t2 ON m.away_team_id = t2.id
 		LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
 		WHERE m.status = 'scheduled' AND m.match_date BETWEEN datetime('now') AND datetime('now', '+7 days')
-		ORDER BY m.match_date ASC`
+		ORDER BY m.popularity DESC`
 
 	args = append(args, userID)
 
@@ -204,6 +209,7 @@ func (s *Storage) GetActiveMatches(ctx context.Context, userID string) ([]Match,
 			&match.HomeOdds,
 			&match.DrawOdds,
 			&match.AwayOdds,
+			&match.Popularity,
 			&homeTeam,
 			&awayTeam,
 			&prediction,
@@ -258,6 +264,7 @@ func (s *Storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 			m.home_odds,
 			m.draw_odds,
 			m.away_odds,
+			m.popularity,
 			json_object('id', t1.id, 'name', t1.name, 'short_name', t1.short_name, 'crest_url', t1.crest_url, 'country', t1.country, 'abbreviation', t1.abbreviation) as home_team,
 			json_object('id', t2.id, 'name', t2.name, 'short_name', t2.short_name, 'crest_url', t2.crest_url, 'country', t2.country, 'abbreviation', t2.abbreviation) as away_team
 		FROM matches m
@@ -281,6 +288,7 @@ func (s *Storage) GetMatchByID(ctx context.Context, id string) (Match, error) {
 		&match.HomeOdds,
 		&match.DrawOdds,
 		&match.AwayOdds,
+		&match.Popularity,
 		&homeTeam,
 		&awayTeam,
 	); err != nil && IsNoRowsError(err) {
@@ -332,7 +340,7 @@ func (s *Storage) GetCompletedMatchesWithoutCompletedPredictions(ctx context.Con
 
 func (s *Storage) GetMatchesForTeam(ctx context.Context, teamID string, hoursAhead int) ([]Match, error) {
 	query := `
-        SELECT id, tournament, home_team_id, away_team_id, match_date, status
+        SELECT id, tournament, home_team_id, away_team_id, match_date, status, popularity
         FROM matches
         WHERE (home_team_id = ? OR away_team_id = ?)
         AND status = ?
@@ -348,7 +356,15 @@ func (s *Storage) GetMatchesForTeam(ctx context.Context, teamID string, hoursAhe
 	var matches []Match
 	for rows.Next() {
 		var match Match
-		if err := rows.Scan(&match.ID, &match.Tournament, &match.HomeTeamID, &match.AwayTeamID, &match.MatchDate, &match.Status); err != nil {
+		if err := rows.Scan(
+			&match.ID,
+			&match.Tournament,
+			&match.HomeTeamID,
+			&match.AwayTeamID,
+			&match.MatchDate,
+			&match.Status,
+			&match.Popularity,
+		); err != nil {
 			return nil, err
 		}
 		matches = append(matches, match)
@@ -387,4 +403,53 @@ func (s *Storage) GetPredictionStats(ctx context.Context, matchID string) (Predi
 		Draw: (draw / total) * 100,
 		Away: (away / total) * 100,
 	}, nil
+}
+
+func (s *Storage) GetTodayMostPopularMatch(ctx context.Context) (Match, error) {
+	query := `
+		SELECT m.id, m.tournament, m.home_team_id, m.away_team_id, m.match_date, m.status, m.home_score, m.away_score, m.popularity,
+			   json_object('id', home_team.id, 'name', home_team.name, 'short_name', home_team.short_name, 'crest_url', home_team.crest_url, 'country', home_team.country, 'abbreviation', home_team.abbreviation) as home_team,
+			   json_object('id', away_team.id, 'name', away_team.name, 'short_name', away_team.short_name, 'crest_url', away_team.crest_url, 'country', away_team.country, 'abbreviation', away_team.abbreviation) as away_team
+		FROM matches m
+		JOIN teams home_team ON home_team.id = home_team_id
+		JOIN teams away_team ON away_team.id = away_team_id
+		WHERE datetime(m.match_date) BETWEEN datetime('now', 'localtime') AND datetime('now', '+24 hours', 'localtime')
+		ORDER BY m.popularity DESC
+		LIMIT 1
+	`
+
+	var match Match
+	var homeTeam, awayTeam interface{}
+	row := s.db.QueryRowContext(ctx, query)
+
+	if err := row.Scan(
+		&match.ID,
+		&match.Tournament,
+		&match.HomeTeamID,
+		&match.AwayTeamID,
+		&match.MatchDate,
+		&match.Status,
+		&match.HomeScore,
+		&match.AwayScore,
+		&match.Popularity,
+		&homeTeam,
+		&awayTeam,
+	); err != nil && IsNoRowsError(err) {
+		return Match{}, ErrNotFound
+	}
+
+	homeTeamStruct, err := UnmarshalJSONToStruct[Team](homeTeam)
+	if err != nil {
+		return Match{}, err
+	}
+
+	awayTeamStruct, err := UnmarshalJSONToStruct[Team](awayTeam)
+	if err != nil {
+		return Match{}, err
+	}
+
+	match.HomeTeam = homeTeamStruct
+	match.AwayTeam = awayTeamStruct
+
+	return match, nil
 }

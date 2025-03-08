@@ -33,6 +33,7 @@ type storager interface {
 	GetUserRank(ctx context.Context, userID string) ([]db.Rank, error)
 	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 	GetPredictionStats(ctx context.Context, userID string) (db.PredictionStats, error)
+	GetTodayMostPopularMatch(ctx context.Context) (db.Match, error)
 }
 
 type API struct {

@@ -21,7 +21,7 @@ func (a API) SavePrediction(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	uid := getUserID(c)
+	uid := GetContextUserID(c)
 
 	match, err := a.storage.GetMatchByID(ctx, req.MatchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
@@ -55,7 +55,7 @@ func (a API) SavePrediction(c echo.Context) error {
 
 func (a API) GetUserPredictions(c echo.Context) error {
 	ctx := c.Request().Context()
-	uid := getUserID(c)
+	uid := GetContextUserID(c)
 
 	resp, err := a.predictionsByUserID(ctx, uid, false)
 

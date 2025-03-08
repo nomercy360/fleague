@@ -38,8 +38,7 @@ func (t *TelegramNotifier) SendPhotoNotification(params contract.SendNotificatio
 	}
 
 	photoParams := &telegram.SendPhotoParams{
-		ChatID: 927635965,
-		// ChatID:              params.ChatID,
+		ChatID:              params.ChatID,
 		Caption:             params.Message,
 		ParseMode:           models.ParseModeMarkdown,
 		Photo:               &models.InputFileUpload{Filename: "img.jpg", Data: bytes.NewReader(params.Image)},
@@ -62,8 +61,8 @@ func (t *TelegramNotifier) SendTextNotification(params contract.SendNotification
 	log.Printf("Sending notification to chatID: %d", params.ChatID)
 
 	textParams := &telegram.SendMessageParams{
-		ChatID: 927635965,
-		//ChatID:              params.ChatID,
+		// ChatID: 927635965,
+		ChatID:              params.ChatID,
 		Text:                params.Message,
 		ParseMode:           models.ParseModeMarkdown,
 		DisableNotification: true,

@@ -62,6 +62,7 @@ CREATE TABLE matches
     away_odds    REAL,                         -- Коэффициенты на победу гостевой команды
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    popularity   REAL     DEFAULT 0.0,         -- Популярность матча
     FOREIGN KEY (home_team_id) REFERENCES teams (id) ON DELETE CASCADE,
     FOREIGN KEY (away_team_id) REFERENCES teams (id) ON DELETE CASCADE
 );
@@ -110,8 +111,7 @@ CREATE TABLE notifications
     user_id           TEXT NOT NULL,
     notification_type TEXT NOT NULL, -- could be weekly_summary, match_reminder, etc.
     related_id        TEXT,          -- e.g., match_id or weekly summary id
-    sent_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    sent_at           DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 

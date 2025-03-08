@@ -69,5 +69,17 @@ export const dict = {
 		results_announcement: 'Результаты будут объявлены {{ date }} в Telegram канале',
 		join_channel: 'Вступить в канал',
 	},
+	'prediction_saved': 'Мы сохранили ваш прогноз',
+	'save_prediction': 'Сделать прогноз',
+	'saving': 'Сохранение...',
+	'match_outcome': 'Исход матча',
+	'win': 'Победа',
+	'your_prediction': 'Ваш прогноз',
+	'home': 'Дом',
+	'away': 'Гости',
+	'vs': 'VS',
+	'odds_home': 'Домашняя команда:',
+	'odds_draw': 'Ничья:',
+	'odds_away': 'Гостевая команда:',
 }
 

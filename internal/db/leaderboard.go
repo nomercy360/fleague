@@ -10,7 +10,7 @@ func (s *Storage) GetLeaderboard(ctx context.Context, seasonID string) ([]Leader
             points
         FROM leaderboards
         WHERE season_id = ?
-        ORDER BY points DESC LIMIT 10`
+        ORDER BY points DESC LIMIT 100`
 
 	rows, err := s.db.QueryContext(ctx, query, seasonID)
 	if err != nil {
