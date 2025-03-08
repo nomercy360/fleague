@@ -48,6 +48,7 @@ type Config struct {
 	} `yaml:"football_api"`
 	OpenAIKey         string `yaml:"openai_key"`
 	TelegramChannelID int64  `yaml:"telegram_channel_id"`
+	BotWebApp         string `yaml:"bot_web_app"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -370,6 +371,7 @@ func main() {
 		OpenAIKey:       cfg.OpenAIKey,
 		ImagePreviewURL: cfg.OGImagePreviewSVC,
 		ChannelChatID:   cfg.TelegramChannelID,
+		BotWebApp:       cfg.BotWebApp,
 	}
 
 	sync := syncer.NewSyncer(storage, notifier, syncerCfg)

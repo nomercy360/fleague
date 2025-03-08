@@ -23,7 +23,7 @@ func NewTelegramNotifier(bot *telegram.Bot) *TelegramNotifier {
 func (t *TelegramNotifier) SendPhotoNotification(params contract.SendNotificationParams) error {
 	log.Printf("Sending notification to chatID: %d", params.ChatID)
 
-	button := models.InlineKeyboardButton{Text: "View"}
+	button := models.InlineKeyboardButton{Text: params.ButtonText}
 
 	if params.BotWebApp != "" {
 		button.URL = params.BotWebApp

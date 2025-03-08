@@ -172,8 +172,8 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 		Image:      imgData,
 		ChatID:     s.cfg.ChannelChatID,
 		Message:    bot.EscapeMarkdown(text),
-		WebAppURL:  fmt.Sprintf("%s/matches/%s", s.cfg.WebAppURL, mostPopularMatch.ID),
-		ButtonText: "Make your prediction",
+		BotWebApp:  fmt.Sprintf("%s?startapp=m_%s", s.cfg.BotWebApp, mostPopularMatch.ID),
+		ButtonText: "Сделать ставочку",
 	}); err != nil {
 		log.Printf("Failed to send notification to channel: %v", err)
 	}

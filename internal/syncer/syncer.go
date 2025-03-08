@@ -49,6 +49,7 @@ type Config struct {
 	OpenAIKey       string
 	ImagePreviewURL string
 	ChannelChatID   int64
+	BotWebApp       string
 }
 type Syncer struct {
 	storage  storager
