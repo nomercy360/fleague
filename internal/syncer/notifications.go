@@ -141,6 +141,8 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
+
+				log.Printf("Sent notification to user %s about match %s", user.ID, match.ID)
 			} else {
 				log.Printf("Failed to send notification to user %s: %v", user.ID, err)
 			}
@@ -181,6 +183,8 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		log.Printf("Sent notification to channel about match %s", mostPopularMatch.ID)
 	}
 
 	return nil
