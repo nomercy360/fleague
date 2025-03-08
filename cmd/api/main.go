@@ -242,7 +242,7 @@ func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
 
 	for {
 		now := time.Now().In(location) // Get current time in Moscow timezone
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 06, 02, 0, 0, location)
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 10, 00, 0, 0, location)
 
 		// If it's already past 10 AM MSK today, schedule for tomorrow
 		if now.After(nextRun) {
@@ -378,7 +378,7 @@ func main() {
 
 	go startSyncer(ctx, sync)
 
-	// go startNotificationJob(ctx, sync)
+	go startNotificationJob(ctx, sync)
 
 	if err := e.Start(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)); err != nil {
 		log.Fatalf("failed to start server: %v", err)
