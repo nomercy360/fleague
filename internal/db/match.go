@@ -414,7 +414,7 @@ func (s *Storage) GetTodayMostPopularMatch(ctx context.Context) (Match, error) {
 		JOIN teams home_team ON home_team.id = home_team_id
 		JOIN teams away_team ON away_team.id = away_team_id
 		WHERE datetime(m.match_date) BETWEEN datetime('now', 'localtime') AND datetime('now', '+24 hours', 'localtime')
-		ORDER BY m.popularity DESC
+		ORDER BY m.match_date ASC
 		LIMIT 1
 	`
 
