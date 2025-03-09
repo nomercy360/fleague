@@ -142,7 +142,16 @@ export type MatchResponse = {
 	status: string
 	away_score: any
 	home_score: any
-	prediction: any
+	prediction: {
+		user_id: string
+		match_id: string
+		predicted_outcome: string
+		predicted_home_score: any
+		predicted_away_score: any
+		points_awarded: number
+		completed_at: string
+		created_at: string
+	}
 	home_odds: any
 	away_odds: any
 	draw_odds: any

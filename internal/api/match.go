@@ -11,6 +11,7 @@ import (
 
 func (a API) GetMatchByID(c echo.Context) error {
 	matchID := c.Param("id")
+	uid := GetContextUserID(c)
 	ctx := c.Request().Context()
 
 	match, err := a.storage.GetMatchByID(ctx, matchID)
@@ -18,6 +19,15 @@ func (a API) GetMatchByID(c echo.Context) error {
 		return terrors.NotFound(err, "match not found")
 	} else if err != nil {
 		return terrors.InternalServer(err, "failed to get match")
+	}
+
+	prediction, err := a.storage.GetUserPredictionByMatchID(ctx, uid, matchID)
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
+		return terrors.InternalServer(err, "failed to get user prediction")
+	}
+
+	if prediction.UserID != "" {
+		match.Prediction = &prediction
 	}
 
 	//stats, err := a.storage.GetPredictionStats(ctx, matchID)

@@ -81,4 +81,8 @@ export const dict = {
 	'odds_home': 'Home:',
 	'odds_draw': 'Draw:',
 	'odds_away': 'Away:',
+	'prediction': {
+		'score': 'You will receive 5 points for correctly predicting the exact score',
+		'outcome': 'You will receive 3 points for correctly predicting the match outcome',
+	},
 }

@@ -100,7 +100,7 @@ func (s *Syncer) SendMatchNotification(ctx context.Context) error {
 			continue
 		}
 
-		matches, err := s.storage.GetMatchesForTeam(ctx, *user.FavoriteTeamID, 12)
+		matches, err := s.storage.GetMatchesForTeam(ctx, *user.FavoriteTeamID, 14)
 		if err != nil {
 			log.Printf("Failed to fetch matches for user %s: %v", user.ID, err)
 			continue

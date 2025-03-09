@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.47
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.0
 	github.com/go-playground/validator/v10 v10.23.0
-	github.com/go-telegram/bot v1.12.1
+	github.com/go-telegram/bot v1.14.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/invopop/jsonschema v0.13.0
 	github.com/labstack/echo-jwt/v4 v4.3.0
