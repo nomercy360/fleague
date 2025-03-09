@@ -231,11 +231,6 @@ func startSyncer(ctx context.Context, sync *syncer.Syncer) {
 }
 
 func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
-	//send when app starts
-	if err := sync.SendMatchNotification(ctx); err != nil {
-		log.Printf("Failed to send match notifications: %v", err)
-	}
-
 	location, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
 		log.Fatalf("Failed to load Moscow timezone: %v", err)
