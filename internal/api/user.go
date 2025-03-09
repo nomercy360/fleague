@@ -3,13 +3,16 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
 	"net/http"
+	"path/filepath"
 	"sort"
+	"time"
 )
 
 func GetContextUserID(c echo.Context) string {
@@ -156,9 +159,51 @@ func (a API) UpdateUser(c echo.Context) error {
 		user.LanguageCode = req.LanguageCode
 	}
 
+	if req.AvatarURL != nil {
+		user.AvatarURL = req.AvatarURL
+	}
+
 	if err := a.storage.UpdateUserInformation(ctx, user); err != nil {
 		return terrors.InternalServer(err, "could not update user")
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "ok"})
+}
+
+func (a API) GetPresignedURL(c echo.Context) error {
+	var req contract.PresignedURLRequest
+	if err := c.Bind(&req); err != nil {
+		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	if err := c.Validate(req); err != nil {
+		return terrors.BadRequest(err, "failed to validate request")
+	}
+
+	uid := GetContextUserID(c)
+
+	if uid == "" {
+		return terrors.Unauthorized(nil, "unauthorized")
+	}
+
+	fileExt := filepath.Ext(req.FileName)
+	if fileExt == "" {
+		fileExt = ".jpg" // Default extension
+	}
+
+	fileName := fmt.Sprintf("wishes/%d%s", time.Now().Unix(), fileExt)
+
+	url, err := a.s3.GetPresignedURL(fileName, 15*time.Minute)
+
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get presigned url")
+	}
+
+	res := contract.PresignedURLResponse{
+		URL:      url,
+		FileName: fileName,
+		CdnURL:   fmt.Sprintf("%s/%s", a.cfg.AssetsURL, fileName),
+	}
+
+	return c.JSON(http.StatusOK, res)
 }

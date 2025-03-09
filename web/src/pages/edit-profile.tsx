@@ -1,12 +1,12 @@
 import { setUser, store } from '~/store'
-import { createEffect, onCleanup, onMount, createSignal, Show } from 'solid-js'
+import { createEffect, onCleanup, onMount, createSignal, Show, Switch, Match } from 'solid-js'
 import { TextField, TextFieldInput } from '~/components/ui/text-field'
 import { createStore } from 'solid-js/store'
 import { useMainButton } from '~/lib/useMainButton'
 import { Button } from '~/components/ui/button'
 import { IconChevronRight } from '~/components/icons'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchTeams, fetchUpdateUser } from '~/lib/api'
+import { fetchPresignedUrl, fetchTeams, fetchUpdateUser, uploadToS3 } from '~/lib/api'
 import { cn } from '~/lib/utils'
 import { useNavigate } from '@solidjs/router'
 import { useTranslations } from '~/lib/locale-context'
@@ -28,12 +28,18 @@ export default function EditUserPage() {
 		last_name: '',
 		favorite_team_id: '',
 		language_code: '',
+		avatar_url: null,
 	})
 
 	const [showTeamSelector, setShowTeamSelector] = createSignal(false)
 
 	const [searchTerm, setSearchTerm] = createSignal('')
 	const [selectedTeam, setSelectedTeam] = createSignal({} as Team)
+
+	const [imgFile, setImgFile] = createSignal<File | null>(null)
+	const [imgUploadProgress, setImgUploadProgress] = createSignal(0)
+
+	const [previewUrl, setPreviewUrl] = createSignal('')
 
 	const teams = createQuery<Team[]>(() => ({
 		queryKey: ['teams'],
@@ -58,10 +64,36 @@ export default function EditUserPage() {
 			if (store.user.favorite_team) {
 				setSelectedTeam(store.user.favorite_team)
 			}
+
+			if (store.user.avatar_url) {
+				setPreviewUrl(store.user.avatar_url)
+			}
 		}
 	})
 
 	async function updateUser() {
+		if (imgFile() && imgFile() !== null) {
+			mainButton.showProgress(true)
+			try {
+				const { cdn_url, url } = await fetchPresignedUrl(imgFile()!.name)
+				await uploadToS3(
+					url,
+					imgFile()!,
+					e => {
+						setImgUploadProgress(Math.round((e.loaded / e.total) * 100))
+					},
+					() => {
+						setImgUploadProgress(0)
+					},
+				)
+				setEditUser('avatar_url', cdn_url)
+			} catch (e) {
+				console.error(e)
+			}
+		}
+
+		mainButton.hideProgress()
+
 		const { error } = await fetchUpdateUser({
 			...editUser,
 			favorite_team_id: selectedTeam()?.id,
@@ -92,15 +124,31 @@ export default function EditUserPage() {
 
 	const { t } = useTranslations()
 
+	const handleFileChange = (event: any) => {
+		const file = event.target.files[0]
+		if (file) {
+			const maxSize = 1024 * 1024 * 5 // 7MB
+
+			if (file.size > maxSize) {
+				window.Telegram.WebApp.showAlert('File size is too big')
+				return
+			}
+
+			setImgFile(file)
+			setPreviewUrl('')
+
+			const reader = new FileReader()
+			reader.onload = e => {
+				setPreviewUrl(e.target?.result as string)
+			}
+			reader.readAsDataURL(file)
+		}
+	}
 
 	return (
 		<div class="flex flex-col items-center justify-center bg-background text-foreground px-2 py-3 gap-3">
 			<Show when={!showTeamSelector()}>
-				<img
-					src={store.user?.avatar_url}
-					alt="User avatar"
-					class="my-6 size-24 rounded-full object-cover"
-				/>
+				<ImageBox imgURL={previewUrl()} onFileChange={handleFileChange} />
 				<TextField>
 					<TextFieldInput
 						placeholder={t('first_name')}
@@ -206,3 +254,30 @@ export default function EditUserPage() {
 		</div>
 	)
 }
+
+function ImageBox(props: { imgURL: string; onFileChange: any }) {
+	return (
+		<div class="mt-5 flex h-full items-center justify-center relative">
+			<div class="relative flex size-24 flex-col items-center justify-center gap-2">
+				<img
+					src={props.imgURL}
+					alt="Uploaded image preview"
+					class="size-24 rounded-full rounded-full object-cover"
+				/>
+				<input
+					class="absolute size-full cursor-pointer rounded-full opacity-0"
+					type="file"
+					accept="image/*"
+					onChange={props.onFileChange}
+				/>
+			</div>
+			<div
+				class="flex items-center justify-center rounded-full size-7 bg-primary text-primary-foreground absolute bottom-0 right-0 pointer-events-none">
+				<span class="text-[16px] material-symbols-rounded">
+					edit
+				</span>
+			</div>
+		</div>
+	)
+}
+

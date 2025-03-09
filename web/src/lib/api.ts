@@ -104,8 +104,9 @@ export const uploadToS3 = (
 }
 
 export const fetchPresignedUrl = async (file: string) => {
-	const { data } = await apiRequest(`/presigned-url?filename=${file}`, {
-		method: 'GET',
+	const { data } = await apiRequest(`/presigned-url`, {
+		method: 'POST',
+		body: JSON.stringify({ file_name: file }),
 	})
 
 	return data

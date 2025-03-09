@@ -37,9 +37,9 @@ type storager interface {
 }
 
 type API struct {
-	storage  storager
-	cfg      Config
-	s3Client *s3.Client
+	storage storager
+	cfg     Config
+	s3      *s3.Client
 }
 
 type Config struct {
@@ -51,9 +51,9 @@ type Config struct {
 
 func New(storage storager, cfg Config, s3Client *s3.Client) *API {
 	return &API{
-		storage:  storage,
-		cfg:      cfg,
-		s3Client: s3Client,
+		storage: storage,
+		cfg:     cfg,
+		s3:      s3Client,
 	}
 }
 

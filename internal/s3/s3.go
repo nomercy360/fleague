@@ -89,5 +89,5 @@ func (s *Client) UploadFile(file []byte, fileName string) (string, error) {
 		return "", err
 	}
 
-	return s.GetPresignedURL(fileName, time.Hour)
+	return fileName, nil
 }

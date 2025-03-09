@@ -199,7 +199,7 @@ func (a API) uploadImageToS3(imgURL string, fileName string) error {
 		return fmt.Errorf("failed to read file: %v", err)
 	}
 
-	if _, err = a.s3Client.UploadFile(data, fileName); err != nil {
+	if _, err = a.s3.UploadFile(data, fileName); err != nil {
 		return fmt.Errorf("failed to upload user avatar to S3: %v", err)
 	}
 

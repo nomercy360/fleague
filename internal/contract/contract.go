@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/user/project/internal/db"
+	"net/url"
 	"time"
 )
 
@@ -159,6 +160,7 @@ type UpdateUserRequest struct {
 	LastName       *string `json:"last_name"`
 	FavoriteTeamID *string `json:"favorite_team_id"`
 	LanguageCode   *string `json:"language_code"`
+	AvatarURL      *string `json:"avatar_url"`
 }
 
 func (u UpdateUserRequest) Validate() error {
@@ -178,6 +180,17 @@ func (u UpdateUserRequest) Validate() error {
 		return fmt.Errorf("language code must be ru or en")
 	}
 
+	if u.AvatarURL != nil {
+		if *u.AvatarURL == "" {
+			return fmt.Errorf("avatar url cannot be empty")
+		}
+
+		parsedURL, err := url.Parse(*u.AvatarURL)
+		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+			return fmt.Errorf("avatar url is not valid")
+		}
+	}
+
 	return nil
 }
 
@@ -188,4 +201,14 @@ type SendNotificationParams struct {
 	WebAppURL  string
 	Image      []byte
 	ButtonText string
+}
+
+type PresignedURLRequest struct {
+	FileName string `json:"file_name" validate:"required"`
+}
+
+type PresignedURLResponse struct {
+	URL      string `json:"url"`
+	FileName string `json:"file_name"`
+	CdnURL   string `json:"cdn_url"`
 }
