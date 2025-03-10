@@ -85,4 +85,11 @@ export const dict = {
 		'score': 'You will receive 5 points for correctly predicting the exact score',
 		'outcome': 'You will receive 3 points for correctly predicting the match outcome',
 	},
+	'feature': {
+		'title': 'New Feature!',
+		'description': 'Friends, we want to add cash prizes to the game! Make a monthly contribution, compete in predictions, and win real money. What do you think?',
+		'option_yes': 'Yes, I’m ready to participate!',
+		'option_no': 'No, I’m not interested',
+		'button_submit': 'Submit',
+	},
 }

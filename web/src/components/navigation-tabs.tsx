@@ -4,6 +4,7 @@ import { useLocation } from '@solidjs/router'
 import { createSignal, onMount, Show } from 'solid-js'
 import { Button } from '~/components/ui/button'
 import { sendFeedback } from '~/lib/api'
+import { useTranslations } from '~/lib/locale-context'
 
 export default function NavigationTabs(props: any) {
 	const location = useLocation()
@@ -81,12 +82,15 @@ const PredictionDialog = () => {
 		setShowSurvey(false)
 	}
 
+	const { t } = useTranslations()
 	return (
 		<Show when={showSurvey()}>
 			<div class="px-3 fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
 				<div class="relative bg-background rounded-lg pr-4 pl-6 pt-5 pb-6 w-full max-w-md">
 					<div class="pb-4 flex flex-row items-center justify-between w-full">
-						<h2 class="text-xl font-bold">Новая фича!</h2>
+						<h2 class="text-xl font-bold">
+							{t('feature.title')}
+						</h2>
 						<button class="flex items-center justify-center rounded-sm"
 										onClick={() => onClose()}>
 						<span
@@ -97,8 +101,7 @@ const PredictionDialog = () => {
 						</button>
 					</div>
 					<p class="mb-6">
-						Друзья, мы хотим добавить в игру денежные призы! Делайте взнос, соревнуйтесь в прогнозах и выигрывайте
-						реальные деньги. Что думаете?
+						{t('feature.description')}
 					</p>
 
 					<div class="space-y-3 mb-8">
@@ -129,7 +132,9 @@ const PredictionDialog = () => {
 									/>
 								</svg>
 							</div>
-							<span>Да, готов участвовать!</span>
+							<span>
+								{t('feature.option_yes')}
+							</span>
 						</label>
 
 						<label class="flex items-center gap-3 cursor-pointer">
@@ -159,7 +164,9 @@ const PredictionDialog = () => {
 									/>
 								</svg>
 							</div>
-							<span>Нет, мне это не интересно</span>
+							<span>
+								{t('feature.option_no')}
+							</span>
 						</label>
 					</div>
 
@@ -168,7 +175,7 @@ const PredictionDialog = () => {
 							onClick={handleSubmit}
 							disabled={!selectedOption()}
 						>
-							Отправить
+							{t('feature.button_submit')}
 						</Button>
 					</div>
 				</div>
