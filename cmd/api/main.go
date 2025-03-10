@@ -347,6 +347,8 @@ func main() {
 	g.PUT("/users", a.UpdateUser)
 	g.GET("/match/popular", a.GetTodayMostPopularMatch)
 	g.POST("/presigned-url", a.GetPresignedURL)
+	g.POST("/feedback", a.SaveSurvey)
+	g.GET("/survey-stats", a.GetSurveyStats)
 
 	done := make(chan bool, 1)
 

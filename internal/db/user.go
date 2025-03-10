@@ -350,3 +350,105 @@ func (s *Storage) GetAllUsersWithFavoriteTeam(ctx context.Context) ([]User, erro
 	}
 	return users, nil
 }
+
+func (s *Storage) FollowUser(ctx context.Context, followerID, followingID string) error {
+	query := `
+		INSERT INTO user_followers (follower_id, following_id)
+		VALUES (?, ?)
+	`
+	_, err := s.db.ExecContext(ctx, query, followerID, followingID)
+	if err != nil {
+		if IsUniqueViolationError(err) {
+			return fmt.Errorf("already following user: %w", err)
+		}
+		if IsForeignKeyViolationError(err) {
+			return fmt.Errorf("one of the users does not exist: %w", err)
+		}
+		return err
+	}
+	return nil
+}
+
+// UnfollowUser allows a user to unfollow another user
+func (s *Storage) UnfollowUser(ctx context.Context, followerID, followingID string) error {
+	query := `
+		DELETE FROM user_followers
+		WHERE follower_id = ? AND following_id = ?
+	`
+	result, err := s.db.ExecContext(ctx, query, followerID, followingID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return errors.New("not following this user")
+	}
+	return nil
+}
+
+// IsFollowing checks if a user is following another user
+func (s *Storage) IsFollowing(ctx context.Context, followerID, followingID string) (bool, error) {
+	query := `
+		SELECT 1 FROM user_followers
+		WHERE follower_id = ? AND following_id = ?
+	`
+	var exists int
+	err := s.db.QueryRowContext(ctx, query, followerID, followingID).Scan(&exists)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// GetFollowers retrieves a list of users following the given user
+func (s *Storage) GetFollowers(ctx context.Context, userID string) ([]User, error) {
+	query := `
+		SELECT u.id, u.first_name, u.last_name, u.username, u.avatar_url
+		FROM user_followers uf
+		JOIN users u ON uf.follower_id = u.id
+		WHERE uf.following_id = ?
+	`
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var followers []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username, &user.AvatarURL); err != nil {
+			return nil, err
+		}
+		followers = append(followers, user)
+	}
+	return followers, rows.Err()
+}
+
+// GetFollowing retrieves a list of users the given user is following
+func (s *Storage) GetFollowing(ctx context.Context, userID string) ([]User, error) {
+	query := `
+		SELECT u.id, u.first_name, u.last_name, u.username, u.avatar_url
+		FROM user_followers uf
+		JOIN users u ON uf.following_id = u.id
+		WHERE uf.follower_id = ?
+	`
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var following []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Username, &user.AvatarURL); err != nil {
+			return nil, err
+		}
+		following = append(following, user)
+	}
+	return following, rows.Err()
+}

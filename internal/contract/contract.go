@@ -1,10 +1,12 @@
 package contract
 
 import (
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/user/project/internal/db"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -211,4 +213,23 @@ type PresignedURLResponse struct {
 	URL      string `json:"url"`
 	FileName string `json:"file_name"`
 	CdnURL   string `json:"cdn_url"`
+}
+
+type SurveyRequest struct {
+	Feature    string `json:"feature"`
+	Preference string `json:"preference"`
+}
+
+func (r *SurveyRequest) Validate() error {
+	if strings.TrimSpace(r.Feature) == "" {
+		return errors.New("feature is required and cannot be empty")
+	}
+
+	switch strings.ToLower(strings.TrimSpace(r.Preference)) {
+	case "yes", "no":
+	default:
+		return errors.New("preference must be either 'yes' or 'no'")
+	}
+
+	return nil
 }

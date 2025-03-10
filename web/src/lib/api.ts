@@ -241,3 +241,10 @@ export const fetchMatchByID = async (matchId: string) => {
 
 	return data
 }
+
+export const sendFeedback = async (feedback: any) => {
+	return await apiRequest('/feedback', {
+		method: 'POST',
+		body: JSON.stringify(feedback),
+	})
+}

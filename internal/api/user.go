@@ -207,3 +207,97 @@ func (a API) GetPresignedURL(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, res)
 }
+
+func (a API) FollowUserHandler(c echo.Context) error {
+	followingID := c.Param("user_id")
+	followerID := GetContextUserID(c)
+
+	if followerID == "" {
+		return terrors.Unauthorized(nil, "unauthorized")
+	}
+	if followerID == followingID {
+		return terrors.BadRequest(nil, "you cannot follow yourself")
+	}
+
+	ctx := c.Request().Context()
+	err := a.storage.FollowUser(ctx, followerID, followingID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return terrors.NotFound(err, "user not found")
+		}
+		return terrors.InternalServer(err, "failed to follow user")
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"message": "followed successfully"})
+}
+
+// UnfollowUserHandler allows a user to unfollow another user
+func (a API) UnfollowUserHandler(c echo.Context) error {
+	followingID := c.Param("user_id")
+	followerID := GetContextUserID(c)
+
+	if followerID == "" {
+		return terrors.Unauthorized(nil, "unauthorized")
+	}
+
+	ctx := c.Request().Context()
+	err := a.storage.UnfollowUser(ctx, followerID, followingID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return terrors.NotFound(err, "user not found")
+		}
+		return terrors.InternalServer(err, "failed to unfollow user")
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"message": "unfollowed successfully"})
+}
+
+func (a API) GetFollowersHandler(c echo.Context) error {
+	userID := c.Param("user_id")
+	ctx := c.Request().Context()
+
+	followers, err := a.storage.GetFollowers(ctx, userID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get followers")
+	}
+
+	var users []contract.UserProfile
+	for _, user := range followers {
+		users = append(users, contract.UserProfile{
+			ID:        user.ID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Username:  user.Username,
+			AvatarURL: user.AvatarURL,
+		})
+	}
+
+	return c.JSON(http.StatusOK, users)
+}
+
+// GetFollowingHandler retrieves a list of users the logged-in user is following
+func (a API) GetFollowingHandler(c echo.Context) error {
+	userID := GetContextUserID(c)
+	if userID == "" {
+		return terrors.Unauthorized(nil, "unauthorized")
+	}
+
+	ctx := c.Request().Context()
+	following, err := a.storage.GetFollowing(ctx, userID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get following list")
+	}
+
+	var users []contract.UserProfile
+	for _, user := range following {
+		users = append(users, contract.UserProfile{
+			ID:        user.ID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Username:  user.Username,
+			AvatarURL: user.AvatarURL,
+		})
+	}
+
+	return c.JSON(http.StatusOK, users)
+}

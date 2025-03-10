@@ -34,6 +34,13 @@ type storager interface {
 	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 	GetPredictionStats(ctx context.Context, userID string) (db.PredictionStats, error)
 	GetTodayMostPopularMatch(ctx context.Context) (db.Match, error)
+	FollowUser(ctx context.Context, followerID, followeeID string) error
+	UnfollowUser(ctx context.Context, followerID, followeeID string) error
+	GetFollowers(ctx context.Context, userID string) ([]db.User, error)
+	GetFollowing(ctx context.Context, userID string) ([]db.User, error)
+	GetSurveyByUserAndFeature(ctx context.Context, userID, feature string) (db.Survey, error)
+	SaveSurvey(ctx context.Context, survey db.Survey) error
+	GetSurveyStats(ctx context.Context, feature string) (map[string]int, error)
 }
 
 type API struct {

@@ -11,14 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Link } from '~/components/link'
 import { Button } from '~/components/ui/button'
 
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '~/components/ui/dialog'
 import { useTranslations } from '~/lib/locale-context'
 import { getUserLeaderboardPoints, getUserLeaderboardPosition, store } from '~/store'
 import { useNavigate, useSearchParams } from '@solidjs/router'
@@ -268,56 +260,3 @@ function LeaderBoardEntry(props: LeaderBoardEntryProps) {
 	)
 }
 
-type SeasonCardProps = {
-	season: Season
-	type: string
-}
-
-function SeasonCard(props: SeasonCardProps) {
-	const { t } = useTranslations()
-	return (
-		<Dialog>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>{props.type === 'monthly' ? 'Monthly Seasons' : 'Big Season'}</DialogTitle>
-					<DialogDescription>
-						<img
-							class="mb-1 mt-4 rounded-xl h-[300px] w-full object-cover"
-							src="/preview.jpg"
-							alt="Season Prize"
-						/>
-						<p class="mb-4 text-xs">
-							Season {props.season.name} prize - {props.type === 'monthly' ? '"Ural" FC T-Shirt' : 'Big Trophy'}
-						</p>
-						<p class="text-sm">
-							{props.type === 'monthly'
-								? 'Join our monthly challenges to win!'
-								: 'Compete for the ultimate glory!'}
-						</p>
-					</DialogDescription>
-				</DialogHeader>
-			</DialogContent>
-			<div class="relative w-full bg-secondary p-3 rounded-2xl flex items-center justify-start flex-col gap-1">
-				<DialogTrigger class="size-8 absolute top-1 right-1">
-					<span class="material-symbols-rounded text-[20px] text-secondary-foreground">
-						info
-					</span>
-				</DialogTrigger>
-				<span class="text-primary material-symbols-rounded text-[32px]">
-					sports_soccer
-				</span>
-				<h1 class="text-foreground text-2xl font-extrabold leading-none">
-					{props.type === 'monthly' ? t('active_season', { name: props.season.name }) : `${t('big_season')} ${props.season.name}`}
-				</h1>
-				<p class="text-sm text-secondary-foreground text-center">
-					<Show when={props.type === 'monthly'}>
-						{t('season_ends_on', formatDate(props.season.end_date, false, store.user?.language_code))}
-					</Show>
-					<Show when={props.type === 'football'}>
-						{t('big_season_ends_on', formatDate(props.season.end_date, false, store.user?.language_code))}
-					</Show>
-				</p>
-			</div>
-		</Dialog>
-	)
-}

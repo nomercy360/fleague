@@ -132,3 +132,16 @@ CREATE TABLE user_badges
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (badge_id) REFERENCES badges (id) ON DELETE CASCADE
 );
+
+CREATE TABLE surveys
+(
+    id         TEXT PRIMARY KEY, -- Уникальный идентификатор опроса
+    user_id    TEXT NOT NULL,    -- ID пользователя
+    feature    TEXT NOT NULL,    -- Название фичи (например, "prediction_prizes")
+    preference TEXT NOT NULL,    -- Ответ пользователя ("yes" или "no")
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_surveys_user_id ON surveys (user_id);
+CREATE INDEX idx_surveys_feature ON surveys (feature);
