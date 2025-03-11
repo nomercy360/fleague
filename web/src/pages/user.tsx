@@ -130,7 +130,7 @@ export default function UserProfilePage() {
 						/>
 						<ProfileStat
 							icon="target"
-							value={`${store.user?.prediction_accuracy}%`}
+							value={`${userInfoQuery.data.user?.prediction_accuracy}%`}
 							color="#F1C40F"
 							label={t('accuracy')}
 						/>
