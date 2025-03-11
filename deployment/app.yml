@@ -89,7 +89,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: fleague-api.mxksim.dev
+    - host: fleague-api.mxksimdev.com
       http:
         paths:
           - path: /
