@@ -1,5 +1,4 @@
 import { useMainButton } from '~/lib/useMainButton'
-
 import { createEffect, createSignal, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { fetchMatchByID, MatchResponse, PredictionRequest, saveMatchPrediction } from '~/lib/api'
 import { createQuery } from '@tanstack/solid-query'
@@ -10,7 +9,6 @@ import { cn, formatDate } from '~/lib/utils'
 import { store } from '~/store'
 import { queryClient } from '~/App'
 
-
 function MatchPage() {
 	const [predictionType, setPredictionType] = createSignal('outcome')
 	const [selectedOutcome, setSelectedOutcome] = createSignal('')
@@ -19,9 +17,7 @@ function MatchPage() {
 	const [isSubmitting, setIsSubmitting] = createSignal(false)
 
 	const params = useParams()
-
 	const { t } = useTranslations()
-
 	const navigate = useNavigate()
 
 	const matchQuery = createQuery<MatchResponse>(() => ({
@@ -82,7 +78,7 @@ function MatchPage() {
 		if (matchQuery.data && matchQuery.data.prediction) {
 			if (matchQuery.data.prediction.predicted_outcome) {
 				setSelectedOutcome(matchQuery.data.prediction.predicted_outcome)
-			} else if (matchQuery.data.prediction.predicted_home_score) {
+			} else if (matchQuery.data.prediction.predicted_home_score != null) {
 				setHomeScore(matchQuery.data.prediction.predicted_home_score.toString())
 				setAwayScore(matchQuery.data.prediction.predicted_away_score.toString())
 				setPredictionType('score')
@@ -104,8 +100,9 @@ function MatchPage() {
 			<Show when={matchQuery.isSuccess}>
 				<div class="w-full bg-secondary p-3 text-center">
 					<h2 class="text-lg font-bold text-foreground">{matchQuery.data?.tournament}</h2>
-					<p
-						class="text-muted-foreground text-sm">{formatDate(matchQuery.data!.match_date, true, store.user?.language_code)}</p>
+					<p class="text-muted-foreground text-sm">
+						{formatDate(matchQuery.data!.match_date, true, store.user?.language_code)}
+					</p>
 				</div>
 
 				<div class="w-full p-4 flex items-center justify-between">
@@ -146,13 +143,14 @@ function MatchPage() {
 				</div>
 
 				<div class="px-1 py-4 border-t w-full border-secondary">
-					<h3 class="px-2 text-lg font-semibold mb-2">
-						{t('your_prediction')}
-					</h3>
+					<h3 class="px-2 text-lg font-semibold mb-2">{t('your_prediction')}</h3>
 
-					<Show when={matchQuery.data?.status != 'scheduled' && matchQuery.data?.prediction.completed_at}>
+					<Show when={matchQuery.data?.status != 'scheduled' && matchQuery.data?.prediction?.completed_at}>
 						<div
-							class={cn('flex flex-row justify-between items-center w-full mb-3 p-3 bg-secondary rounded-lg', matchQuery.data?.prediction.points_awarded ? 'shadow-green-500 bg-green-100' : 'shadow-red-400 bg-red-100')}
+							class={cn(
+								'flex flex-row justify-between items-center w-full mb-3 p-3 bg-secondary rounded-lg',
+								matchQuery.data?.prediction.points_awarded ? 'shadow-green-500 bg-green-100' : 'shadow-red-400 bg-red-100',
+							)}
 						>
 							<div class="flex flex-col items-start">
 								<Switch>
@@ -168,15 +166,18 @@ function MatchPage() {
 										<p class="font-bold text-lg">{matchQuery.data?.away_team.abbreviation}</p>
 										<p class="text-sm text-secondary-foreground">{t('win')}</p>
 									</Match>
-									<Match when={matchQuery.data?.prediction.predicted_home_score}>
-										<p class="font-bold text-lg">{matchQuery.data?.home_team.abbreviation}</p>
-										<p class="text-sm text-secondary-foreground">{matchQuery.data?.prediction.predicted_home_score}</p>
+									<Match when={matchQuery.data?.prediction.predicted_home_score != null}>
+										<p class="font-bold text-lg">
+											{matchQuery.data?.prediction.predicted_home_score} - {matchQuery.data?.prediction.predicted_away_score}
+										</p>
+										<p class="text-sm text-secondary-foreground">{t('exact_score')}</p>
 									</Match>
 								</Switch>
 							</div>
 							<Show when={matchQuery.data?.prediction.points_awarded}>
 								<div class="flex flex-col items-end">
 									<p class="font-bold text-lg">+{matchQuery.data?.prediction.points_awarded}</p>
+									<p class="text-xs text-secondary-foreground">{t('points')}</p>
 								</div>
 							</Show>
 						</div>
@@ -203,7 +204,18 @@ function MatchPage() {
 								{t('exact_score')}
 							</button>
 						</div>
-
+						<div class="mb-1 ml-2">
+							<Show when={predictionType() === 'outcome'}>
+								<span class="text-xs font-medium">
+									{t('prediction_cost_and_reward', { cost: 20, points: 7 })}
+								</span>
+							</Show>
+							<Show when={predictionType() === 'score'}>
+								<span class="text-xs font-medium">
+									{t('prediction_cost_and_reward', { cost: 30, points: 10 })}
+								</span>
+							</Show>
+						</div>
 						<Show when={predictionType() === 'outcome'}>
 							<div class="grid grid-cols-3 gap-3 mb-4">
 								<button
@@ -276,16 +288,6 @@ function MatchPage() {
 								</div>
 							</div>
 						</Show>
-						<Show when={predictionType() === 'score' && (homeScore() !== '' || awayScore() !== '')}>
-							<p class="text-xs text-muted-foreground text-center">
-								{t('prediction.score')}
-							</p>
-						</Show>
-						<Show when={predictionType() === 'outcome' && selectedOutcome()}>
-							<p class="text-xs text-muted-foreground text-center">
-								{t('prediction.outcome')}
-							</p>
-						</Show>
 					</Show>
 				</div>
 			</Show>
@@ -294,4 +296,3 @@ function MatchPage() {
 }
 
 export default MatchPage
-

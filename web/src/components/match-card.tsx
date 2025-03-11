@@ -3,6 +3,7 @@ import { IconTrophy } from '~/components/icons'
 import { cn, formatDate, timeToLocaleString } from '~/lib/utils'
 import { MatchResponse, PredictionResponse } from '~/lib/api'
 import { store } from '~/store'
+import { Link } from '~/components/link'
 
 type MatchCardProps = {
 	match: MatchResponse
@@ -99,7 +100,9 @@ export default function MatchCard(props: MatchCardProps) {
 	)
 
 	return (
-		<div class="h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card">
+		<Link
+			href={`/matches/${match.id}`}
+			class="h-[120px] relative grid grid-cols-3 items-center rounded-2xl max-w-md mx-auto p-2.5 pt-4 bg-card">
 			<Show when={prediction}>
         <span class={predictionClass}>
           <Switch>
@@ -181,6 +184,6 @@ export default function MatchCard(props: MatchCardProps) {
 				/>
 				<p class="text-xs text-foreground">{away_team.short_name}</p>
 			</div>
-		</div>
+		</Link>
 	)
 }

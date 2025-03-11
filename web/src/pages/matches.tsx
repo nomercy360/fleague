@@ -143,13 +143,7 @@ export default function MatchesPage() {
 										{formatDate(date)}
 									</p>
 									<For each={matches as any}>
-										{match => (
-											<DrawerTrigger class="w-full" onClick={() => {
-												setSelectedMatch(match)
-											}}>
-												<MatchCard match={match} prediction={match.prediction} />
-											</DrawerTrigger>)
-										}
+										{match => (<MatchCard match={match} prediction={match.prediction} />)}
 									</For>
 								</>
 							))}
