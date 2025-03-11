@@ -76,7 +76,7 @@ func (s *Storage) GetUserRank(ctx context.Context, userID string) ([]Rank, error
 	}
 	defer rows.Close()
 
-	var ranks []Rank
+	ranks := make([]Rank, 0)
 	for rows.Next() {
 		var rank Rank
 		if err := rows.Scan(
