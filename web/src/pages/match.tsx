@@ -48,7 +48,15 @@ function MatchPage() {
 			setIsSubmitting(false)
 			await matchQuery.refetch()
 			await queryClient.invalidateQueries({ queryKey: ['predictions'] })
-			showToast({ variant: 'success', title: t('prediction_saved'), duration: 3000 })
+			showToast({
+				variant: 'success',
+				title: t('prediction_saved'),
+				description: t('prediction_submitted', {
+					cost: predictionType() === 'score' ? 20 : 10,
+					points: predictionType() === 'score' ? 7 : 3,
+				}),
+				duration: 3000,
+			})
 			navigate('/')
 		} else {
 			setIsSubmitting(false)

@@ -108,4 +108,5 @@ export const dict = {
 	'prediction.outcome': 'Прогноз на исход матча',
 	'save_prediction': 'Сохранить прогноз',
 	'saving': 'Сохранение...',
+	prediction_submitted: 'Вы потратили {{ cost }} токенов. Выиграйте до {{ points }} очков!',
 }

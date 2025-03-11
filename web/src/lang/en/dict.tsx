@@ -112,4 +112,5 @@ export const dict = {
 	'prediction.outcome': 'Predicting match outcome',
 	'save_prediction': 'Save Prediction',
 	'saving': 'Saving...',
+	prediction_submitted: 'You spent {{ cost }} tokens. Win up to {{ points }} points!',
 }
