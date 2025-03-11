@@ -103,4 +103,8 @@ export const dict = {
 	daily_bonus_description: <>Log in every day and claim <span class="text-primary font-semibold">5 tokens</span> for
 		free!</>,
 	friends_invited: 'My friends',
+	join_channel: 'Join the Channel',
+	join_channel_description: <>Join our community and earn <span class="text-primary font-semibold">10 tokens</span> for
+		subscribing!</>,
+	my_balance: 'My Balance',
 }

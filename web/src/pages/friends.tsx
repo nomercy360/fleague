@@ -8,7 +8,6 @@ import { useTranslations } from '~/lib/locale-context'
 
 export default function FriendsPage() {
 	const [isCopied, setIsCopied] = createSignal(false)
-	const [points, setPoints] = createSignal(0)
 
 	const generateShareURL = () => {
 		const botURL = import.meta.env.DEV
@@ -44,17 +43,14 @@ export default function FriendsPage() {
 		queryFn: fetchReferrals,
 	}))
 
-	createEffect(() => {
-		if (referrals.data) {
-			const totalPoints = referrals.data.reduce((acc: any) => acc + 10, 0)
-			setPoints(totalPoints)
-		}
-	})
-
 	const { t } = useTranslations()
 
 	return (
 		<div class="h-full p-3 overflow-y-scroll pb-[180px]">
+			<div class="mb-2 px-2 flex flex-row items-start justify-between">
+				{t('my_balance')}:
+				<span class="font-bold text-lg">{store.user?.prediction_tokens}</span>
+			</div>
 			<button class="relative bg-secondary p-3 rounded-2xl flex flex-col items-start text-start justify-center"
 							onClick={shareProfileURL}>
 				<span
@@ -99,37 +95,21 @@ export default function FriendsPage() {
 					</p>
 				</div>
 			</div>
-			<div class="mt-6">
-				<div class="flex flex-row items-center justify-between w-full">
-					<p class="text-lg font-semibold">
-						{t('friends_invited')}
-					</p>
-				</div>
-				<Show when={referrals.data?.length > 0}>
-					<For each={referrals.data}>
-						{(referral) => (
-							<div class="mt-1 flex items-center justify-between bg-card rounded-2xl p-3">
-								<div class="flex items-center">
-									<img
-										class="size-6 rounded-full"
-										src={referral.avatar_url}
-										alt={referral.first_name}
-									/>
-									<span class="ml-4 font-medium">
-										{referral.first_name} {referral.last_name}
-									</span>
-								</div>
-								<div class="flex items-center">
-									<p class="text-sm font-medium text-secondary-foreground mr-0.5">
-										+10
-									</p>
-									<span class="text-[12px] material-symbols-rounded text-yellow-200">star</span>
-								</div>
-							</div>
-						)}
-					</For>
-				</Show>
-			</div>
+			<button
+				onClick={() => {
+					window.Telegram.WebApp.openTelegramLink('https://t.me/mpl_footbal_analyst')
+				}}
+				class="relative mt-2 bg-card p-3 rounded-2xl flex flex-col items-start text-start justify-center">
+				<span class="material-symbols-rounded text-[20px] absolute top-3 right-3 text-secondary-foreground">
+						arrow_outward
+				</span>
+				<h1 class="text-base font-bold">
+					{t('join_channel')}
+				</h1>
+				<p class="text-sm text-secondary-foreground mt-1">
+					{t('join_channel_description')}
+				</p>
+			</button>
 		</div>
 	)
 }
