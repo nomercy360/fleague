@@ -13,6 +13,7 @@ import (
 	"github.com/user/project/internal/terrors"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"time"
@@ -161,7 +162,8 @@ func (a *API) TelegramAuth(c echo.Context) error {
 	}
 
 	if uresp.TotalPredictions > 0 {
-		uresp.PredictionAccuracy = (float64(uresp.CorrectPredictions) / float64(uresp.TotalPredictions)) * 100
+		accuracy := (float64(uresp.CorrectPredictions) / float64(uresp.TotalPredictions)) * 100
+		uresp.PredictionAccuracy = math.Round(accuracy*100) / 100
 	}
 
 	resp := &contract.UserAuthResponse{

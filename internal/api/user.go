@@ -9,6 +9,7 @@ import (
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
+	"math"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -107,7 +108,8 @@ func (a *API) GetUserInfo(c echo.Context) error {
 	}
 
 	if resp.User.TotalPredictions > 0 {
-		resp.User.PredictionAccuracy = (float64(resp.User.CorrectPredictions) / float64(resp.User.TotalPredictions)) * 100
+		accuracy := (float64(resp.User.CorrectPredictions) / float64(resp.User.TotalPredictions)) * 100
+		resp.User.PredictionAccuracy = math.Round(accuracy*100) / 100
 	}
 
 	return c.JSON(http.StatusOK, resp)

@@ -22,8 +22,6 @@ CREATE TABLE users
     FOREIGN KEY (favorite_team_id) REFERENCES teams (id) ON DELETE SET NULL
 );
 
--- ALTER TABLE users ADD COLUMN prediction_tokens INTEGER DEFAULT 50; -- Starting balance
-
 CREATE TABLE user_logins
 (
     id         TEXT PRIMARY KEY,                   -- Unique ID for each login event
@@ -96,8 +94,6 @@ CREATE TABLE predictions
     FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, match_id)
 );
-
--- ALTER TABLE predictions ADD COLUMN token_cost INTEGER DEFAULT 0;
 
 CREATE TABLE seasons
 (
