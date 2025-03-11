@@ -33,6 +33,8 @@ export function ProfileStat(props: ProfileStatProps) {
 	)
 }
 
+//
+
 export default function UserProfilePage() {
 	const params = useParams()
 	const username = params.username
