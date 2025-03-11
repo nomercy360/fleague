@@ -11,11 +11,10 @@ import {
 import { DrawerClose, DrawerContent, DrawerFooter } from '~/components/ui/drawer'
 import { Button } from '~/components/ui/button'
 import { IconMinus, IconPlus } from '~/components/icons'
-import { cn, formatDate } from '~/lib/utils'
+import { cn } from '~/lib/utils'
 import { useTranslations } from '~/lib/locale-context'
-import { createQuery } from '@tanstack/solid-query'
-import match from '~/pages/match'
-import { setUser, store, updateUserBalance } from '~/store'
+import { updateUserBalance } from '~/store'
+import { showToast } from '~/components/ui/toast'
 
 
 interface ScoreboardProps {
@@ -77,6 +76,16 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		if (!error) {
 			updateUserBalance(data.balance)
 			props.onUpdate()
+
+			showToast({
+				variant: 'success',
+				title: t('prediction_saved'),
+				description: t('prediction_submitted', {
+					cost: isExactScore() ? 20 : 10,
+					points: outcome() ? 7 : 3,
+				}),
+				duration: 3000,
+			})
 		}
 
 		if (error === 'insufficient tokens') {
@@ -220,11 +229,20 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 								</div>
 							</Show>
 						</div>
-						<p class="text-xs text-muted-foreground mt-2">
-							{formatDate(props.match.match_date, true)}
-						</p>
 					</div>
 					<div class="w-full gap-2 flex flex-col mb-4">
+						<div class="ml-2">
+							<Show when={outcome()}>
+								<span class="text-xs font-medium">
+									{t('prediction_cost_and_reward', { cost: 20, points: 7 })}
+								</span>
+							</Show>
+							<Show when={isExactScore()}>
+								<span class="text-xs font-medium">
+									{t('prediction_cost_and_reward', { cost: 30, points: 10 })}
+								</span>
+							</Show>
+						</div>
 						<div class="w-full">
 							<div class="grid grid-cols-3 w-full gap-2">
 								<Button
