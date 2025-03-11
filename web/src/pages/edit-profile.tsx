@@ -107,6 +107,7 @@ export default function EditUserPage() {
 			...store.user,
 			...editUser,
 			favorite_team: selectedTeam(),
+			avatar_url: editUser.avatar_url || store.user.avatar_url,
 		})
 
 		navigate('/')

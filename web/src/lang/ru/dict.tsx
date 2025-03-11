@@ -3,7 +3,7 @@ export const dict = {
 	'edit_profile': 'Профиль',
 	'correct': 'Правильные',
 	'rank': 'Место в рейтинге',
-	'points_earned': 'Заработанные очки',
+	'accuracy': 'Точность прогноза',
 	'max_streak': 'Макс. серия',
 	'check_out_profile': 'Посмотрите профиль {first_name}',
 	'first_name': 'Имя',
@@ -36,6 +36,7 @@ export const dict = {
 	'draw': 'Ничья',
 	'exact_score': 'Точный счет',
 	'save': 'Сохранить',
+	'cancel_prediction': 'Отменить прогноз',
 	'onboarding': [
 		{
 			title: 'Добро пожаловать в MatchPredict!',
@@ -85,11 +86,21 @@ export const dict = {
 		'score': 'Вы получите 5 очков за правильный прогноз счёта',
 		'outcome': 'Вы получите 3 очка за правильный прогноз исхода матча',
 	},
-	"feature": {
-		"title": "Новая фича!",
-		"description": "Друзья, мы хотим добавить в игру денежные призы! Делайте ежемесячный взнос, соревнуйтесь в прогнозах и выигрывайте реальные деньги. Что думаете?",
-		"option_yes": "Да, готов участвовать!",
-		"option_no": "Нет, мне это не интересно",
-		"button_submit": "Отправить"
-	}
+	'feature': {
+		'title': 'Новая фича!',
+		'description': 'Друзья, мы хотим добавить в игру денежные призы! Делайте ежемесячный взнос, соревнуйтесь в прогнозах и выигрывайте реальные деньги. Что думаете?',
+		'option_yes': 'Да, готов участвовать!',
+		'option_no': 'Нет, мне это не интересно',
+		'button_submit': 'Отправить',
+	},
+	send_invite: 'Пригласить друга',
+	invite_friends: 'Приглашайте друзей',
+	invite_friends_description: <>Получи <span class="text-primary font-semibold">50 токенов</span> за каждого друга,
+		который присоединится!</>,
+	buy_points: 'Купить токены',
+	buy_points_description: 'Добавь токены, чтобы делать больше прогнозов и выигрывать призы!',
+	daily_bonus: 'Ежедневный бонус',
+	daily_bonus_description: <>Каждый день получай <span class="text-primary font-semibold">5 токенов</span> за вход в
+		приложение!</>,
+	friends_invited: 'Мои друзья',
 }

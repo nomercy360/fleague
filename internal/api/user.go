@@ -29,7 +29,7 @@ func GetContextUserID(c echo.Context) string {
 	return claims.UID
 }
 
-func (a API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]contract.PredictionResponse, error) {
+func (a *API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]contract.PredictionResponse, error) {
 	predictions, err := a.storage.GetPredictionsByUserID(ctx, uid, onlyCompleted)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (a API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted 
 	return res, nil
 }
 
-func (a API) GetUserInfo(c echo.Context) error {
+func (a *API) GetUserInfo(c echo.Context) error {
 	username := c.Param("username")
 	ctx := c.Request().Context()
 
@@ -95,7 +95,6 @@ func (a API) GetUserInfo(c echo.Context) error {
 			LastName:           user.LastName,
 			Username:           user.Username,
 			AvatarURL:          user.AvatarURL,
-			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
 			Ranks:              ranks,
@@ -107,10 +106,14 @@ func (a API) GetUserInfo(c echo.Context) error {
 		Predictions: userPredictions,
 	}
 
+	if resp.User.TotalPredictions > 0 {
+		resp.User.PredictionAccuracy = (float64(resp.User.CorrectPredictions) / float64(resp.User.TotalPredictions)) * 100
+	}
+
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (a API) ListMyReferrals(c echo.Context) error {
+func (a *API) ListMyReferrals(c echo.Context) error {
 	res, err := a.storage.ListUserReferrals(c.Request().Context(), GetContextUserID(c))
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user referrals")
@@ -124,7 +127,6 @@ func (a API) ListMyReferrals(c echo.Context) error {
 			LastName:           user.LastName,
 			Username:           user.Username,
 			AvatarURL:          user.AvatarURL,
-			TotalPoints:        user.TotalPoints,
 			TotalPredictions:   user.TotalPredictions,
 			CorrectPredictions: user.CorrectPredictions,
 		})
@@ -133,7 +135,7 @@ func (a API) ListMyReferrals(c echo.Context) error {
 	return c.JSON(http.StatusOK, users)
 }
 
-func (a API) UpdateUser(c echo.Context) error {
+func (a *API) UpdateUser(c echo.Context) error {
 	var req contract.UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to decode request")
@@ -170,7 +172,7 @@ func (a API) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "ok"})
 }
 
-func (a API) GetPresignedURL(c echo.Context) error {
+func (a *API) GetPresignedURL(c echo.Context) error {
 	var req contract.PresignedURLRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
@@ -208,7 +210,7 @@ func (a API) GetPresignedURL(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-func (a API) FollowUserHandler(c echo.Context) error {
+func (a *API) FollowUserHandler(c echo.Context) error {
 	followingID := c.Param("user_id")
 	followerID := GetContextUserID(c)
 
@@ -232,7 +234,7 @@ func (a API) FollowUserHandler(c echo.Context) error {
 }
 
 // UnfollowUserHandler allows a user to unfollow another user
-func (a API) UnfollowUserHandler(c echo.Context) error {
+func (a *API) UnfollowUserHandler(c echo.Context) error {
 	followingID := c.Param("user_id")
 	followerID := GetContextUserID(c)
 
@@ -252,7 +254,7 @@ func (a API) UnfollowUserHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "unfollowed successfully"})
 }
 
-func (a API) GetFollowersHandler(c echo.Context) error {
+func (a *API) GetFollowersHandler(c echo.Context) error {
 	userID := c.Param("user_id")
 	ctx := c.Request().Context()
 
@@ -276,7 +278,7 @@ func (a API) GetFollowersHandler(c echo.Context) error {
 }
 
 // GetFollowingHandler retrieves a list of users the logged-in user is following
-func (a API) GetFollowingHandler(c echo.Context) error {
+func (a *API) GetFollowingHandler(c echo.Context) error {
 	userID := GetContextUserID(c)
 	if userID == "" {
 		return terrors.Unauthorized(nil, "unauthorized")

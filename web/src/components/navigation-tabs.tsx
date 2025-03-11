@@ -5,6 +5,7 @@ import { createSignal, onMount, Show } from 'solid-js'
 import { Button } from '~/components/ui/button'
 import { sendFeedback } from '~/lib/api'
 import { useTranslations } from '~/lib/locale-context'
+import { store } from '~/store'
 
 export default function NavigationTabs(props: any) {
 	const location = useLocation()
@@ -19,21 +20,28 @@ export default function NavigationTabs(props: any) {
 		<div class="h-screen bg-background text-foreground">
 			<PredictionDialog />
 			<div
-				class="flex flex-row items-start border-t h-[100px] fixed bottom-0 w-full bg-background z-50 transform -translate-x-1/2 left-1/2"
+				class="flex flex-row items-center border-t h-[100px] fixed bottom-0 w-full bg-background z-50 transform -translate-x-1/2 left-1/2"
 			>
-				<div class="px-2.5 py-4 flex flex-row w-full gap-10 items-center justify-center">
-					{tabs.map(({ href, icon, activePath }) => (
-						<Link
-							href={href}
-							class={cn('size-10 rounded-full p-2 flex items-center flex-col h-full text-sm gap-1', {
-								'bg-blue-500 text-primary-foreground': location.pathname === activePath,
-							})}
-						>
+				<div class='flex flex-row items-center justify-between w-full px-4 space-x-10'>
+					<div
+						class="space-x-1 px-3 h-8 text-secondary-foreground text-xs font-semibold rounded-xl bg-secondary flex items-center justify-center">
+						<span class="material-symbols-rounded text-[16px] text-foreground">token</span>
+						<span>{store.user?.prediction_tokens}</span>
+					</div>
+					<div class="flex flex-row w-full gap-6 items-center justify-center">
+						{tabs.map(({ href, icon, activePath }) => (
+							<Link
+								href={href}
+								class={cn('size-10 rounded-full p-2 flex items-center flex-col h-full text-sm gap-1', {
+									'bg-blue-500 text-primary-foreground': location.pathname === activePath,
+								})}
+							>
 						<span class="material-symbols-rounded icon-fill text-[24px]">
 							{icon}
 						</span>
-						</Link>
-					))}
+							</Link>
+						))}
+					</div>
 				</div>
 			</div>
 			{props.children}
@@ -52,7 +60,7 @@ const PredictionDialog = () => {
 	}
 
 	onMount(() => {
-		// window.Telegram.WebApp.CloudStorage.removeItem('fl_survey_complete')
+		//window.Telegram.WebApp.CloudStorage.removeItem('fl_survey_complete')
 		window.Telegram.WebApp.CloudStorage.getItem(
 			'fl_survey_complete',
 			updateSurveyComplete,

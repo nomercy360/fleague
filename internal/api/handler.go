@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	telegram "github.com/go-telegram/bot"
 	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/s3"
@@ -27,7 +28,7 @@ type storager interface {
 	GetActiveSeasons(ctx context.Context) ([]db.Season, error)
 	UpdateUserPredictionCount(ctx context.Context, userID string) error
 	ListUserReferrals(ctx context.Context, userID string) ([]db.User, error)
-	UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error
+	UpdateUserPoints(ctx context.Context, userID string, isCorrect bool) error
 	ListTeams(ctx context.Context) ([]db.Team, error)
 	UpdateUserInformation(ctx context.Context, user db.User) error
 	GetUserRank(ctx context.Context, userID string) ([]db.Rank, error)
@@ -41,12 +42,17 @@ type storager interface {
 	GetSurveyByUserAndFeature(ctx context.Context, userID, feature string) (db.Survey, error)
 	SaveSurvey(ctx context.Context, survey db.Survey) error
 	GetSurveyStats(ctx context.Context, feature string) (map[string]int, error)
+	RecordUserLogin(ctx context.Context, userID string) error
+	HasLoggedInToday(ctx context.Context, userID string) (bool, error)
+	UpdateUserTokens(ctx context.Context, userID string, amount int, transactionType string) (int, error)
+	DeletePrediction(ctx context.Context, uid, predictionID string) error
 }
 
 type API struct {
 	storage storager
 	cfg     Config
 	s3      *s3.Client
+	tg      *telegram.Bot
 }
 
 type Config struct {
@@ -56,15 +62,16 @@ type Config struct {
 	OpenAIKey string
 }
 
-func New(storage storager, cfg Config, s3Client *s3.Client) *API {
+func New(storage storager, cfg Config, s3Client *s3.Client, tgBot *telegram.Bot) *API {
 	return &API{
 		storage: storage,
 		cfg:     cfg,
 		s3:      s3Client,
+		tg:      tgBot,
 	}
 }
 
-func (a API) Health(c echo.Context) error {
+func (a *API) Health(c echo.Context) error {
 	stats, err := a.storage.Health()
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get health stats")

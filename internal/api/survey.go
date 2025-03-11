@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func (a API) SaveSurvey(c echo.Context) error {
+func (a *API) SaveSurvey(c echo.Context) error {
 	var req contract.SurveyRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to decode request")
@@ -44,7 +44,7 @@ func (a API) SaveSurvey(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
 }
 
-func (a API) GetSurveyStats(c echo.Context) error {
+func (a *API) GetSurveyStats(c echo.Context) error {
 	feature := c.QueryParam("feature")
 	if feature == "" {
 		return terrors.BadRequest(nil, "feature parameter is required")

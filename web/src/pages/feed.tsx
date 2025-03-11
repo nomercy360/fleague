@@ -132,10 +132,10 @@ export default function FeedPage() {
 						/>
 					</Show>
 					<ProfileStat
-						icon="star"
-						value={store.user?.total_points}
+						icon="target"
+						value={`${store.user?.prediction_accuracy}%`}
 						color="#F1C40F"
-						label={t('points_earned')}
+						label={t('accuracy')}
 					/>
 					<Show when={store.user?.longest_win_streak || 0 > 3}>
 						<ProfileStat

@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-func (a API) GetLeaderboard(c echo.Context) error {
+func (a *API) GetLeaderboard(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	seasons, err := a.storage.GetActiveSeasons(ctx)

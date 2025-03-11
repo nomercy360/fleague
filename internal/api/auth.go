@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func (a API) TelegramAuth(c echo.Context) error {
+func (a *API) TelegramAuth(c echo.Context) error {
 	var req contract.AuthTelegramRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
@@ -38,7 +38,6 @@ func (a API) TelegramAuth(c echo.Context) error {
 	}
 
 	data, err := initdata.Parse(req.Query)
-
 	if err != nil {
 		return terrors.Unauthorized(err, "cannot parse init data from telegram")
 	}
@@ -51,22 +50,18 @@ func (a API) TelegramAuth(c echo.Context) error {
 		}
 
 		var first, last *string
-
 		if data.User.FirstName != "" {
 			first = &data.User.FirstName
 		}
-
 		if data.User.LastName != "" {
 			last = &data.User.LastName
 		}
 
 		lang := "ru"
-
 		if data.User.LanguageCode != "ru" {
 			lang = "en"
 		}
 
-		// if referrer is not empty, get referrer user by ID
 		var referrerID *string
 		if req.ReferrerID != nil {
 			referrer, err := a.storage.GetUserByID(*req.ReferrerID)
@@ -75,19 +70,18 @@ func (a API) TelegramAuth(c echo.Context) error {
 			} else if err != nil {
 				log.Printf("failed to get referrer: %v", err)
 			}
-
 			if referrer.ID != "" {
 				referrerID = &referrer.ID
-
-				// add 10 points to referrer
-				if err = a.storage.UpdateUserPoints(context.Background(), referrer.ID, 10, false); err != nil {
-					log.Printf("failed to update referrer points: %v", err)
+				balance, err := a.storage.UpdateUserTokens(context.Background(), referrer.ID, 50, db.TokenTransactionTypeReferral)
+				if err != nil {
+					log.Printf("Failed to award referral bonus for user %s: %v", referrer.ID, err)
 				}
+
+				referrer.PredictionTokens = balance
 			}
 		}
 
 		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", a.cfg.AssetsURL, rand.Intn(30)+1)
-
 		create := db.User{
 			ID:           nanoid.Must(),
 			Username:     username,
@@ -107,26 +101,36 @@ func (a API) TelegramAuth(c echo.Context) error {
 		if err != nil {
 			return terrors.InternalServer(err, "failed to get user")
 		}
-
-		//if data.User.PhotoURL != "" {
-		//	go func() {
-		//		imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
-		//		imgUrl := fmt.Sprintf("%s/%s", s.cfg.AssetsURL, imgFile)
-		//		if err = s.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
-		//			log.Printf("failed to upload user avatar to S3: %v", err)
-		//		}
-		//
-		//		if err = s.storage.UpdateUserAvatarURL(context.Background(), data.User.ID, imgUrl); err != nil {
-		//			log.Printf("failed to update user avatar URL: %v", err)
-		//		}
-		//	}()
-		//}
 	} else if err != nil {
 		return terrors.InternalServer(err, "failed to get user")
 	}
 
-	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
+	ctx := c.Request().Context()
+	hasLoggedInToday, err := a.storage.HasLoggedInToday(ctx, user.ID)
+	if err != nil {
+		log.Printf("Failed to check daily login for user %s: %v", user.ID, err)
+	}
 
+	if err := a.storage.RecordUserLogin(ctx, user.ID); err != nil {
+		log.Printf("Failed to record login for user %s: %v", user.ID, err)
+	}
+
+	if err != nil {
+		log.Printf("Failed to check daily login for user %s: %v", user.ID, err)
+
+	} else if !hasLoggedInToday && user.CreatedAt.Before(time.Now().Add(-24*time.Hour)) {
+		balance, err := a.storage.UpdateUserTokens(ctx, user.ID, 5, db.TokenTransactionTypeDailyLogin)
+
+		if err != nil {
+			log.Printf("Failed to award daily login bonus for user %s: %v", user.ID, err)
+		} else {
+			log.Printf("Awarded 5 Prediction Tokens to user %s for daily login", user.ID)
+		}
+
+		user.PredictionTokens = balance
+	}
+
+	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
 	if err != nil {
 		return terrors.InternalServer(err, "jwt library error")
 	}
@@ -144,7 +148,6 @@ func (a API) TelegramAuth(c echo.Context) error {
 		LanguageCode:       user.LanguageCode,
 		ChatID:             user.ChatID,
 		CreatedAt:          user.CreatedAt,
-		TotalPoints:        user.TotalPoints,
 		TotalPredictions:   user.TotalPredictions,
 		CorrectPredictions: user.CorrectPredictions,
 		AvatarURL:          user.AvatarURL,
@@ -154,6 +157,11 @@ func (a API) TelegramAuth(c echo.Context) error {
 		CurrentWinStreak:   user.CurrentWinStreak,
 		LongestWinStreak:   user.LongestWinStreak,
 		Badges:             user.Badges,
+		PredictionTokens:   user.PredictionTokens,
+	}
+
+	if uresp.TotalPredictions > 0 {
+		uresp.PredictionAccuracy = (float64(uresp.CorrectPredictions) / float64(uresp.TotalPredictions)) * 100
 	}
 
 	resp := &contract.UserAuthResponse{
@@ -183,7 +191,7 @@ func generateJWT(userID string, chatID int64, secretKey string) (string, error) 
 	return t, nil
 }
 
-func (a API) uploadImageToS3(imgURL string, fileName string) error {
+func (a *API) uploadImageToS3(imgURL string, fileName string) error {
 	resp, err := http.Get(imgURL)
 
 	if err != nil {

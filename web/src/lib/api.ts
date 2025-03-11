@@ -113,15 +113,14 @@ export const fetchPresignedUrl = async (file: string) => {
 }
 
 export type PredictionRequest = {
-	match_id: number
+	match_id: string
 	predicted_home_score: number | null
 	predicted_away_score: number | null
 	predicted_outcome: string | null
 }
 
-
 export type MatchResponse = {
-	id: number
+	id: string
 	tournament: string
 	home_team: {
 		id: number
@@ -195,6 +194,12 @@ export const saveMatchPrediction = async (prediction: PredictionRequest) => {
 	})
 }
 
+export const deleteMatchPrediction = async (matchId: string) => {
+	return await apiRequest(`/predictions/${matchId}`, {
+		method: 'DELETE',
+	})
+}
+
 export const fetchPredictions = async () => {
 	const { data } = await apiRequest('/predictions', {
 		method: 'GET',
@@ -246,5 +251,12 @@ export const sendFeedback = async (feedback: any) => {
 	return await apiRequest('/feedback', {
 		method: 'POST',
 		body: JSON.stringify(feedback),
+	})
+}
+
+export const requestInvoice = async () => {
+	///payments/invoice
+	return await apiRequest('/payments/invoice', {
+		method: 'POST',
 	})
 }

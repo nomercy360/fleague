@@ -304,6 +304,12 @@ func main() {
 
 	e.Validator = &customValidator{validator: validator.New()}
 
+	bot, err := telegram.New(cfg.TelegramBotToken)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize bot: %v", err)
+	}
+
 	apiCfg := api.Config{
 		BotToken:  cfg.TelegramBotToken,
 		JWTSecret: cfg.JWTSecret,
@@ -318,15 +324,17 @@ func main() {
 		log.Fatalf("Failed to initialize AWS S3 client: %v\n", err)
 	}
 
-	a := api.New(storage, apiCfg, s3Client)
+	a := api.New(storage, apiCfg, s3Client, bot)
 
 	tmConfig := middleware.TimeoutConfig{
-		Timeout: 20 * time.Second,
+		Timeout: 120 * time.Second,
 	}
 
 	e.Use(middleware.TimeoutWithConfig(tmConfig))
 
 	e.POST("/auth/telegram", a.TelegramAuth)
+
+	e.POST("/telegram/webhook", a.TelegramWebhook)
 
 	// Routes
 	g := e.Group("/v1")
@@ -338,6 +346,7 @@ func main() {
 	g.GET("/matches", a.ListMatches)
 	g.GET("/matches/:id", a.GetMatchByID)
 	g.POST("/predictions", a.SavePrediction)
+	g.DELETE("/predictions/:id", a.CancelPrediction)
 	g.GET("/predictions", a.GetUserPredictions)
 	g.GET("/leaderboard", a.GetLeaderboard)
 	g.GET("/users/:username", a.GetUserInfo)
@@ -349,16 +358,11 @@ func main() {
 	g.POST("/presigned-url", a.GetPresignedURL)
 	g.POST("/feedback", a.SaveSurvey)
 	g.GET("/survey-stats", a.GetSurveyStats)
+	g.POST("/payments/invoice", a.SendInvoice)
 
 	done := make(chan bool, 1)
 
 	go gracefulShutdown(e, done)
-
-	bot, err := telegram.New(cfg.TelegramBotToken)
-
-	if err != nil {
-		log.Fatalf("Failed to initialize bot: %v", err)
-	}
 
 	notifier := notification.NewTelegramNotifier(bot)
 

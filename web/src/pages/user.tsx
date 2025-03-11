@@ -127,10 +127,10 @@ export default function UserProfilePage() {
 							label={t('rank')}
 						/>
 						<ProfileStat
-							icon="star"
-							value={userInfoQuery.data.user.total_points}
+							icon="target"
+							value={`${store.user?.prediction_accuracy}%`}
 							color="#F1C40F"
-							label={t('points')}
+							label={t('accuracy')}
 						/>
 						<Show when={userInfoQuery.data.user.longest_win_streak > 3}>
 							<ProfileStat

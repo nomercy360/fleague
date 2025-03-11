@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mattn/go-sqlite3"
+	"github.com/user/project/internal/nanoid"
 	"time"
 )
 
@@ -21,7 +22,6 @@ type User struct {
 	ChatID             int64     `db:"chat_id"`
 	ReferredBy         *string   `db:"referred_by"`
 	CreatedAt          time.Time `db:"created_at"`
-	TotalPoints        int       `db:"total_points"`
 	TotalPredictions   int       `db:"total_predictions"`
 	CorrectPredictions int       `db:"correct_predictions"`
 	CurrentWinStreak   int       `db:"current_win_streak"`
@@ -29,7 +29,16 @@ type User struct {
 	FavoriteTeamID     *string   `db:"favorite_team_id"`
 	FavoriteTeam       *Team     `db:"favorite_team"`
 	Badges             []Badge   `db:"badges"`
+	PredictionTokens   int       `db:"prediction_tokens"`
 }
+
+var (
+	TokenTransactionTypeDailyLogin       = "daily_login"
+	TokenTransactionTypeReferral         = "referral"
+	TokenTransactionTypePrediction       = "prediction"
+	TokenTransactionTypePredictionRefund = "prediction_refund"
+	TokenTransactionTypePurchase         = "purchase"
+)
 
 type Badge struct {
 	ID        string    `json:"id"`
@@ -99,13 +108,13 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 				u.language_code,
 				u.chat_id,
 				u.created_at,
-				u.total_points,
 				u.total_predictions,
 				u.correct_predictions,
 				u.avatar_url,
 				u.referred_by,
 				u.current_win_streak,
 				u.longest_win_streak,
+				u.prediction_tokens,
 				CASE 
 					WHEN u.favorite_team_id IS NOT NULL THEN 
 						json_object(
@@ -145,13 +154,13 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 		&user.LanguageCode,
 		&user.ChatID,
 		&user.CreatedAt,
-		&user.TotalPoints,
 		&user.TotalPredictions,
 		&user.CorrectPredictions,
 		&user.AvatarURL,
 		&user.ReferredBy,
 		&user.CurrentWinStreak,
 		&user.LongestWinStreak,
+		&user.PredictionTokens,
 		&favoriteTeamJSON,
 		&badgeJSON,
 	); err != nil && IsNoRowsError(err) {
@@ -189,7 +198,7 @@ func (s *Storage) GetUserByUsername(uname string) (User, error) {
 	return s.getUserBy("u.username = ?", uname)
 }
 
-func (s *Storage) UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error {
+func (s *Storage) UpdateUserPoints(ctx context.Context, userID string, isCorrect bool) error {
 	var correctPredictionsIncrement int
 	if isCorrect {
 		correctPredictionsIncrement = 1
@@ -199,12 +208,11 @@ func (s *Storage) UpdateUserPoints(ctx context.Context, userID string, points in
 
 	query := `
 		 UPDATE users
-        SET total_points = total_points + ?,
-            total_predictions = total_predictions + 1,
+        SET total_predictions = total_predictions + 1,
             correct_predictions = correct_predictions + ?
         WHERE id = ?`
 
-	_, err := s.db.ExecContext(ctx, query, points, correctPredictionsIncrement, userID)
+	_, err := s.db.ExecContext(ctx, query, correctPredictionsIncrement, userID)
 	return err
 }
 
@@ -220,7 +228,7 @@ func (s *Storage) UpdateUserPredictionCount(ctx context.Context, userID string) 
 
 func (s *Storage) ListUserReferrals(ctx context.Context, userID string) ([]User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_predictions, correct_predictions, avatar_url, referred_by
 		FROM users
 		WHERE referred_by = ?`
 
@@ -241,7 +249,6 @@ func (s *Storage) ListUserReferrals(ctx context.Context, userID string) ([]User,
 			&user.LanguageCode,
 			&user.ChatID,
 			&user.CreatedAt,
-			&user.TotalPoints,
 			&user.TotalPredictions,
 			&user.CorrectPredictions,
 			&user.AvatarURL,
@@ -286,7 +293,7 @@ func (s *Storage) UpdateUserStreak(ctx context.Context, userID string, currentSt
 
 func (s *Storage) GetAllUsers(ctx context.Context) ([]User, error) {
 	query := `
-		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_points, total_predictions, correct_predictions, avatar_url, referred_by, current_win_streak, longest_win_streak, favorite_team_id
+		SELECT id, first_name, last_name, username, language_code, chat_id, created_at, total_predictions, correct_predictions, avatar_url, referred_by, current_win_streak, longest_win_streak, favorite_team_id
 		FROM users
 		WHERE total_predictions > 0`
 
@@ -307,7 +314,6 @@ func (s *Storage) GetAllUsers(ctx context.Context) ([]User, error) {
 			&user.LanguageCode,
 			&user.ChatID,
 			&user.CreatedAt,
-			&user.TotalPoints,
 			&user.TotalPredictions,
 			&user.CorrectPredictions,
 			&user.AvatarURL,
@@ -451,4 +457,77 @@ func (s *Storage) GetFollowing(ctx context.Context, userID string) ([]User, erro
 		following = append(following, user)
 	}
 	return following, rows.Err()
+}
+
+func (s *Storage) RecordUserLogin(ctx context.Context, userID string) error {
+	query := `
+        INSERT INTO user_logins (id, user_id, login_time)
+        VALUES (?, ?, ?)
+    `
+	id := nanoid.Must() // Assuming you have a nanoid package for unique IDs
+	_, err := s.db.ExecContext(ctx, query, id, userID, time.Now())
+	return err
+}
+
+func (s *Storage) HasLoggedInToday(ctx context.Context, userID string) (bool, error) {
+	query := `
+        SELECT COUNT(*)
+        FROM user_logins
+        WHERE user_id = ?
+        AND DATE(login_time) = DATE('now')
+    `
+	var count int
+	err := s.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (s *Storage) UpdateUserTokens(ctx context.Context, userID string, amount int, transactionType string) (balance int, err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+	}()
+
+	updateQuery := `
+        UPDATE users
+        SET prediction_tokens = prediction_tokens + ?
+        WHERE id = ?
+    `
+	_, err = tx.ExecContext(ctx, updateQuery, amount, userID)
+	if err != nil {
+		return
+	}
+
+	insertQuery := `
+        INSERT INTO token_transactions (id, user_id, amount, transaction_type)
+        VALUES (?, ?, ?, ?)
+    `
+	_, err = tx.ExecContext(ctx, insertQuery, nanoid.Must(), userID, amount, transactionType)
+	if err != nil {
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return
+	}
+
+	if err = s.db.QueryRowContext(
+		ctx,
+		"SELECT prediction_tokens FROM users WHERE id = ?",
+		userID,
+	).Scan(&balance); err != nil {
+		return
+	}
+
+	return
 }

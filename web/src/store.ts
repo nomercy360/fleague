@@ -12,10 +12,10 @@ type User = {
 	language_code: 'en' | 'ru'
 	created_at: string
 	token: string
-	total_points: number
 	total_predictions: number
 	correct_predictions: number
 	referred_by: string
+	prediction_accuracy: number
 	ranks: {
 		season_id: string
 		position: number
@@ -38,6 +38,7 @@ type User = {
 		color: string
 		awarded_at: string
 	}[]
+	prediction_tokens: number
 }
 
 export const getUserLeaderboardPosition = (season: 'monthly' | 'football') => {
@@ -59,6 +60,13 @@ export const [store, setStore] = createStore<{
 })
 
 export const setUser = (user: any) => setStore('user', user)
+
+export const updateUserBalance = (newValue: number) => {
+	setStore('user', {
+		...store.user,
+		prediction_tokens: newValue,
+	})
+}
 
 export const setToken = (token: string) => setStore('token', token)
 

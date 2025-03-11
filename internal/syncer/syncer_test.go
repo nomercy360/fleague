@@ -55,10 +55,8 @@ func TestSyncer_ProcessPredictions(t *testing.T) {
 		Username:           "testuser",
 		ChatID:             123456789,
 		CreatedAt:          time.Now(),
-		TotalPoints:        0,
 		TotalPredictions:   0,
 		CorrectPredictions: 0,
-		GlobalRank:         1,
 		CurrentWinStreak:   0,
 		LongestWinStreak:   0,
 	}
@@ -168,8 +166,6 @@ func TestSyncer_ProcessPredictions(t *testing.T) {
 	// Verify that user's points and streaks are updated
 	updatedUser, err := storage.GetUserByID("user1")
 	assert.NoError(t, err)
-	// Total points: 7 + 3 + 0 = 10
-	assert.Equal(t, 10, updatedUser.TotalPoints)
 	// Total predictions: 3
 	assert.Equal(t, 3, updatedUser.TotalPredictions)
 	// Correct predictions: 2

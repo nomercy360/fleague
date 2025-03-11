@@ -1,11 +1,21 @@
 import { createEffect, createSignal, For, Show } from 'solid-js'
-import { fetchMatchStats, MatchResponse, PredictionRequest, PredictionResponse, saveMatchPrediction } from '~/lib/api'
+import {
+	deleteMatchPrediction,
+	fetchMatchStats,
+	MatchResponse,
+	PredictionRequest,
+	PredictionResponse,
+	requestInvoice,
+	saveMatchPrediction,
+} from '~/lib/api'
 import { DrawerClose, DrawerContent, DrawerFooter } from '~/components/ui/drawer'
 import { Button } from '~/components/ui/button'
 import { IconMinus, IconPlus } from '~/components/icons'
 import { cn, formatDate } from '~/lib/utils'
 import { useTranslations } from '~/lib/locale-context'
 import { createQuery } from '@tanstack/solid-query'
+import match from '~/pages/match'
+import { setUser, store, updateUserBalance } from '~/store'
 
 
 interface ScoreboardProps {
@@ -63,9 +73,17 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			prediction.predicted_outcome = outcome()
 		}
 
-		const { error } = await saveMatchPrediction(prediction)
+		const { data, error } = await saveMatchPrediction(prediction)
 		if (!error) {
+			updateUserBalance(data.balance)
 			props.onUpdate()
+		}
+
+		if (error === 'insufficient tokens') {
+			const { data, error } = await requestInvoice()
+			if (!error) {
+				window.Telegram.WebApp.openTelegramLink(data.link)
+			}
 		}
 	}
 
@@ -88,6 +106,18 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setTeam1Score(null)
 		setTeam2Score(null)
 		setOutcome(null)
+	}
+
+	const onPredictionRemove = async () => {
+		const { error, data } = await deleteMatchPrediction(props.match.id)
+		if (!error) {
+			setTeam1Score(null)
+			setTeam2Score(null)
+			setOutcome(null)
+			setIsExactScore(false)
+			updateUserBalance(data.balance)
+			props.onUpdate()
+		}
 	}
 
 	const { t } = useTranslations()
@@ -239,14 +269,25 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			</div>
 			<DrawerFooter>
 				<DrawerClose>
-					<Button
-						size="default"
-						class="w-full bg-accent text-accent-foreground"
-						disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
-						onClick={onPredictionSave}
-					>
-						{t('save')}
-					</Button>
+					<div class="flex flex-row items-center justify-between gap-2">
+						<Show when={props.prediction}>
+							<Button
+								size="default"
+								class="w-full bg-destructive text-destructive-foreground"
+								onClick={onPredictionRemove}
+							>
+								{t('cancel_prediction')}
+							</Button>
+						</Show>
+						<Button
+							size="default"
+							class="w-full bg-accent text-accent-foreground"
+							disabled={(team1Score() == null || team2Score() == null) && outcome() == null}
+							onClick={onPredictionSave}
+						>
+							{t('save')}
+						</Button>
+					</div>
 				</DrawerClose>
 			</DrawerFooter>
 		</DrawerContent>

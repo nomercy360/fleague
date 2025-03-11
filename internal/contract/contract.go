@@ -27,7 +27,6 @@ type UserResponse struct {
 	ChatID             int64      `json:"chat_id"`
 	LanguageCode       *string    `json:"language_code"`
 	CreatedAt          time.Time  `json:"created_at"`
-	TotalPoints        int        `json:"total_points"`
 	TotalPredictions   int        `json:"total_predictions"`
 	CorrectPredictions int        `json:"correct_predictions"`
 	AvatarURL          *string    `json:"avatar_url"`
@@ -37,6 +36,8 @@ type UserResponse struct {
 	CurrentWinStreak   int        `json:"current_win_streak"`
 	LongestWinStreak   int        `json:"longest_win_streak"`
 	Badges             []db.Badge `json:"badges"`
+	PredictionTokens   int        `json:"prediction_tokens"`
+	PredictionAccuracy float64    `json:"prediction_accuracy"`
 }
 
 type PredictionResponse struct {
@@ -102,7 +103,6 @@ type UserProfile struct {
 	LastName           *string    `json:"last_name"`
 	Username           string     `json:"username"`
 	AvatarURL          *string    `json:"avatar_url"`
-	TotalPoints        int        `json:"total_points"`
 	TotalPredictions   int        `json:"total_predictions"`
 	CorrectPredictions int        `json:"correct_predictions"`
 	Ranks              []db.Rank  `json:"ranks"`
@@ -110,6 +110,7 @@ type UserProfile struct {
 	CurrentWinStreak   int        `json:"current_win_streak"`
 	LongestWinStreak   int        `json:"longest_win_streak"`
 	Badges             []db.Badge `json:"badges"`
+	PredictionAccuracy float64    `json:"prediction_accuracy"`
 }
 
 type LeaderboardEntry struct {

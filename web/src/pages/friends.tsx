@@ -4,6 +4,7 @@ import { createQuery } from '@tanstack/solid-query'
 import { fetchReferrals } from '~/lib/api'
 import { createEffect, createSignal, For, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
+import { useTranslations } from '~/lib/locale-context'
 
 export default function FriendsPage() {
 	const [isCopied, setIsCopied] = createSignal(false)
@@ -50,34 +51,61 @@ export default function FriendsPage() {
 		}
 	})
 
+	const { t } = useTranslations()
+
 	return (
 		<div class="h-full p-3 overflow-y-scroll pb-[180px]">
-			<div class="bg-secondary p-3 rounded-2xl flex flex-col items-center justify-center">
-				<span class="material-symbols-rounded text-[48px]">
+			<button class="relative bg-secondary p-3 rounded-2xl flex flex-col items-start text-start justify-center"
+							onClick={shareProfileURL}>
+				<span
+					class="material-symbols-rounded text-[20px] absolute top-3 right-3 text-secondary-foreground">
+					arrow_outward
+				</span>
+				<span class="material-symbols-rounded text-[32px]">
 					people
 				</span>
-				<h1 class="text-xl font-bold text-center">Invite Friends & Earn</h1>
-				<p class="text-sm text-secondary-foreground text-center mt-2">
-					Receive <span class="text-primary">10 points</span> for each referral and <span
-					class="text-primary">5 points</span> for their referrals.
+				<h1 class="mt-3 text-base font-bold">
+					{t('invite_friends')}
+				</h1>
+				<p class="text-sm text-secondary-foreground mt-1">
+					{t('invite_friends_description')}
 				</p>
+			</button>
+			<div class="grid grid-cols-2 gap-2 mt-2">
+				<div class="relative bg-secondary p-3 rounded-2xl flex flex-col items-start text-start justify-center">
+					<span
+						class="material-symbols-rounded text-[20px] absolute top-3 right-3 text-secondary-foreground">
+						arrow_outward
+					</span>
+					<span class="material-symbols-rounded text-[32px]">
+						star
+					</span>
+					<h1 class="mt-3 text-base font-bold">
+						{t('buy_points')}
+					</h1>
+					<p class="text-sm text-secondary-foreground mt-1">
+						{t('buy_points_description')}
+					</p>
+				</div>
+				<div class="bg-secondary p-3 rounded-2xl flex flex-col items-start text-start justify-center">
+					<span class="material-symbols-rounded text-[32px]">
+						redeem
+					</span>
+					<h1 class="mt-3 text-base font-bold">
+						{t('daily_bonus')}
+					</h1>
+					<p class="text-sm text-secondary-foreground mt-1">
+						{t('daily_bonus_description')}
+					</p>
+				</div>
 			</div>
 			<div class="mt-6">
 				<div class="flex flex-row items-center justify-between w-full">
-					<p class="text-lg font-semibold">Your Referrals</p>
-					<p class="text-sm text-primary font-bold">+{points()} Points</p>
+					<p class="text-lg font-semibold">
+						{t('friends_invited')}
+					</p>
 				</div>
-				<Show
-					when={referrals.data?.length > 0}
-					fallback={
-						<div class="text-center mt-6">
-							<p class="text-secondary-foreground">No friends invited yet!</p>
-							<span class="material-symbols-rounded text-[48px] mt-4">
-								person_off
-							</span>
-						</div>
-					}
-				>
+				<Show when={referrals.data?.length > 0}>
 					<For each={referrals.data}>
 						{(referral) => (
 							<div class="mt-1 flex items-center justify-between bg-card rounded-2xl p-3">
@@ -101,19 +129,6 @@ export default function FriendsPage() {
 						)}
 					</For>
 				</Show>
-			</div>
-			<div class="bg-background p-3 flex flex-row items-center space-x-2 absolute bottom-[100px] w-full left-0 right-0">
-				<Button class="w-full" onClick={shareProfileURL}>
-					Invite a Friend
-				</Button>
-				<Button
-					class={cn('size-10', isCopied() && 'bg-green-500')}
-					onClick={copyProfileURL}
-				>
-					<span class="shrink-0 material-symbols-rounded text-[24px]">
-						content_copy
-					</span>
-				</Button>
 			</div>
 		</div>
 	)

@@ -11,16 +11,28 @@ CREATE TABLE users
     chat_id             INTEGER UNIQUE, -- ID чата в телеграме
     referred_by         TEXT,
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total_points        INTEGER  DEFAULT 0,
     total_predictions   INTEGER  DEFAULT 0,
     correct_predictions INTEGER  DEFAULT 0,
     current_win_streak  INTEGER  DEFAULT 0,
     longest_win_streak  INTEGER  DEFAULT 0,
     favorite_team_id    TEXT,
     avatar_url          TEXT,
+    prediction_tokens   INTEGER  DEFAULT 50,
     FOREIGN KEY (referred_by) REFERENCES users (id) ON DELETE SET NULL,
     FOREIGN KEY (favorite_team_id) REFERENCES teams (id) ON DELETE SET NULL
 );
+
+-- ALTER TABLE users ADD COLUMN prediction_tokens INTEGER DEFAULT 50; -- Starting balance
+
+CREATE TABLE user_logins
+(
+    id         TEXT PRIMARY KEY,                   -- Unique ID for each login event
+    user_id    TEXT NOT NULL,                      -- References the users table
+    login_time DATETIME DEFAULT CURRENT_TIMESTAMP, -- Timestamp of the login
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_user_logins_user_id_login_time ON user_logins (user_id, login_time);
 
 CREATE INDEX idx_users_chat_id ON users (chat_id);
 CREATE INDEX idx_users_username ON users (username);
@@ -79,10 +91,13 @@ CREATE TABLE predictions
     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at         DATETIME, -- Дата когда матч завершился и прогноз был подсчитан
     updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+    token_cost           INTEGER  DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, match_id)
 );
+
+-- ALTER TABLE predictions ADD COLUMN token_cost INTEGER DEFAULT 0;
 
 CREATE TABLE seasons
 (
@@ -145,3 +160,13 @@ CREATE TABLE surveys
 
 CREATE INDEX idx_surveys_user_id ON surveys (user_id);
 CREATE INDEX idx_surveys_feature ON surveys (feature);
+
+CREATE TABLE token_transactions
+(
+    id               TEXT PRIMARY KEY,
+    user_id          TEXT    NOT NULL,
+    amount           INTEGER NOT NULL, -- Positive for earning/buying, negative for spending
+    transaction_type TEXT    NOT NULL, -- e.g., "prediction", "purchase", "daily_bonus"
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);

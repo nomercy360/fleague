@@ -3,7 +3,7 @@ export const dict = {
 	'edit_profile': 'Edit profile',
 	'correct': 'Correct',
 	'rank': 'Monthly Rank',
-	'points_earned': 'Points Earned',
+	'accuracy': 'Prediction Accuracy',
 	'max_streak': 'Max Streak',
 	'check_out_profile': 'Check out {first_name}\'s profile',
 	'first_name': 'First name',
@@ -36,6 +36,7 @@ export const dict = {
 	'draw': 'Draw',
 	'exact_score': 'Exact score',
 	'save': 'Save & close',
+	'cancel_prediction': 'Cancel Prediction',
 	'onboarding': [
 		{
 			title: 'Welcome to MatchPredict!',
@@ -92,4 +93,14 @@ export const dict = {
 		'option_no': 'No, I’m not interested',
 		'button_submit': 'Submit',
 	},
+	send_invite: 'Send Invite',
+	invite_friends: 'Invite Friends',
+	invite_friends_description: <>Earn <span class="text-primary font-semibold">50 tokens</span> for each friend who
+		joins!</>,
+	buy_points: 'Buy Points',
+	buy_points_description: 'Get more tokens to make predictions and win rewards!',
+	daily_bonus: 'Daily Bonus',
+	daily_bonus_description: <>Log in every day and claim <span class="text-primary font-semibold">5 tokens</span> for
+		free!</>,
+	friends_invited: 'My friends',
 }

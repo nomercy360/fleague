@@ -23,7 +23,7 @@ type storager interface {
 	GetActiveSeasons(ctx context.Context) ([]db.Season, error)
 	GetActiveSeason(ctx context.Context, seasonType string) (db.Season, error)
 	UpdateUserLeaderboardPoints(ctx context.Context, userID, seasonID string, points int) error
-	UpdateUserPoints(ctx context.Context, userID string, points int, isCorrect bool) error
+	UpdateUserPoints(ctx context.Context, userID string, isCorrect bool) error
 	SaveTeam(ctx context.Context, team db.Team) error
 	GetUserByID(id string) (db.User, error)
 	UpdateUserStreak(ctx context.Context, userID string, currentStreak, longestStreak int) error

@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func (a API) GetMatchByID(c echo.Context) error {
+func (a *API) GetMatchByID(c echo.Context) error {
 	matchID := c.Param("id")
 	uid := GetContextUserID(c)
 	ctx := c.Request().Context()
@@ -41,7 +41,7 @@ func (a API) GetMatchByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, toMatchResponse(match))
 }
 
-func (a API) ListMatches(c echo.Context) error {
+func (a *API) ListMatches(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 	matches, err := a.storage.GetActiveMatches(ctx, uid)
@@ -72,7 +72,7 @@ func toMatchResponse(match db.Match) contract.MatchResponse {
 
 //GetTodayMostPopularMatch
 
-func (a API) GetTodayMostPopularMatch(c echo.Context) error {
+func (a *API) GetTodayMostPopularMatch(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	match, err := a.storage.GetTodayMostPopularMatch(ctx)

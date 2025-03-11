@@ -15,6 +15,7 @@ type Prediction struct {
 	CompletedAt        *time.Time `json:"completed_at" db:"completed_at"`
 	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
 	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
+	TokenCost          int        `json:"token_cost" db:"token_cost"`
 }
 
 const (
@@ -25,22 +26,33 @@ const (
 
 func (s *Storage) SavePrediction(ctx context.Context, prediction Prediction) error {
 	query := `
-		INSERT INTO predictions (user_id, match_id, predicted_outcome, predicted_home_score, predicted_away_score)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO predictions (
+			user_id, match_id, predicted_outcome, predicted_home_score, predicted_away_score, token_cost
+		) VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(user_id, match_id) DO UPDATE SET
-		predicted_outcome = excluded.predicted_outcome,
-		predicted_home_score = excluded.predicted_home_score,
-		predicted_away_score = excluded.predicted_away_score,
-		points_awarded = excluded.points_awarded,
-		updated_at = CURRENT_TIMESTAMP`
+			predicted_outcome = excluded.predicted_outcome,
+			predicted_home_score = excluded.predicted_home_score,
+			predicted_away_score = excluded.predicted_away_score,
+			token_cost = excluded.token_cost,
+			updated_at = CURRENT_TIMESTAMP`
 	_, err := s.db.ExecContext(ctx, query,
 		prediction.UserID,
 		prediction.MatchID,
 		prediction.PredictedOutcome,
 		prediction.PredictedHomeScore,
 		prediction.PredictedAwayScore,
+		prediction.TokenCost,
 	)
 
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) DeletePrediction(ctx context.Context, userID, matchID string) error {
+	query := `DELETE FROM predictions WHERE user_id = ? AND match_id = ?`
+	_, err := s.db.ExecContext(ctx, query, userID, matchID)
 	return err
 }
 
@@ -53,6 +65,7 @@ func (s *Storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 			predicted_home_score,
 			predicted_away_score,
 			points_awarded,
+			token_cost,
 			created_at,
 			updated_at,
 			completed_at
@@ -67,6 +80,7 @@ func (s *Storage) GetUserPredictionByMatchID(ctx context.Context, uid, matchID s
 		&prediction.PredictedHomeScore,
 		&prediction.PredictedAwayScore,
 		&prediction.PointsAwarded,
+		&prediction.TokenCost,
 		&prediction.CreatedAt,
 		&prediction.UpdatedAt,
 		&prediction.CompletedAt,

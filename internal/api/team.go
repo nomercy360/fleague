@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (a API) ListTeams(c echo.Context) error {
+func (a *API) ListTeams(c echo.Context) error {
 	teams, err := a.storage.ListTeams(c.Request().Context())
 	if err != nil {
 		return terrors.InternalServer(err, "failed to list teams")

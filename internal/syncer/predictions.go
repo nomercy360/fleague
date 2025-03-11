@@ -90,7 +90,7 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 				}
 			}
 
-			err = s.storage.UpdateUserPoints(ctx, prediction.UserID, totalPoints, isCorrect)
+			err = s.storage.UpdateUserPoints(ctx, prediction.UserID, isCorrect)
 			if err != nil {
 				log.Printf("Failed to update user points for user %s: %v", prediction.UserID, err)
 				continue

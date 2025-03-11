@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (a API) GetActiveSeasons(c echo.Context) error {
+func (a *API) GetActiveSeasons(c echo.Context) error {
 	seasons, err := a.storage.GetActiveSeasons(c.Request().Context())
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get active season")
