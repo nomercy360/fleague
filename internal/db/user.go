@@ -38,6 +38,7 @@ var (
 	TokenTransactionTypePrediction       = "prediction"
 	TokenTransactionTypePredictionRefund = "prediction_refund"
 	TokenTransactionTypePurchase         = "purchase"
+	TokenTransactionTypePredictionWon    = "prediction_won"
 )
 
 type Badge struct {

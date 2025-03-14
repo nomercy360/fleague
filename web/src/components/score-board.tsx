@@ -81,8 +81,8 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 				variant: 'success',
 				title: t('prediction_saved'),
 				description: t('prediction_submitted', {
-					cost: isExactScore() ? 20 : 10,
-					points: outcome() ? 7 : 3,
+					cost: isExactScore() ? 10 : 20,
+					points: isExactScore() ? 7 : 3,
 				}),
 				duration: 3000,
 			})
@@ -234,12 +234,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						<div class="ml-2">
 							<Show when={outcome()}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 20, points: 7 })}
+									{t('prediction_cost_and_reward', { cost: 20, points: 3 })}
 								</span>
 							</Show>
 							<Show when={isExactScore()}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 30, points: 10 })}
+									{t('prediction_cost_and_reward', { cost: 10, points: 7 })}
 								</span>
 							</Show>
 						</div>

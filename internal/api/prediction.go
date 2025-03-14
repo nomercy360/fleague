@@ -48,9 +48,9 @@ func (a *API) SavePrediction(c echo.Context) error {
 
 	newTokenCost := 0
 	if req.PredictedHomeScore != nil && req.PredictedAwayScore != nil {
-		newTokenCost = 20 // Exact score
+		newTokenCost = 10 // Exact score
 	} else if req.PredictedOutcome != nil {
-		newTokenCost = 10 // Outcome
+		newTokenCost = 20 // Outcome
 	}
 
 	var resultBalance int
