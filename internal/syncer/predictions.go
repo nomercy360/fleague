@@ -102,6 +102,15 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 				continue
 			}
 
+			// refund tokens if the prediction was correct - 150% of the token cost
+			if isCorrect {
+				refundAmount := int(float64(prediction.TokenCost) * 1.5)
+				_, err = s.storage.UpdateUserTokens(ctx, user.ID, refundAmount, db.TokenTransactionTypePredictionWon)
+				if err != nil {
+					log.Printf("Failed to refund tokens for user %s: %v", user.ID, err)
+				}
+			}
+
 			// go s.notifyUser(ctx, user, user.CurrentWinStreak, bonusPoints)
 		}
 	}

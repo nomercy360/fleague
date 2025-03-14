@@ -84,12 +84,12 @@ export const dict = {
 	},
 	send_invite: 'Send Invite',
 	invite_friends: 'Invite Friends',
-	invite_friends_description: <>Earn <span class="text-primary font-semibold">50 tokens</span> for each friend who
+	invite_friends_description: <>Earn <span class="text-primary font-semibold">100 tokens</span> for each friend who
 		joins!</>,
 	buy_points: 'Buy Points',
 	buy_points_description: 'Get more tokens to make predictions and win rewards!',
 	daily_bonus: 'Daily Bonus',
-	daily_bonus_description: <>Log in every day and claim <span class="text-primary font-semibold">5 tokens</span> for
+	daily_bonus_description: <>Log in every day and claim <span class="text-primary font-semibold">10 tokens</span> for
 		free!</>,
 	friends_invited: 'My friends',
 	join_channel: 'Join the Channel',

@@ -80,17 +80,17 @@ export const dict = {
 	},
 	send_invite: 'Пригласить друга',
 	invite_friends: 'Приглашайте друзей',
-	invite_friends_description: <>Получи <span class="text-primary font-semibold">50 токенов</span> за каждого друга,
+	invite_friends_description: <>Получи <span class="text-primary font-semibold">100 токенов</span> за каждого друга,
 		который присоединится!</>,
 	buy_points: 'Купить токены',
 	buy_points_description: 'Добавь токены, чтобы делать больше прогнозов и выигрывать призы!',
 	daily_bonus: 'Ежедневный бонус',
-	daily_bonus_description: <>Каждый день получай <span class="text-primary font-semibold">5 токенов</span> за вход в
+	daily_bonus_description: <>Каждый день получай <span class="text-primary font-semibold">10 токенов</span> за вход в
 		приложение!</>,
 	friends_invited: 'Мои друзья',
 	join_channel: 'Присоединяйся к каналу',
 	join_channel_description: <>Стань частью сообщества и получи <span
-		class="text-primary font-semibold">10 токенов</span> за подписку!</>,
+		class="text-primary font-semibold">70 токенов</span> за подписку!</>,
 	my_balance: 'Мой баланс',
 	'prediction_cost_and_reward': 'Стоимость: {{ cost }} токенов | Награда: {{ points }} очков',
 	'prediction_saved': 'Прогноз сохранён!',

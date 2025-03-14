@@ -41,6 +41,7 @@ type storager interface {
 	GetLastMatchesByTeamID(ctx context.Context, teamID string, limit int) ([]db.Match, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetTodayMostPopularMatch(ctx context.Context) (db.Match, error)
+	UpdateUserTokens(ctx context.Context, userID string, amount int, transactionType string) (balance int, err error)
 }
 type Config struct {
 	APIBaseURL      string
