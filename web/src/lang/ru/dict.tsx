@@ -120,5 +120,5 @@ export const dict = {
 	'win_prizes_description': 'At the end of the month, the leader wins a football jersey — shipped by mail!',
 	'next': 'Next',
 	'start': 'Start',
-	prediction_submitted: 'Вы потратили {{ cost }} токенов. Выиграйте до {{ points }} очков!',
+	prediction_submitted: 'Выиграйте до {{ points }} очков!',
 }
