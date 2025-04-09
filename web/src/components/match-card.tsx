@@ -246,8 +246,8 @@ export function CompactMatchCard(props: CompactMatchCardProps) {
 				{
 					'bg-card': status === 'scheduled',
 					'bg-accent': status === 'ongoing',
-					'bg-red-900/30': status === 'completed' && !predictionCorrect,
-					'bg-green-900/30': status === 'completed' && predictionCorrect,
+					'dark:bg-red-900/30 bg-red-400/30': status === 'completed' && !predictionCorrect,
+					'dark:bg-green-400/30 bg-green-400/30': status === 'completed' && predictionCorrect,
 				},
 			)}
 		>
