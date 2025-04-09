@@ -9,14 +9,13 @@ import (
 	"net/http"
 )
 
-var ErrInsufficientTokens = terrors.Forbidden(errors.New("insufficient tokens"), "insufficient tokens")
+var ErrNoActiveSubscription = terrors.Forbidden(errors.New("no active subscription"), "no active subscription")
 
 func (a *API) SavePrediction(c echo.Context) error {
 	var req contract.PredictionRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to decode request")
 	}
-
 	if err := req.Validate(); err != nil {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
@@ -24,96 +23,38 @@ func (a *API) SavePrediction(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 
+	//user, err := a.storage.GetUserByID(uid)
+	//if err != nil {
+	//	return terrors.InternalServer(err, "failed to get user")
+	//}
+	//
+	//if !user.SubscriptionActive || user.SubscriptionExpiry.Before(time.Now()) {
+	//	return ErrNoActiveSubscription
+	//}
+
 	match, err := a.storage.GetMatchByID(ctx, req.MatchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		return terrors.BadRequest(nil, "match not found")
 	} else if err != nil {
 		return err
 	}
-
 	if match.Status != db.MatchStatusScheduled {
 		return terrors.BadRequest(nil, "match is not scheduled")
 	}
 
-	// Check if this is an update
-	existing, err := a.storage.GetUserPredictionByMatchID(ctx, uid, req.MatchID)
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
-		return terrors.InternalServer(err, "failed to check existing prediction")
-	}
-
-	isUpdate := false
-	if err == nil && existing.UserID == uid {
-		isUpdate = true
-	}
-
-	newTokenCost := 0
-	if req.PredictedHomeScore != nil && req.PredictedAwayScore != nil {
-		newTokenCost = 10 // Exact score
-	} else if req.PredictedOutcome != nil {
-		newTokenCost = 20 // Outcome
-	}
-
-	var resultBalance int
-
-	user, err := a.storage.GetUserByID(uid)
-	if err != nil {
-		return terrors.InternalServer(err, "failed to get user")
-	}
-
-	// For new predictions, set token cost and deduct
-	if !isUpdate {
-		if newTokenCost > 0 {
-			if user.PredictionTokens < newTokenCost {
-				return ErrInsufficientTokens
-			}
-
-			resultBalance, err = a.storage.UpdateUserTokens(ctx, uid, -newTokenCost, db.TokenTransactionTypePrediction)
-			if err != nil {
-				return terrors.InternalServer(err, "failed to update user tokens")
-			}
-		}
-	} else {
-		// For updates, calculate token difference
-		oldTokenCost := existing.TokenCost
-		tokenDiff := newTokenCost - oldTokenCost
-
-		switch {
-		case tokenDiff > 0: // Additional tokens required
-			if user.PredictionTokens < tokenDiff {
-				return ErrInsufficientTokens
-			}
-
-			resultBalance, err = a.storage.UpdateUserTokens(ctx, uid, -tokenDiff, db.TokenTransactionTypePrediction)
-			if err != nil {
-				return terrors.InternalServer(err, "failed to update user tokens")
-			}
-
-		case tokenDiff < 0: // Refund excess tokens
-			resultBalance, err = a.storage.UpdateUserTokens(ctx, uid, -tokenDiff, db.TokenTransactionTypePredictionRefund)
-			if err != nil {
-				return terrors.InternalServer(err, "failed to update user tokens")
-			}
-
-		default: // No change
-			resultBalance = user.PredictionTokens
-		}
-	}
-
-	// Save prediction
+	// Сохраняем прогноз без учета токенов
 	prediction := db.Prediction{
 		UserID:             uid,
 		MatchID:            req.MatchID,
 		PredictedOutcome:   req.PredictedOutcome,
 		PredictedHomeScore: req.PredictedHomeScore,
 		PredictedAwayScore: req.PredictedAwayScore,
-		TokenCost:          newTokenCost,
 	}
-
 	if err := a.storage.SavePrediction(ctx, prediction); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{"status": "ok", "balance": resultBalance})
+	return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
 }
 
 func (a *API) CancelPrediction(c echo.Context) error {
@@ -125,7 +66,7 @@ func (a *API) CancelPrediction(c echo.Context) error {
 		return terrors.BadRequest(nil, "match_id is required")
 	}
 
-	// Check match status
+	// Проверка статуса матча
 	match, err := a.storage.GetMatchByID(ctx, matchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		return terrors.BadRequest(nil, "match not found")
@@ -136,42 +77,29 @@ func (a *API) CancelPrediction(c echo.Context) error {
 		return terrors.BadRequest(nil, "cannot cancel prediction for a match that has started or completed")
 	}
 
-	// Check if prediction exists
-	prediction, err := a.storage.GetUserPredictionByMatchID(ctx, uid, matchID)
+	// Проверка существования прогноза
+	_, err = a.storage.GetUserPredictionByMatchID(ctx, uid, matchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		return terrors.BadRequest(nil, "no prediction found for this match")
 	} else if err != nil {
 		return err
 	}
 
-	// Delete prediction and refund tokens
+	// Удаляем прогноз без возврата токенов
 	if err := a.storage.DeletePrediction(ctx, uid, matchID); err != nil {
 		return err
 	}
 
-	balance, err := a.storage.UpdateUserTokens(
-		ctx,
-		uid,
-		prediction.TokenCost,
-		db.TokenTransactionTypePredictionRefund,
-	)
-
-	if err != nil {
-		return terrors.InternalServer(err, "failed to update user tokens")
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"status": "ok", "balance": balance})
+	return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
 }
 
 func (a *API) GetUserPredictions(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 
-	resp, err := a.predictionsByUserID(ctx, uid, false)
-
+	resp, err := a.predictionsByUserID(ctx, uid)
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user predictions")
 	}
-
 	return c.JSON(http.StatusOK, resp)
 }

@@ -23,11 +23,6 @@ export default function NavigationTabs(props: any) {
 				class="flex flex-row items-center border-t h-[100px] fixed bottom-0 w-full bg-background z-50 transform -translate-x-1/2 left-1/2"
 			>
 				<div class='flex flex-row items-center justify-between w-full px-4 space-x-10'>
-					<div
-						class="space-x-1 px-3 h-8 text-secondary-foreground text-xs font-semibold rounded-xl bg-secondary flex items-center justify-center">
-						<span class="material-symbols-rounded text-[16px] text-foreground">token</span>
-						<span>{store.user?.prediction_tokens}</span>
-					</div>
 					<div class="flex flex-row w-full gap-6 items-center justify-center">
 						{tabs.map(({ href, icon, activePath }) => (
 							<Link

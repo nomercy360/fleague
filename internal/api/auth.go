@@ -73,12 +73,7 @@ func (a *API) TelegramAuth(c echo.Context) error {
 			}
 			if referrer.ID != "" {
 				referrerID = &referrer.ID
-				balance, err := a.storage.UpdateUserTokens(context.Background(), referrer.ID, 50, db.TokenTransactionTypeReferral)
-				if err != nil {
-					log.Printf("Failed to award referral bonus for user %s: %v", referrer.ID, err)
-				}
-
-				referrer.PredictionTokens = balance
+				// TODO: give user free month of subscription
 			}
 		}
 
@@ -107,28 +102,9 @@ func (a *API) TelegramAuth(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	hasLoggedInToday, err := a.storage.HasLoggedInToday(ctx, user.ID)
-	if err != nil {
-		log.Printf("Failed to check daily login for user %s: %v", user.ID, err)
-	}
 
 	if err := a.storage.RecordUserLogin(ctx, user.ID); err != nil {
 		log.Printf("Failed to record login for user %s: %v", user.ID, err)
-	}
-
-	if err != nil {
-		log.Printf("Failed to check daily login for user %s: %v", user.ID, err)
-
-	} else if !hasLoggedInToday && user.CreatedAt.Before(time.Now().Add(-24*time.Hour)) {
-		balance, err := a.storage.UpdateUserTokens(ctx, user.ID, 5, db.TokenTransactionTypeDailyLogin)
-
-		if err != nil {
-			log.Printf("Failed to award daily login bonus for user %s: %v", user.ID, err)
-		} else {
-			log.Printf("Awarded 5 Prediction Tokens to user %s for daily login", user.ID)
-		}
-
-		user.PredictionTokens = balance
 	}
 
 	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
@@ -158,7 +134,8 @@ func (a *API) TelegramAuth(c echo.Context) error {
 		CurrentWinStreak:   user.CurrentWinStreak,
 		LongestWinStreak:   user.LongestWinStreak,
 		Badges:             user.Badges,
-		PredictionTokens:   user.PredictionTokens,
+		SubscriptionActive: user.SubscriptionActive,
+		SubscriptionExpiry: user.SubscriptionExpiry,
 	}
 
 	if uresp.TotalPredictions > 0 {

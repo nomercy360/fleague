@@ -215,12 +215,12 @@ function MatchPage() {
 						<div class="mb-1 ml-2">
 							<Show when={predictionType() === 'outcome'}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 20, points: 3 })}
+									{t('prediction_reward', { points: 3 })}
 								</span>
 							</Show>
 							<Show when={predictionType() === 'score'}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 10, points: 7 })}
+									{t('prediction_reward', { points: 7 })}
 								</span>
 							</Show>
 						</div>

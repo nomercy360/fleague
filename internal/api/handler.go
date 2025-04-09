@@ -8,6 +8,7 @@ import (
 	"github.com/user/project/internal/s3"
 	"github.com/user/project/internal/terrors"
 	"net/http"
+	"time"
 )
 
 // storager interface for database operations
@@ -24,7 +25,7 @@ type storager interface {
 	GetUserPredictionByMatchID(ctx context.Context, uid, matchID string) (db.Prediction, error)
 	SavePrediction(ctx context.Context, prediction db.Prediction) error
 	GetMatchByID(ctx context.Context, matchID string) (db.Match, error)
-	GetPredictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]db.Prediction, error)
+	GetPredictionsByUserID(ctx context.Context, uid string, opts ...db.PredictionFilter) ([]db.Prediction, error)
 	GetActiveSeasons(ctx context.Context) ([]db.Season, error)
 	UpdateUserPredictionCount(ctx context.Context, userID string) error
 	ListUserReferrals(ctx context.Context, userID string) ([]db.User, error)
@@ -44,8 +45,9 @@ type storager interface {
 	GetSurveyStats(ctx context.Context, feature string) (map[string]int, error)
 	RecordUserLogin(ctx context.Context, userID string) error
 	HasLoggedInToday(ctx context.Context, userID string) (bool, error)
-	UpdateUserTokens(ctx context.Context, userID string, amount int, transactionType string) (int, error)
 	DeletePrediction(ctx context.Context, uid, predictionID string) error
+	SaveSubscription(ctx context.Context, subscription db.Subscription) error
+	UpdateUserSubscription(ctx context.Context, uid string, active bool, expiry time.Time) error
 }
 
 type API struct {

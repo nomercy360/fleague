@@ -265,6 +265,45 @@ func startNotificationJob(ctx context.Context, sync *syncer.Syncer) {
 	}
 }
 
+func startWeeklyRecapJob(ctx context.Context, sync *syncer.Syncer) {
+	location, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		log.Fatalf("Failed to load Moscow timezone: %v", err)
+	}
+
+	if err := sync.SendWeeklyRecap(ctx); err != nil {
+		log.Printf("Failed to send weekly recap: %v", err)
+	}
+
+	for {
+		now := time.Now().In(location)
+		// Находим следующий понедельник в 10:00 MSK
+		daysUntilMonday := (8 - int(now.Weekday())) % 7 // 1 - Monday, 0 - Sunday
+		if daysUntilMonday == 0 && now.Hour() >= 10 {
+			daysUntilMonday = 7 // Если сегодня понедельник и уже после 10:00, ждем следующего
+		}
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, location).
+			AddDate(0, 0, daysUntilMonday)
+
+		waitDuration := time.Until(nextRun)
+		log.Printf("Next weekly recap job scheduled at: %v (Moscow Time)", nextRun)
+
+		timer := time.NewTimer(waitDuration)
+
+		select {
+		case <-timer.C:
+			log.Println("Running weekly recap job at 10 AM Moscow Time...")
+			if err := sync.SendWeeklyRecap(ctx); err != nil {
+				log.Printf("Failed to send weekly recap: %v", err)
+			}
+		case <-ctx.Done():
+			log.Println("Stopping weekly recap job...")
+			timer.Stop()
+			return
+		}
+	}
+}
+
 func main() {
 	configFilePath := "config.yml"
 	configFilePathEnv := os.Getenv("CONFIG_FILE_PATH")
@@ -383,6 +422,8 @@ func main() {
 	go startSyncer(ctx, sync)
 
 	go startNotificationJob(ctx, sync)
+
+	// go startWeeklyRecapJob(ctx, sync)
 
 	if err := e.Start(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)); err != nil {
 		log.Fatalf("failed to start server: %v", err)

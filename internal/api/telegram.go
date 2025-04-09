@@ -7,34 +7,29 @@ import (
 	"github.com/go-telegram/bot/models"
 	"github.com/labstack/echo/v4"
 	"github.com/user/project/internal/db"
+	"github.com/user/project/internal/nanoid"
 	"github.com/user/project/internal/terrors"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 )
 
-// SendInvoice sends an invoice to the user for purchasing prediction tokens
+// SendInvoice отправляет счет пользователю для покупки подписки на месяц
 func (a *API) SendInvoice(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 
-	//user, err := a.storage.GetUserByID(uid)
-	//if err != nil {
-	//	return terrors.InternalServer(err, "failed to get user")
-	//}
-
-	// Define token packages (e.g., 50 tokens for 10 XTR)
-	amount := 1       // XTR (Telegram Stars)
-	tokenAmount := 50 // Prediction tokens
+	// Стоимость подписки в Telegram Stars (XTR)
+	amount := 1 // 1 XTR за подписку на месяц
 
 	invoice := telegram.CreateInvoiceLinkParams{
-		Title:       "Prediction Tokens Purchase",
-		Description: fmt.Sprintf("Buy %d prediction tokens", tokenAmount),
-		Payload:     fmt.Sprintf("purchase:%s:%d", uid, tokenAmount), // Internal payload
+		Title:       "Monthly Subscription",
+		Description: "Get access to predictions for 30 days",
+		Payload:     fmt.Sprintf("subscription:%s", uid), // Payload для подписки
 		Currency:    "XTR",
 		Prices: []models.LabeledPrice{
-			{Label: "Prediction Tokens", Amount: amount},
+			{Label: "Monthly Subscription", Amount: amount},
 		},
 	}
 
@@ -46,7 +41,7 @@ func (a *API) SendInvoice(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"status": "ok", "link": link})
 }
 
-// HandlePreCheckoutQuery processes the pre-checkout query
+// HandlePreCheckoutQuery обрабатывает запрос перед оплатой
 func (a *API) HandlePreCheckoutQuery(update models.Update) error {
 	var resp telegram.AnswerPreCheckoutQueryParams
 	if update.PreCheckoutQuery == nil {
@@ -56,48 +51,46 @@ func (a *API) HandlePreCheckoutQuery(update models.Update) error {
 	query := update.PreCheckoutQuery
 	ctx := context.Background()
 
-	// Validate payload
+	// Проверяем payload
 	parts := strings.Split(query.InvoicePayload, ":")
-	if len(parts) != 3 || parts[0] != "purchase" {
+	if len(parts) != 2 || parts[0] != "subscription" {
 		resp = telegram.AnswerPreCheckoutQueryParams{
 			PreCheckoutQueryID: query.ID,
 			OK:                 false,
-			ErrorMessage:       "Invalid purchase request",
+			ErrorMessage:       "Invalid subscription request",
 		}
-
 		_, err := a.tg.AnswerPreCheckoutQuery(ctx, &resp)
-
 		if err != nil {
 			log.Printf("failed to reject payment: %v\n", err)
-			return nil
 		}
-
 		return nil
 	}
 
 	uid := parts[1]
-	//tokenAmount, _ := strconv.Atoi(parts[2])
 
-	// Verify user exists
+	// Проверяем существование пользователя
 	_, err := a.storage.GetUserByID(uid)
 	if err != nil {
 		log.Printf("failed to get user: %v\n", err)
+		resp = telegram.AnswerPreCheckoutQueryParams{
+			PreCheckoutQueryID: query.ID,
+			OK:                 false,
+			ErrorMessage:       "User not found",
+		}
+		_, err = a.tg.AnswerPreCheckoutQuery(ctx, &resp)
+		if err != nil {
+			log.Printf("failed to reject payment: %v\n", err)
+		}
 		return nil
 	}
 
-	// Approve the payment
+	// Подтверждаем оплату
 	resp = telegram.AnswerPreCheckoutQueryParams{
 		PreCheckoutQueryID: query.ID,
 		OK:                 true,
 	}
-
-	ok, err := a.tg.AnswerPreCheckoutQuery(ctx, &resp)
+	_, err = a.tg.AnswerPreCheckoutQuery(ctx, &resp)
 	if err != nil {
-		log.Printf("failed to approve payment: %v\n", err)
-		return nil
-	}
-
-	if !ok {
 		log.Printf("failed to approve payment: %v\n", err)
 		return nil
 	}
@@ -105,7 +98,7 @@ func (a *API) HandlePreCheckoutQuery(update models.Update) error {
 	return nil
 }
 
-// HandleSuccessfulPayment processes the successful payment
+// HandleSuccessfulPayment обрабатывает успешную оплату
 func (a *API) HandleSuccessfulPayment(update models.Update) error {
 	if update.Message == nil || update.Message.SuccessfulPayment == nil {
 		return nil
@@ -114,49 +107,87 @@ func (a *API) HandleSuccessfulPayment(update models.Update) error {
 	payment := update.Message.SuccessfulPayment
 	ctx := context.Background()
 
-	// Extract payload
+	// Извлекаем payload
 	parts := strings.Split(payment.InvoicePayload, ":")
-	if len(parts) != 3 || parts[0] != "purchase" {
-		return nil // Silently ignore invalid payload
+	if len(parts) != 2 || parts[0] != "subscription" {
+		return nil // Игнорируем некорректный payload
 	}
 
 	uid := parts[1]
-	tokenAmount, _ := strconv.Atoi(parts[2])
 
-	// Convert XTR to prediction tokens and update balance
-	balance, err := a.storage.UpdateUserTokens(
-		ctx,
-		uid,
-		tokenAmount,
-		db.TokenTransactionTypePurchase,
-	)
-
+	// Активируем подписку на 30 дней
+	user, err := a.storage.GetUserByID(uid)
 	if err != nil {
-		log.Printf("failed to update user tokens: %v\n", err)
+		log.Printf("failed to get user: %v\n", err)
 		return nil
+	}
+
+	// Рассчитываем новую дату окончания подписки
+	now := time.Now()
+	newExpiry := now.AddDate(0, 1, 0) // +1 месяц
+	if user.SubscriptionActive && user.SubscriptionExpiry.After(now) {
+		// Если подписка уже активна, добавляем 30 дней к текущей дате окончания
+		newExpiry = user.SubscriptionExpiry.AddDate(0, 1, 0)
+	}
+
+	// Обновляем статус подписки пользователя
+	err = a.storage.UpdateUserSubscription(ctx, uid, true, newExpiry)
+	if err != nil {
+		log.Printf("failed to update user subscription: %v\n", err)
+		return nil
+	}
+
+	subscription := db.Subscription{
+		ID:        nanoid.Must(),
+		UserID:    uid,
+		StartDate: now,
+		EndDate:   newExpiry,
+		IsPaid:    true,
+		CreatedAt: now,
+	}
+
+	err = a.storage.SaveSubscription(ctx, subscription)
+	if err != nil {
+		log.Printf("failed to save subscription: %v\n", err)
+		return nil
+	}
+
+	var messageText string
+	switch *user.LanguageCode {
+	case "ru":
+		messageText = fmt.Sprintf(
+			"Оплата прошла успешно! Ваша подписка активна до %s",
+			newExpiry.Format("02.01.2006"),
+		)
+	default:
+		messageText = fmt.Sprintf(
+			"Payment successful! Your subscription is active until %s",
+			newExpiry.Format("2006-01-02"),
+		)
 	}
 
 	msg := telegram.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Payment successful! You've received %d prediction tokens. New balance: %d", tokenAmount, balance),
+		Text:   messageText,
 	}
 
-	// Notify user
 	_, err = a.tg.SendMessage(ctx, &msg)
+	if err != nil {
+		log.Printf("failed to send message: %v\n", err)
+	}
 
-	// for testing purposes do a refund in telegram
+	// Для тестов возвращаем деньги (оставлено как было)
 	go func() {
 		_, err = a.tg.RefundStarPayment(ctx, &telegram.RefundStarPaymentParams{
 			UserID:                  update.Message.Chat.ID,
 			TelegramPaymentChargeID: payment.TelegramPaymentChargeID,
 		})
-
 		if err != nil {
 			log.Printf("failed to refund payment: %v\n", err)
 		}
 	}()
 
-	return err
+	return nil
 }
 
 func (a *API) TelegramWebhook(c echo.Context) error {

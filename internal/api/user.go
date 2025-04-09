@@ -30,8 +30,8 @@ func GetContextUserID(c echo.Context) string {
 	return claims.UID
 }
 
-func (a *API) predictionsByUserID(ctx context.Context, uid string, onlyCompleted bool) ([]contract.PredictionResponse, error) {
-	predictions, err := a.storage.GetPredictionsByUserID(ctx, uid, onlyCompleted)
+func (a *API) predictionsByUserID(ctx context.Context, uid string, filter ...db.PredictionFilter) ([]contract.PredictionResponse, error) {
+	predictions, err := a.storage.GetPredictionsByUserID(ctx, uid, filter...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (a *API) GetUserInfo(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get user")
 	}
 
-	userPredictions, err := a.predictionsByUserID(ctx, user.ID, false)
+	userPredictions, err := a.predictionsByUserID(ctx, user.ID)
 
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user predictions")

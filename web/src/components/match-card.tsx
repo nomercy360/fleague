@@ -184,3 +184,132 @@ export default function MatchCard(props: MatchCardProps) {
 		</div>
 	)
 }
+
+type CompactMatchCardProps = {
+	match: MatchResponse
+	prediction?: PredictionResponse
+}
+
+export function CompactMatchCard(props: CompactMatchCardProps) {
+	const { match, prediction } = props
+	const {
+		home_team,
+		away_team,
+		match_date,
+		status,
+		home_score,
+		away_score,
+	} = match
+
+	const {
+		predicted_home_score,
+		predicted_away_score,
+		predicted_outcome,
+		points_awarded,
+		completed_at,
+	} = prediction ?? {}
+
+	const hasPrediction = () => !!prediction
+
+	const predictionCompleted = completed_at !== null
+	const predictionCorrect = (points_awarded || 0) > 0
+	const predictionLost = !!completed_at && !predictionCorrect
+	const predictionEditable = !predictionCompleted
+
+	function getCompletedPredictionDetails() {
+		if (!prediction) return null
+
+		// If the prediction was score-based, show predicted scores
+		if (predicted_home_score !== null && predicted_away_score !== null) {
+			return `(${predicted_home_score}:${predicted_away_score})`
+		}
+
+		// Otherwise show outcome-based prediction in parentheses
+		if (predicted_outcome === 'draw') {
+			return '(X)'
+		}
+
+		if (predicted_outcome === 'home') {
+			return `(${home_team.abbreviation})`
+		}
+
+		if (predicted_outcome === 'away') {
+			return `(${away_team.abbreviation})`
+		}
+
+		return ''
+	}
+
+	return (
+		<div
+			class={`h-[60px] rounded-lg p-2 flex items-center justify-between bg-card`}
+		>
+			<div class="flex flex-col items-center w-1/3">
+				<img src={home_team.crest_url} alt={home_team.name} class="size-5 object-contain" />
+				<p class="text-xs text-foreground truncate max-w-[60px]">{home_team.short_name}</p>
+			</div>
+
+			<Show when={status === 'scheduled'}>
+				<div class="mb-1 flex flex-col items-center text-center justify-end self-stretch">
+					<span class="leading-none text-xs font-bold text-center">
+						{timeToLocaleString(match_date, store.user?.language_code)}
+					</span>
+					<span class="text-xs text-center">
+						{formatDate(match_date, false, store.user?.language_code)}
+					</span>
+					<p class="mt-1 text-xs text-muted-foreground">
+						{match.tournament}
+					</p>
+				</div>
+			</Show>
+			{/*<div class="flex flex-col items-center text-center w-1/3 relative">*/}
+			{/*	{hasPrediction() && (*/}
+			{/*		<span class="material-symbols-rounded text-green-500 text-[12px]">check_circle</span>*/}
+			{/*	)}*/}
+			{/*	<span class="text-xs font-bold">{timeToLocaleString(match_date, store.user?.language_code)}</span>*/}
+			{/*	<span*/}
+			{/*		class="text-[10px] text-muted-foreground">{formatDate(match_date, false, store.user?.language_code)}</span>*/}
+			{/*</div>*/}
+			<Show when={status === 'completed'}>
+				<div class="flex flex-col items-center text-center">
+					<Show when={predictionCorrect}>
+						<div class="space-x-0.5 flex flex-row items-center justify-center">
+							<span class="material-symbols-rounded text-green-500 text-[12px]">check_circle</span>
+							<span class="text-xs text-secondary-foreground text-center">
+							{getCompletedPredictionDetails()}
+						</span>
+						</div>
+					</Show>
+					<Show when={predictionLost}>
+						<div class="space-x-0.5 flex flex-row items-center justify-center">
+							<span class="material-symbols-rounded text-red-500 text-[12px]">cancel</span>
+							<span class="text-xs text-secondary-foreground text-center">
+								{getCompletedPredictionDetails()}
+							</span>
+						</div>
+					</Show>
+					<span class="text-xs font-bold text-center">
+            {home_score} - {away_score}
+          </span>
+				</div>
+			</Show>
+
+			<Show when={status === 'ongoing'}>
+				<div class="mb-3 flex flex-col items-center text-center justify-end self-stretch">
+					<span class="text-xs font-bold text-center">
+						{home_score} - {away_score}
+					</span>
+					<span class="flex items-center justify-center text-xs text-center">
+						Live <span
+						class="material-symbols-rounded icon-fill text-green-400 text-[16px] animate-pulse">fiber_manual_record</span>
+					</span>
+				</div>
+			</Show>
+
+			<div class="flex flex-col items-center w-1/3">
+				<img src={away_team.crest_url} alt={away_team.name} class="size-5 object-contain" />
+				<p class="text-xs text-foreground truncate max-w-[40px]">{away_team.short_name}</p>
+			</div>
+		</div>
+	)
+}

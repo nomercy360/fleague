@@ -13,7 +13,6 @@ import { Button } from '~/components/ui/button'
 import { IconMinus, IconPlus } from '~/components/icons'
 import { cn } from '~/lib/utils'
 import { useTranslations } from '~/lib/locale-context'
-import { updateUserBalance } from '~/store'
 import { showToast } from '~/components/ui/toast'
 
 
@@ -74,7 +73,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 
 		const { data, error } = await saveMatchPrediction(prediction)
 		if (!error) {
-			updateUserBalance(data.balance)
 			props.onUpdate()
 
 			showToast({
@@ -88,12 +86,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			})
 		}
 
-		if (error === 'insufficient tokens') {
-			const { data, error } = await requestInvoice()
-			if (!error) {
-				window.Telegram.WebApp.openTelegramLink(data.link)
-			}
-		}
+		// if (error === 'insufficient tokens') {
+		// 	const { data, error } = await requestInvoice()
+		// 	if (!error) {
+		// 		window.Telegram.WebApp.openTelegramLink(data.link)
+		// 	}
+		// }
 	}
 
 	createEffect(() => {
@@ -117,49 +115,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		setOutcome(null)
 	}
 
-	const onPredictionRemove = async () => {
-		const { error, data } = await deleteMatchPrediction(props.match.id)
-		if (!error) {
-			setTeam1Score(null)
-			setTeam2Score(null)
-			setOutcome(null)
-			setIsExactScore(false)
-			updateUserBalance(data.balance)
-			props.onUpdate()
-		}
-	}
-
 	const { t } = useTranslations()
 
 	return (
 		<DrawerContent class="pb-3 bg-card">
 			<div class="mx-auto w-full px-4">
 				<div class="flex flex-col items-center gap-4">
-					{/*<div class="mx-auto w-full px-4">*/}
-					{/*	<div class="flex flex-col items-center gap-4">*/}
-					{/*		<div class="w-full">*/}
-					{/*			<div class="h-2 bg-gray-200 rounded-lg overflow-hidden relative">*/}
-					{/*				<div*/}
-					{/*					class="absolute left-0 h-2 bg-blue-500"*/}
-					{/*					style={{ width: `${predictionStats().home}%` }}*/}
-					{/*				/>*/}
-					{/*				<div*/}
-					{/*					class="absolute left-[${predictionStats().home}%] h-2 bg-yellow-500"*/}
-					{/*					style={{ width: `${predictionStats().draw}%` }}*/}
-					{/*				/>*/}
-					{/*				<div*/}
-					{/*					class="absolute right-0 h-2 bg-red-500"*/}
-					{/*					style={{ width: `${predictionStats().away}%` }}*/}
-					{/*				/>*/}
-					{/*			</div>*/}
-					{/*			<div class="flex justify-between text-xs mt-1">*/}
-					{/*				<span>{t('win_1')}: {predictionStats().home}%</span>*/}
-					{/*				<span>{t('draw')}: {predictionStats().draw}%</span>*/}
-					{/*				<span>{t('win_2')}: {predictionStats().away}%</span>*/}
-					{/*			</div>*/}
-					{/*		</div>*/}
-					{/*	</div>*/}
-					{/*</div>*/}
 					<div class="w-full justify-between flex flex-col items-start gap-2">
 						<div class="flex flex-row w-full justify-between items-center h-10">
 							<div class="flex flex-row w-full justify-between items-center">
@@ -234,12 +195,12 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 						<div class="ml-2">
 							<Show when={outcome()}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 20, points: 3 })}
+									{t('prediction_reward', { points: 3 })}
 								</span>
 							</Show>
 							<Show when={isExactScore()}>
 								<span class="text-xs font-medium">
-									{t('prediction_cost_and_reward', { cost: 10, points: 7 })}
+									{t('prediction_reward', { points: 7 })}
 								</span>
 							</Show>
 						</div>
@@ -288,15 +249,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 			<DrawerFooter>
 				<DrawerClose>
 					<div class="flex flex-row items-center justify-between gap-2">
-						<Show when={props.prediction}>
-							<Button
-								size="default"
-								class="w-full bg-destructive text-destructive-foreground"
-								onClick={onPredictionRemove}
-							>
-								{t('cancel_prediction')}
-							</Button>
-						</Show>
 						<Button
 							size="default"
 							class="w-full bg-accent text-accent-foreground"

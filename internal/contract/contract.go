@@ -36,8 +36,9 @@ type UserResponse struct {
 	CurrentWinStreak   int        `json:"current_win_streak"`
 	LongestWinStreak   int        `json:"longest_win_streak"`
 	Badges             []db.Badge `json:"badges"`
-	PredictionTokens   int        `json:"prediction_tokens"`
 	PredictionAccuracy float64    `json:"prediction_accuracy"`
+	SubscriptionActive bool       `json:"subscription_active"`
+	SubscriptionExpiry time.Time  `json:"subscription_expiry"`
 }
 
 type PredictionResponse struct {

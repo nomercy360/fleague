@@ -1,6 +1,10 @@
 package db
 
-import "context"
+import (
+	"context"
+	"database/sql"
+	"errors"
+)
 
 func (s *Storage) GetLeaderboard(ctx context.Context, seasonID string) ([]LeaderboardEntry, error) {
 	query := `
@@ -95,4 +99,31 @@ func (s *Storage) GetUserRank(ctx context.Context, userID string) ([]Rank, error
 	}
 
 	return ranks, nil
+}
+
+func (s *Storage) GetUserMonthlyRank(ctx context.Context, userID string) (position int, points int, err error) {
+	query := `
+		WITH ranked_leaderboard AS (
+			SELECT
+				l.user_id,
+				l.points,
+				RANK() OVER (ORDER BY l.points DESC) AS position
+			FROM leaderboards l
+			JOIN seasons s ON l.season_id = s.id
+			WHERE s.is_active = 1 AND s.type = 'monthly'
+		)
+		SELECT position, points
+		FROM ranked_leaderboard
+		WHERE user_id = ?
+	`
+
+	err = s.db.QueryRowContext(ctx, query, userID).Scan(&position, &points)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, 0, nil
+		}
+		return 0, 0, err
+	}
+
+	return position, points, nil
 }

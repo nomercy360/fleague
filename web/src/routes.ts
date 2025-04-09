@@ -36,10 +36,6 @@ export const routes: RouteDefinition[] = [
 		'component': lazy(() => import('./pages/edit-profile')),
 	},
 	{
-		'path': '/onboarding',
-		'component': OnboardingPage,
-	},
-	{
 		'path': '/matches/:id',
 		'component': MatchPage,
 	},

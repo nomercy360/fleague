@@ -29,17 +29,9 @@ type User struct {
 	FavoriteTeamID     *string   `db:"favorite_team_id"`
 	FavoriteTeam       *Team     `db:"favorite_team"`
 	Badges             []Badge   `db:"badges"`
-	PredictionTokens   int       `db:"prediction_tokens"`
+	SubscriptionActive bool      `db:"subscription_active"`
+	SubscriptionExpiry time.Time `db:"subscription_expiry"`
 }
-
-var (
-	TokenTransactionTypeDailyLogin       = "daily_login"
-	TokenTransactionTypeReferral         = "referral"
-	TokenTransactionTypePrediction       = "prediction"
-	TokenTransactionTypePredictionRefund = "prediction_refund"
-	TokenTransactionTypePurchase         = "purchase"
-	TokenTransactionTypePredictionWon    = "prediction_won"
-)
 
 type Badge struct {
 	ID        string    `json:"id"`
@@ -115,7 +107,6 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 				u.referred_by,
 				u.current_win_streak,
 				u.longest_win_streak,
-				u.prediction_tokens,
 				CASE 
 					WHEN u.favorite_team_id IS NOT NULL THEN 
 						json_object(
@@ -161,7 +152,6 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 		&user.ReferredBy,
 		&user.CurrentWinStreak,
 		&user.LongestWinStreak,
-		&user.PredictionTokens,
 		&favoriteTeamJSON,
 		&badgeJSON,
 	); err != nil && IsNoRowsError(err) {
@@ -483,52 +473,4 @@ func (s *Storage) HasLoggedInToday(ctx context.Context, userID string) (bool, er
 		return false, err
 	}
 	return count > 0, nil
-}
-
-func (s *Storage) UpdateUserTokens(ctx context.Context, userID string, amount int, transactionType string) (balance int, err error) {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-			return
-		}
-	}()
-
-	updateQuery := `
-        UPDATE users
-        SET prediction_tokens = prediction_tokens + ?
-        WHERE id = ?
-    `
-	_, err = tx.ExecContext(ctx, updateQuery, amount, userID)
-	if err != nil {
-		return
-	}
-
-	insertQuery := `
-        INSERT INTO token_transactions (id, user_id, amount, transaction_type)
-        VALUES (?, ?, ?, ?)
-    `
-	_, err = tx.ExecContext(ctx, insertQuery, nanoid.Must(), userID, amount, transactionType)
-	if err != nil {
-		return
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return
-	}
-
-	if err = s.db.QueryRowContext(
-		ctx,
-		"SELECT prediction_tokens FROM users WHERE id = ?",
-		userID,
-	).Scan(&balance); err != nil {
-		return
-	}
-
-	return
 }

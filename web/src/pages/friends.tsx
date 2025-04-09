@@ -47,10 +47,6 @@ export default function FriendsPage() {
 
 	return (
 		<div class="h-full p-3 overflow-y-scroll pb-[180px]">
-			<div class="mb-2 px-2 flex flex-row items-start justify-between">
-				{t('my_balance')}:
-				<span class="font-bold text-lg">{store.user?.prediction_tokens}</span>
-			</div>
 			<button class="relative bg-secondary p-3 rounded-2xl flex flex-col items-start text-start justify-center"
 							onClick={shareProfileURL}>
 				<span

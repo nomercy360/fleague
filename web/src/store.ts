@@ -16,6 +16,8 @@ type User = {
 	correct_predictions: number
 	referred_by: string
 	prediction_accuracy: number
+	subscription_active: boolean
+	subscription_expiry: string
 	ranks: {
 		season_id: string
 		position: number
@@ -38,7 +40,6 @@ type User = {
 		color: string
 		awarded_at: string
 	}[]
-	prediction_tokens: number
 }
 
 export const getUserLeaderboardPosition = (season: 'monthly' | 'football') => {
@@ -60,13 +61,6 @@ export const [store, setStore] = createStore<{
 })
 
 export const setUser = (user: any) => setStore('user', user)
-
-export const updateUserBalance = (newValue: number) => {
-	setStore('user', {
-		...store.user,
-		prediction_tokens: newValue,
-	})
-}
 
 export const setToken = (token: string) => setStore('token', token)
 

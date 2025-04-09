@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
 	telegram "github.com/go-telegram/bot"
 	"github.com/user/project/internal/contract"
 	"github.com/user/project/internal/db"
-	"log"
 )
 
 func (s *Syncer) ProcessPredictions(ctx context.Context) error {
@@ -24,7 +25,6 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 	}
 
 	for _, match := range matches {
-		// Retrieve all predictions for the current match
 		predictions, err := s.storage.GetPredictionsForMatch(ctx, match.ID)
 		if err != nil {
 			log.Printf("Failed to fetch predictions for match %s: %v", match.ID, err)
@@ -32,50 +32,35 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 		}
 
 		for _, prediction := range predictions {
-			// Ensure match scores are available
 			if match.AwayScore == nil || match.HomeScore == nil {
 				log.Printf("Skipping prediction for match %s with missing scores", match.ID)
 				continue
 			}
 
-			// Calculate base points based on prediction correctness
 			basePoints := calculateBasePoints(match, prediction)
 			isExactCorrect := basePoints == 7
 			isOutcomeCorrect := basePoints == 3
-
-			// Determine if the prediction was correct
 			isCorrect := isExactCorrect || isOutcomeCorrect
 
-			// Fetch the user to update streaks
 			user, err := s.storage.GetUserByID(prediction.UserID)
 			if err != nil {
 				log.Printf("Failed to fetch user %s: %v", prediction.UserID, err)
 				continue
 			}
 
-			// Initialize bonus points
 			bonusPoints := 0
-
 			if isCorrect {
-				// Increment the user's current streak
 				user.CurrentWinStreak += 1
-
-				// Update the longest streak if necessary
 				if user.CurrentWinStreak > user.LongestWinStreak {
 					user.LongestWinStreak = user.CurrentWinStreak
 				}
-
-				// Calculate bonus based on the new streak
 				bonusPoints = calculateBonus(user.CurrentWinStreak)
 			} else {
-				// Reset the user's current streak
 				user.CurrentWinStreak = 0
 			}
 
-			// Calculate total points (base + bonus)
 			totalPoints := basePoints + bonusPoints
 
-			// Update the prediction result with total points
 			err = s.storage.UpdatePredictionResult(ctx, prediction.MatchID, prediction.UserID, totalPoints)
 			if err != nil {
 				log.Printf("Failed to update prediction result for match %s, user %s: %v", prediction.MatchID, prediction.UserID, err)
@@ -102,19 +87,9 @@ func (s *Syncer) ProcessPredictions(ctx context.Context) error {
 				continue
 			}
 
-			// refund tokens if the prediction was correct - 150% of the token cost
-			if isCorrect {
-				refundAmount := int(float64(prediction.TokenCost) * 1.5)
-				_, err = s.storage.UpdateUserTokens(ctx, user.ID, refundAmount, db.TokenTransactionTypePredictionWon)
-				if err != nil {
-					log.Printf("Failed to refund tokens for user %s: %v", user.ID, err)
-				}
-			}
-
-			// go s.notifyUser(ctx, user, user.CurrentWinStreak, bonusPoints)
+			go s.notifyUser(ctx, user, user.CurrentWinStreak, bonusPoints)
 		}
 	}
-
 	return nil
 }
 
@@ -135,20 +110,16 @@ func calculateBasePoints(match db.Match, prediction db.Prediction) int {
 	awayScore := *match.AwayScore
 	homeScore := *match.HomeScore
 
-	// Exact score prediction
 	if prediction.PredictedHomeScore != nil && prediction.PredictedAwayScore != nil {
 		predictedHomeScore := *prediction.PredictedHomeScore
 		predictedAwayScore := *prediction.PredictedAwayScore
-
 		if homeScore == predictedHomeScore && awayScore == predictedAwayScore {
 			return 7
 		}
 	}
 
-	// Outcome prediction
 	if prediction.PredictedOutcome != nil {
 		outcome := *prediction.PredictedOutcome
-
 		if outcome == db.MatchOutcomeDraw && homeScore == awayScore {
 			return 3
 		}

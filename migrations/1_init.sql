@@ -8,7 +8,7 @@ CREATE TABLE users
     last_name           TEXT,
     username            TEXT,
     language_code       TEXT,
-    chat_id             INTEGER UNIQUE, -- ID чата в телеграме
+    chat_id             INTEGER UNIQUE,     -- ID чата в телеграме
     referred_by         TEXT,
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
     total_predictions   INTEGER  DEFAULT 0,
@@ -17,7 +17,8 @@ CREATE TABLE users
     longest_win_streak  INTEGER  DEFAULT 0,
     favorite_team_id    TEXT,
     avatar_url          TEXT,
-    prediction_tokens   INTEGER  DEFAULT 50,
+    subscription_active BOOLEAN  DEFAULT 0, -- Активна ли подписка (вместо токенов)
+    subscription_expiry DATETIME,           -- Дата истечения подписки
     FOREIGN KEY (referred_by) REFERENCES users (id) ON DELETE SET NULL,
     FOREIGN KEY (favorite_team_id) REFERENCES teams (id) ON DELETE SET NULL
 );
@@ -89,7 +90,6 @@ CREATE TABLE predictions
     created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at         DATETIME, -- Дата когда матч завершился и прогноз был подсчитан
     updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
-    token_cost           INTEGER  DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, match_id)
@@ -157,12 +157,16 @@ CREATE TABLE surveys
 CREATE INDEX idx_surveys_user_id ON surveys (user_id);
 CREATE INDEX idx_surveys_feature ON surveys (feature);
 
-CREATE TABLE token_transactions
+CREATE TABLE subscriptions
 (
     id               TEXT PRIMARY KEY,
-    user_id          TEXT    NOT NULL,
-    amount           INTEGER NOT NULL, -- Positive for earning/buying, negative for spending
-    transaction_type TEXT    NOT NULL, -- e.g., "prediction", "purchase", "daily_bonus"
+    user_id          TEXT     NOT NULL,
+    start_date       DATETIME NOT NULL,  -- Начало подписки
+    end_date         DATETIME NOT NULL,  -- Окончание подписки
+    is_paid          BOOLEAN  DEFAULT 1, -- Платная или бесплатная (за реферала)
+    referred_user_id TEXT,               -- ID приглашенного друга, если подписка бесплатная
     created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (referred_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
