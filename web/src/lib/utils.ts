@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateString: string, dateTime = false, locale: 'en' | 'ru' = 'en') {
+export function formatDate(dateString: string, dateTime = false, locale: 'en' | 'ru' = 'en', includeDayOfWeek = true) {
 	const daysOfWeek = {
 		en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
 		ru: ['вс.', 'пн.', 'вт.', 'ср.', 'чт.', 'пт.', 'сб.'],
@@ -52,7 +52,11 @@ export function formatDate(dateString: string, dateTime = false, locale: 'en' | 
 		const dayOfWeek = daysOfWeek[locale][date.getDay()]
 
 		if (date > now) {
-			result = `${dayOfWeek}, ${day} ${month}`
+			if (includeDayOfWeek) {
+				result = `${dayOfWeek}, ${day} ${month}`
+			} else {
+				result = `${day} ${month}`
+			}
 		} else {
 			result = `${day} ${month}`
 		}

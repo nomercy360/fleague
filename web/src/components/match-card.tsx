@@ -242,7 +242,14 @@ export function CompactMatchCard(props: CompactMatchCardProps) {
 
 	return (
 		<div
-			class={`h-[60px] rounded-lg p-2 flex items-center justify-between bg-card`}
+			class={cn(`h-[60px] rounded-lg p-2 flex items-center justify-between`,
+				{
+					'bg-card': status === 'scheduled',
+					'bg-accent': status === 'ongoing',
+					'bg-red-900/30': status === 'completed' && !predictionCorrect,
+					'bg-green-900/30': status === 'completed' && predictionCorrect,
+				},
+			)}
 		>
 			<div class="flex flex-col items-center w-1/3">
 				<img src={home_team.crest_url} alt={home_team.name} class="size-5 object-contain" />
@@ -251,25 +258,21 @@ export function CompactMatchCard(props: CompactMatchCardProps) {
 
 			<Show when={status === 'scheduled'}>
 				<div class="mb-1 flex flex-col items-center text-center justify-end self-stretch">
-					<span class="leading-none text-xs font-bold text-center">
-						{timeToLocaleString(match_date, store.user?.language_code)}
+					<span class="text-xs text-center mb-0.5">
+						{formatDate(match_date, false, store.user?.language_code, false)}
 					</span>
-					<span class="text-xs text-center">
-						{formatDate(match_date, false, store.user?.language_code)}
-					</span>
-					<p class="mt-1 text-xs text-muted-foreground">
-						{match.tournament}
-					</p>
+					{hasPrediction() && (
+						<div class="space-x-0.5 flex flex-row items-center justify-center">
+							<span class="material-symbols-rounded text-secondary-foreground text-[12px]">
+								hourglass_empty
+							</span>
+							<span class="text-xs text-secondary-foreground text-center">
+							{getCompletedPredictionDetails()}
+						</span>
+						</div>
+					)}
 				</div>
 			</Show>
-			{/*<div class="flex flex-col items-center text-center w-1/3 relative">*/}
-			{/*	{hasPrediction() && (*/}
-			{/*		<span class="material-symbols-rounded text-green-500 text-[12px]">check_circle</span>*/}
-			{/*	)}*/}
-			{/*	<span class="text-xs font-bold">{timeToLocaleString(match_date, store.user?.language_code)}</span>*/}
-			{/*	<span*/}
-			{/*		class="text-[10px] text-muted-foreground">{formatDate(match_date, false, store.user?.language_code)}</span>*/}
-			{/*</div>*/}
 			<Show when={status === 'completed'}>
 				<div class="flex flex-col items-center text-center">
 					<Show when={predictionCorrect}>
