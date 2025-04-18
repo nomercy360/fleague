@@ -1,16 +1,17 @@
-import { setUser, store } from '~/store'
-import { createEffect, onCleanup, onMount, createSignal, Show, Switch, Match } from 'solid-js'
+import { setShowSubscriptionModal, setUser, store } from '~/store'
+import { createEffect, onCleanup, onMount, createSignal, Show, For } from 'solid-js'
 import { TextField, TextFieldInput } from '~/components/ui/text-field'
 import { createStore } from 'solid-js/store'
 import { useMainButton } from '~/lib/useMainButton'
 import { Button } from '~/components/ui/button'
 import { IconChevronRight } from '~/components/icons'
 import { createQuery } from '@tanstack/solid-query'
-import { fetchPresignedUrl, fetchTeams, fetchUpdateUser, uploadToS3 } from '~/lib/api'
+import { cancelSubscription, fetchPresignedUrl, fetchTeams, fetchUpdateUser, uploadToS3 } from '~/lib/api'
 import { cn } from '~/lib/utils'
 import { useNavigate } from '@solidjs/router'
 import { useTranslations } from '~/lib/locale-context'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import { showToast } from '~/components/ui/toast'
 
 type Team = {
 	id: number
@@ -22,7 +23,6 @@ type Team = {
 
 export default function EditUserPage() {
 	const mainButton = useMainButton()
-
 	const [editUser, setEditUser] = createStore({
 		first_name: '',
 		last_name: '',
@@ -30,28 +30,25 @@ export default function EditUserPage() {
 		language_code: '',
 		avatar_url: null,
 	})
-
 	const [showTeamSelector, setShowTeamSelector] = createSignal(false)
-
 	const [searchTerm, setSearchTerm] = createSignal('')
 	const [selectedTeam, setSelectedTeam] = createSignal({} as Team)
-
 	const [imgFile, setImgFile] = createSignal<File | null>(null)
 	const [imgUploadProgress, setImgUploadProgress] = createSignal(0)
-
 	const [previewUrl, setPreviewUrl] = createSignal('')
+	const [isProcessingSubscription, setIsProcessingSubscription] = createSignal(false)
 
 	const teams = createQuery<Team[]>(() => ({
 		queryKey: ['teams'],
 		queryFn: () => fetchTeams(),
 	}))
-
 	const filteredTeams = () =>
 		teams.data?.filter((team) =>
 			team.name.toLowerCase().includes(searchTerm().toLowerCase()),
 		) || []
 
 	const navigate = useNavigate()
+	const { t } = useTranslations()
 
 	createEffect(() => {
 		if (store.user?.username) {
@@ -60,11 +57,9 @@ export default function EditUserPage() {
 				last_name: store.user.last_name,
 				language_code: store.user.language_code,
 			})
-
 			if (store.user.favorite_team) {
 				setSelectedTeam(store.user.favorite_team)
 			}
-
 			if (store.user.avatar_url) {
 				setPreviewUrl(store.user.avatar_url)
 			}
@@ -79,7 +74,7 @@ export default function EditUserPage() {
 				await uploadToS3(
 					url,
 					imgFile()!,
-					e => {
+					(e) => {
 						setImgUploadProgress(Math.round((e.loaded / e.total) * 100))
 					},
 					() => {
@@ -113,6 +108,28 @@ export default function EditUserPage() {
 		navigate('/')
 	}
 
+	async function handleSubscriptionToggle() {
+		setIsProcessingSubscription(true)
+		try {
+			if (store.user.subscription_active) {
+				await cancelSubscription()
+				setUser({
+					...store.user,
+					subscription_active: false,
+					subscription_expiry: null,
+				})
+			} else {
+				navigate('/')
+				setShowSubscriptionModal(true)
+			}
+		} catch (e) {
+			console.error(e)
+			showToast({
+				description: t('subscription.error'),
+			})
+		}
+	}
+
 	onMount(() => {
 		mainButton.enable('Save & close')
 		mainButton.onClick(updateUser)
@@ -123,27 +140,33 @@ export default function EditUserPage() {
 		mainButton.hide()
 	})
 
-	const { t } = useTranslations()
-
 	const handleFileChange = (event: any) => {
 		const file = event.target.files[0]
 		if (file) {
-			const maxSize = 1024 * 1024 * 5 // 7MB
-
+			const maxSize = 1024 * 1024 * 5 // 5MB
 			if (file.size > maxSize) {
 				window.Telegram.WebApp.showAlert('File size is too big')
 				return
 			}
-
 			setImgFile(file)
 			setPreviewUrl('')
-
 			const reader = new FileReader()
-			reader.onload = e => {
+			reader.onload = (e) => {
 				setPreviewUrl(e.target?.result as string)
 			}
 			reader.readAsDataURL(file)
 		}
+	}
+
+	const subscriptionDetails = {
+		name: t('subscription.premium'),
+		cost: '150',
+		costUnit: t('subscription.stars'),
+		description: t('subscription.premium_description'),
+		features: [
+			t('subscription.feature_predictions'),
+			t('subscription.feature_monthly_prizes'),
+		],
 	}
 
 	return (
@@ -166,13 +189,13 @@ export default function EditUserPage() {
 				</TextField>
 				<div class="flex-col w-full">
 					<p class="px-2 py-1 text-sm text-muted-foreground">
-						App & Notifications Language
+						{t('app_language')}
 					</p>
 					<Select
 						value={editUser.language_code}
 						onChange={(value) => setEditUser('language_code', value as string)}
 						options={['ru', 'en']}
-						placeholder="App language"
+						placeholder={t('select_language')}
 						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
 					>
 						<SelectTrigger class="w-full">
@@ -180,12 +203,10 @@ export default function EditUserPage() {
 						</SelectTrigger>
 						<SelectContent />
 					</Select>
-
 				</div>
-
 				<div class="mt-2 w-full">
 					<p class="px-2 text-sm text-muted-foreground">
-						{t('favorite_team', { points: 3 })}
+						{t('favorite_team')}
 					</p>
 					<Button
 						size="sm"
@@ -193,30 +214,38 @@ export default function EditUserPage() {
 						variant="secondary"
 						onClick={() => setShowTeamSelector(true)}
 					>
-          <span class="flex flex-row items-center gap-2">
-            <Show
-							when={selectedTeam().id}
-							fallback={
-								<span class="text-muted-foreground">
-									{t('select_favorite_team')}
-								</span>
-							}
-						>
-							<>
-								<img
-									src={selectedTeam().crest_url}
-									alt={selectedTeam().short_name}
-									class="size-6"
-								/>
-								{selectedTeam().short_name}
-							</>
-						</Show>
-          </span>
+            <span class="flex flex-row items-center gap-2">
+              <Show
+								when={selectedTeam().id}
+								fallback={<span class="text-muted-foreground">{t('select_favorite_team')}</span>}
+							>
+                <>
+                  <img
+										src={selectedTeam().crest_url}
+										alt={selectedTeam().short_name}
+										class="size-6"
+									/>
+									{selectedTeam().short_name}
+                </>
+              </Show>
+            </span>
 						<IconChevronRight class="size-6" />
 					</Button>
+					<div class="mt-3 w-full">
+						<p class="px-2 text-sm text-muted-foreground">{t('subscription.title')}</p>
+						<Button
+							size="sm"
+							class={cn(
+								'mt-1 h-12 w-full',
+								store.user.subscription_active ? 'bg-red-700' : 'bg-primary text-primary-foreground',
+							)}
+							onClick={() => handleSubscriptionToggle()}
+						>
+							{store.user.subscription_active ? t('subscription.unsubscribe') : t('subscription.subscribe')}
+						</Button>
+					</div>
 				</div>
 			</Show>
-
 			<Show when={showTeamSelector()}>
 				<div class="h-screen flex-col flex items-center justify-start w-full">
 					<div class="w-full flex items-center relative">
@@ -239,7 +268,10 @@ export default function EditUserPage() {
 					<div class="mt-4 grid grid-cols-3 gap-2 w-full overflow-y-scroll pb-[40px]">
 						{filteredTeams().map((team) => (
 							<button
-								class={cn('border flex flex-col items-center p-3 rounded-2xl bg-secondary', selectedTeam()?.id === team.id && 'border-primary')}
+								class={cn(
+									'border flex flex-col items-center p-3 rounded-2xl bg-secondary',
+									selectedTeam()?.id === team.id && 'border-primary',
+								)}
 								onClick={() => {
 									setSelectedTeam(team)
 									setShowTeamSelector(false)
@@ -263,7 +295,7 @@ function ImageBox(props: { imgURL: string; onFileChange: any }) {
 				<img
 					src={props.imgURL}
 					alt="Uploaded image preview"
-					class="size-24 rounded-full rounded-full object-cover"
+					class="size-24 rounded-full object-cover"
 				/>
 				<input
 					class="absolute size-full cursor-pointer rounded-full opacity-0"
@@ -274,9 +306,7 @@ function ImageBox(props: { imgURL: string; onFileChange: any }) {
 			</div>
 			<div
 				class="flex items-center justify-center rounded-full size-7 bg-primary text-primary-foreground absolute bottom-0 right-0 pointer-events-none">
-				<span class="text-[16px] material-symbols-rounded">
-					edit
-				</span>
+				<span class="text-[16px] material-symbols-rounded">edit</span>
 			</div>
 		</div>
 	)

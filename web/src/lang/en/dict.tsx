@@ -134,4 +134,9 @@ export const dict = {
 	'subscription.feature_monthly_prizes': 'Compete for monthly leaderboards and prizes',
 	'subscription.subscribe': 'Subscribe Now',
 	'subscription.processing': 'Processing...',
+	'subscription.unsubscribe': 'Cancel Subscription',
+	'subscription.expires': 'Expires on {date}',
+	'subscription.error': 'An error occurred. Please try again.',
+	'app_language': 'App & Notifications Language',
+	'select_language': 'Select Language',
 }

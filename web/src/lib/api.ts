@@ -247,16 +247,17 @@ export const fetchMatchByID = async (matchId: string) => {
 	return data
 }
 
-export const sendFeedback = async (feedback: any) => {
-	return await apiRequest('/feedback', {
-		method: 'POST',
-		body: JSON.stringify(feedback),
-	})
-}
-
 export const requestInvoice = async () => {
 	///payments/invoice
 	return await apiRequest('/payments/invoice', {
 		method: 'POST',
+	})
+}
+
+
+export const cancelSubscription = async () => {
+	///payments/invoice
+	return await apiRequest('/subscriptions', {
+		method: 'DELETE',
 	})
 }

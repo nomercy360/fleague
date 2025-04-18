@@ -130,4 +130,7 @@ export const dict = {
 	'subscription.feature_monthly_prizes': 'Участвуйте в ежемесячных рейтингах и выигрывайте призы',
 	'subscription.subscribe': 'Подписаться сейчас',
 	'subscription.processing': 'Обработка...',
+	'subscription.expires': 'Expires on {date}',
+	'app_language': 'Язык приложения и уведомлений',
+	'select_language': 'Выберите язык',
 }
