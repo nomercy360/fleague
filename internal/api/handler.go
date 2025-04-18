@@ -48,6 +48,8 @@ type storager interface {
 	DeletePrediction(ctx context.Context, uid, predictionID string) error
 	SaveSubscription(ctx context.Context, subscription db.Subscription) error
 	UpdateUserSubscription(ctx context.Context, uid string, active bool, expiry time.Time) error
+	GetActiveSubscription(ctx context.Context, uid string) (db.Subscription, error)
+	SuspendSubscription(ctx context.Context, uid string) error
 }
 
 type API struct {

@@ -13,24 +13,24 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID                 string    `db:"id"`
-	FirstName          *string   `db:"first_name"`
-	LastName           *string   `db:"last_name"`
-	Username           string    `db:"username"`
-	AvatarURL          *string   `db:"avatar_url"`
-	LanguageCode       *string   `db:"language_code"`
-	ChatID             int64     `db:"chat_id"`
-	ReferredBy         *string   `db:"referred_by"`
-	CreatedAt          time.Time `db:"created_at"`
-	TotalPredictions   int       `db:"total_predictions"`
-	CorrectPredictions int       `db:"correct_predictions"`
-	CurrentWinStreak   int       `db:"current_win_streak"`
-	LongestWinStreak   int       `db:"longest_win_streak"`
-	FavoriteTeamID     *string   `db:"favorite_team_id"`
-	FavoriteTeam       *Team     `db:"favorite_team"`
-	Badges             []Badge   `db:"badges"`
-	SubscriptionActive bool      `db:"subscription_active"`
-	SubscriptionExpiry time.Time `db:"subscription_expiry"`
+	ID                 string     `db:"id"`
+	FirstName          *string    `db:"first_name"`
+	LastName           *string    `db:"last_name"`
+	Username           string     `db:"username"`
+	AvatarURL          *string    `db:"avatar_url"`
+	LanguageCode       *string    `db:"language_code"`
+	ChatID             int64      `db:"chat_id"`
+	ReferredBy         *string    `db:"referred_by"`
+	CreatedAt          time.Time  `db:"created_at"`
+	TotalPredictions   int        `db:"total_predictions"`
+	CorrectPredictions int        `db:"correct_predictions"`
+	CurrentWinStreak   int        `db:"current_win_streak"`
+	LongestWinStreak   int        `db:"longest_win_streak"`
+	FavoriteTeamID     *string    `db:"favorite_team_id"`
+	FavoriteTeam       *Team      `db:"favorite_team"`
+	Badges             []Badge    `db:"badges"`
+	SubscriptionActive bool       `db:"subscription_active"`
+	SubscriptionExpiry *time.Time `db:"subscription_expiry"`
 }
 
 type Badge struct {
@@ -107,6 +107,8 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 				u.referred_by,
 				u.current_win_streak,
 				u.longest_win_streak,
+				u.subscription_active,
+				u.subscription_expiry,
 				CASE 
 					WHEN u.favorite_team_id IS NOT NULL THEN 
 						json_object(
@@ -152,6 +154,8 @@ func (s *Storage) getUserBy(condition string, value interface{}) (User, error) {
 		&user.ReferredBy,
 		&user.CurrentWinStreak,
 		&user.LongestWinStreak,
+		&user.SubscriptionActive,
+		&user.SubscriptionExpiry,
 		&favoriteTeamJSON,
 		&badgeJSON,
 	); err != nil && IsNoRowsError(err) {

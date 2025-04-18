@@ -54,10 +54,12 @@ export const [store, setStore] = createStore<{
 	user: User
 	token: string
 	following: number[]
+	showSubscriptionModal: boolean
 }>({
 	user: {} as User,
 	token: null as any,
 	following: [],
+	showSubscriptionModal: false,
 })
 
 export const setUser = (user: any) => setStore('user', user)
@@ -66,6 +68,9 @@ export const setToken = (token: string) => setStore('token', token)
 
 export const setFollowing = (following: number[]) =>
 	setStore('following', following)
+
+export const setShowSubscriptionModal = (show: boolean) =>
+	setStore('showSubscriptionModal', show)
 
 export const [editUser, setEditUser] = createStore<any>({
 	first_name: '',

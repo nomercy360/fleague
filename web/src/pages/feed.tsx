@@ -1,7 +1,3 @@
-import {
-	IconChevronRight,
-} from '~/components/icons'
-
 import UserActivity from '~/components/prediction-card'
 import { Link } from '~/components/link'
 import { store } from '~/store'

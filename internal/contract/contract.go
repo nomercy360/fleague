@@ -38,7 +38,7 @@ type UserResponse struct {
 	Badges             []db.Badge `json:"badges"`
 	PredictionAccuracy float64    `json:"prediction_accuracy"`
 	SubscriptionActive bool       `json:"subscription_active"`
-	SubscriptionExpiry time.Time  `json:"subscription_expiry"`
+	SubscriptionExpiry *time.Time `json:"subscription_expiry"`
 }
 
 type PredictionResponse struct {

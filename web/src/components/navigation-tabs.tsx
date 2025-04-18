@@ -1,11 +1,11 @@
 import { Link } from '~/components/link'
 import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
-import { createSignal, onMount, Show } from 'solid-js'
-import { Button } from '~/components/ui/button'
-import { sendFeedback } from '~/lib/api'
+import { createSignal, For, Show } from 'solid-js'
 import { useTranslations } from '~/lib/locale-context'
-import { store } from '~/store'
+import { setShowSubscriptionModal, store } from '~/store'
+import { Button } from '~/components/ui/button'
+import { requestInvoice } from '~/lib/api'
 
 export default function NavigationTabs(props: any) {
 	const location = useLocation()
@@ -18,11 +18,11 @@ export default function NavigationTabs(props: any) {
 
 	return (
 		<div class="h-screen bg-background text-foreground">
-			<PredictionDialog />
+			<SubscriptionModal />
 			<div
 				class="flex flex-row items-center border-t h-[100px] fixed bottom-0 w-full bg-background z-50 transform -translate-x-1/2 left-1/2"
 			>
-				<div class='flex flex-row items-center justify-between w-full px-4 space-x-10'>
+				<div class="flex flex-row items-center justify-between w-full px-4 space-x-10">
 					<div class="flex flex-row w-full gap-6 items-center justify-center">
 						{tabs.map(({ href, icon, activePath }) => (
 							<Link
@@ -44,141 +44,79 @@ export default function NavigationTabs(props: any) {
 	)
 }
 
+function SubscriptionModal() {
+	const [isProcessing, setIsProcessing] = createSignal(false)
+	const { t } = useTranslations()
 
-const PredictionDialog = () => {
-	const [selectedOption, setSelectedOption] = createSignal<string | null>(null)
-	const [showSurvey, setShowSurvey] = createSignal(false)
-
-	const updateSurveyComplete = (err: unknown, value: unknown) => {
-		const isComplete = value === 'true'
-		setShowSurvey(!isComplete)
-	}
-
-	onMount(() => {
-		//window.Telegram.WebApp.CloudStorage.removeItem('fl_survey_complete')
-		window.Telegram.WebApp.CloudStorage.getItem(
-			'fl_survey_complete',
-			updateSurveyComplete,
-		)
-	})
-
-	const handleSubmit = async (e: any) => {
-		e.preventDefault()
-		if (!selectedOption()) return
-
+	const handleSubscribe = async () => {
 		try {
-			const { data, error } = await sendFeedback({
-				feature: 'prediction_prizes',
-				preference: selectedOption(),
-			})
-
+			setIsProcessing(true)
+			const { data, error } = await requestInvoice()
 			if (data) {
-				onClose()
+				window.Telegram.WebApp.openTelegramLink(data.link)
+				setShowSubscriptionModal(false)
 			}
-		} catch (error) {
-			console.error('Error submitting feedback:', error)
+		} catch (Domingo) {
+			window.Telegram.WebApp.HapticFeedback.notificationOccurred('error')
+		} finally {
+			setIsProcessing(false)
 		}
 	}
 
 	const onClose = () => {
-		window.Telegram.WebApp.CloudStorage.setItem('fl_survey_complete', 'true')
-		setShowSurvey(false)
+		setShowSubscriptionModal(false)
 	}
 
-	const { t } = useTranslations()
 	return (
-		<Show when={showSurvey()}>
+		<Show when={store.showSubscriptionModal}>
 			<div class="px-3 fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
 				<div class="relative bg-background rounded-lg pr-4 pl-6 pt-5 pb-6 w-full max-w-md">
 					<div class="pb-4 flex flex-row items-center justify-between w-full">
-						<h2 class="text-xl font-bold">
-							{t('feature.title')}
-						</h2>
-						<button class="flex items-center justify-center rounded-sm"
-										onClick={() => onClose()}>
-						<span
-							class="material-symbols-rounded text-[24px] text-muted-foreground"
+						<h2 class="text-xl font-bold">{t('subscription.title')}</h2>
+						<button
+							class="flex items-center justify-center rounded-sm"
+							onClick={onClose}
 						>
-							close
-						</span>
+              <span class="material-symbols-rounded text-[24px] text-muted-foreground">
+                close
+              </span>
 						</button>
 					</div>
-					<p class="mb-6">
-						{t('feature.description')}
-					</p>
+					<p class="mb-6">{t('subscription.description')}</p>
 
-					<div class="space-y-3 mb-8">
-						<label class="flex items-center gap-3 cursor-pointer">
-							<input
-								type="radio"
-								name="option"
-								value="yes"
-								checked={selectedOption() === 'yes'}
-								onChange={(e) => setSelectedOption(e.target.value)}
-								class="hidden peer"
-							/>
-							<div
-								class="w-5 h-5 border-2 rounded flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary">
-								<svg
-									class={selectedOption() === 'yes' ? 'block' : 'hidden'}
-									width="12"
-									height="12"
-									viewBox="0 0 12 12"
-									fill="none"
-								>
-									<path
-										d="M2 6L5 9L10 3"
-										stroke="white"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							</div>
-							<span>
-								{t('feature.option_yes')}
-							</span>
-						</label>
-
-						<label class="flex items-center gap-3 cursor-pointer">
-							<input
-								type="radio"
-								name="option"
-								value="no"
-								checked={selectedOption() === 'no'}
-								onChange={(e) => setSelectedOption(e.target.value)}
-								class="hidden peer"
-							/>
-							<div
-								class="w-5 h-5 border-2 rounded flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary">
-								<svg
-									class={selectedOption() === 'no' ? 'block' : 'hidden'}
-									width="12"
-									height="12"
-									viewBox="0 0 12 12"
-									fill="none"
-								>
-									<path
-										d="M2 6L5 9L10 3"
-										stroke="white"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							</div>
-							<span>
-								{t('feature.option_no')}
-							</span>
-						</label>
+					<div class="border-2 rounded-lg p-4 mb-8">
+						<div class="flex justify-between items-center mb-2">
+							<h3 class="font-semibold">{t('subscription.premium')}</h3>
+							<span class="text-primary font-bold">
+                150 {t('subscription.stars')}
+              </span>
+						</div>
+						<p class="text-sm text-muted-foreground mb-2">
+							{t('subscription.premium_description')}
+						</p>
+						<ul class="text-sm space-y-1">
+							<li class="flex items-center gap-2">
+									<span class="material-symbols-rounded text-primary text-[16px]">
+										check
+									</span>
+								{t('subscription.feature_predictions')}
+							</li>
+							<li class="flex items-center gap-2">
+									<span class="material-symbols-rounded text-primary text-[16px]">
+										check
+									</span>
+								{t('subscription.feature_monthly_prizes')}
+							</li>
+						</ul>
 					</div>
 
 					<div class="flex justify-center">
 						<Button
-							onClick={handleSubmit}
-							disabled={!selectedOption()}
+							onClick={handleSubscribe}
+							disabled={isProcessing()}
+							class="w-full"
 						>
-							{t('feature.button_submit')}
+							{isProcessing() ? t('subscription.processing') : t('subscription.subscribe')}
 						</Button>
 					</div>
 				</div>
@@ -186,4 +124,3 @@ const PredictionDialog = () => {
 		</Show>
 	)
 }
-

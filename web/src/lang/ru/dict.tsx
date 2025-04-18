@@ -121,4 +121,13 @@ export const dict = {
 	'next': 'Next',
 	'start': 'Start',
 	prediction_submitted: 'Выиграйте до {{ points }} очков!',
+	'subscription.title': 'Разблокируйте премиум-функции',
+	'subscription.description': 'Получите доступ к эксклюзивным функциям с подпиской Premium.',
+	'subscription.premium': 'Премиум-подписка',
+	'subscription.stars': 'Звезды',
+	'subscription.premium_description': 'Делайте прогнозы и соревнуйтесь за ежемесячные призы!',
+	'subscription.feature_predictions': 'Неограниченные прогнозы на матчи',
+	'subscription.feature_monthly_prizes': 'Участвуйте в ежемесячных рейтингах и выигрывайте призы',
+	'subscription.subscribe': 'Подписаться сейчас',
+	'subscription.processing': 'Обработка...',
 }

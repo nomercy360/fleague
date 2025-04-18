@@ -14,6 +14,7 @@ import { IconMinus, IconPlus } from '~/components/icons'
 import { cn } from '~/lib/utils'
 import { useTranslations } from '~/lib/locale-context'
 import { showToast } from '~/components/ui/toast'
+import { setShowSubscriptionModal, store } from '~/store'
 
 
 interface ScoreboardProps {
@@ -55,6 +56,11 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 	}
 
 	const onPredictionSave = async () => {
+		if (!store.user.subscription_active) {
+			setShowSubscriptionModal(true)
+			return
+		}
+
 		const prediction: PredictionRequest = {
 			match_id: props.match.id,
 			predicted_home_score: null,
@@ -85,13 +91,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 				duration: 3000,
 			})
 		}
-
-		// if (error === 'insufficient tokens') {
-		// 	const { data, error } = await requestInvoice()
-		// 	if (!error) {
-		// 		window.Telegram.WebApp.openTelegramLink(data.link)
-		// 	}
-		// }
 	}
 
 	createEffect(() => {

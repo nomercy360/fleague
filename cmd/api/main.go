@@ -49,6 +49,7 @@ type Config struct {
 	OpenAIKey         string `yaml:"openai_key"`
 	TelegramChannelID int64  `yaml:"telegram_channel_id"`
 	BotWebApp         string `yaml:"bot_web_app"`
+	ExternalURL       string `yaml:"external_url"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -349,6 +350,13 @@ func main() {
 		log.Fatalf("Failed to initialize bot: %v", err)
 	}
 
+	if _, err := bot.SetWebhook(context.Background(), &telegram.SetWebhookParams{
+		URL:                fmt.Sprintf("%s/telegram/webhook", cfg.ExternalURL),
+		DropPendingUpdates: true,
+	}); err != nil {
+		log.Fatalf("Failed to set webhook: %v", err)
+	}
+
 	apiCfg := api.Config{
 		BotToken:  cfg.TelegramBotToken,
 		JWTSecret: cfg.JWTSecret,
@@ -398,6 +406,7 @@ func main() {
 	g.POST("/feedback", a.SaveSurvey)
 	g.GET("/survey-stats", a.GetSurveyStats)
 	g.POST("/payments/invoice", a.SendInvoice)
+	g.DELETE("/subscriptions", a.CancelSubscription)
 
 	done := make(chan bool, 1)
 
