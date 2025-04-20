@@ -65,5 +65,19 @@ func (s *Storage) SuspendSubscription(ctx context.Context, uid string) error {
 		SET end_date = CURRENT_TIMESTAMP
 		WHERE user_id = ? AND end_date > CURRENT_TIMESTAMP`
 	_, err := s.db.ExecContext(ctx, query, uid)
+	if err != nil {
+		return err
+	}
+
+	query = `
+		UPDATE users
+		SET subscription_active = false, subscription_expiry = CURRENT_TIMESTAMP
+		WHERE id = ?`
+
+	_, err = s.db.ExecContext(ctx, query, uid)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
