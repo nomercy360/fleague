@@ -36,7 +36,7 @@ To place bets, you\’ll need a subscription for *150 Telegram Stars* per month\
 
 🔥 Subscribe now and unleash your *football instincts*\!`
 
-	batchSize := 3
+	batchSize := 10
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, batchSize)
 
