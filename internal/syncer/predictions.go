@@ -139,13 +139,17 @@ func (s *Syncer) notifyUser(ctx context.Context, user db.User, streak int, bonus
 		return
 	}
 
-	message := fmt.Sprintf("🎉 Congratulations! You've achieved a streak of %d correct predictions and earned an extra %d points!", streak, bonusPoints)
+	message := fmt.Sprintf("🎉 Ты попал в яблочко %d раз подряд и заработал %d бонусных очков! Так держать, твое футбольное чутье на высоте!", streak, bonusPoints)
+	if user.LanguageCode != nil && *user.LanguageCode != "ru" {
+		message = fmt.Sprintf("🎉 Awesome job! You've nailed %d predictions in a row and scored %d bonus points! Your football instincts are on fire!", streak, bonusPoints)
+	}
+
 	err := s.notifier.SendTextNotification(contract.SendNotificationParams{
 		ChatID:  user.ChatID,
 		Message: telegram.EscapeMarkdown(message),
 	})
 
 	if err != nil {
-		log.Printf("Failed to send notification to user %s: %v", user.ID, err)
+		log.Printf("Не получилось отправить уведомление пользователю %s: %v", user.ID, err)
 	}
 }

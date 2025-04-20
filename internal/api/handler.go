@@ -50,6 +50,7 @@ type storager interface {
 	UpdateUserSubscription(ctx context.Context, uid string, active bool, expiry time.Time) error
 	GetActiveSubscription(ctx context.Context, uid string) (db.Subscription, error)
 	SuspendSubscription(ctx context.Context, uid string) error
+	GetAllUsers(ctx context.Context) ([]db.User, error)
 }
 
 type API struct {

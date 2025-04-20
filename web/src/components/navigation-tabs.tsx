@@ -87,8 +87,8 @@ function SubscriptionModal() {
 					<div class="border-2 rounded-lg p-4 mb-8">
 						<div class="flex justify-between items-center mb-2">
 							<h3 class="font-semibold">{t('subscription.premium')}</h3>
-							<span class="text-primary font-bold">
-                150 {t('subscription.stars')}
+							<span class="text-yellow-500 font-bold flex items-center justify-center">
+                150 <span class="material-symbols-rounded icon-fill">star</span>
               </span>
 						</div>
 						<p class="text-sm text-muted-foreground mb-2">

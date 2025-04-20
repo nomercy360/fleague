@@ -373,11 +373,11 @@ func main() {
 
 	a := api.New(storage, apiCfg, s3Client, bot)
 
-	tmConfig := middleware.TimeoutConfig{
-		Timeout: 120 * time.Second,
-	}
+	//tmConfig := middleware.TimeoutConfig{
+	//	Timeout: 120 * time.Second,
+	//}
 
-	e.Use(middleware.TimeoutWithConfig(tmConfig))
+	//e.Use(middleware.TimeoutWithConfig(tmConfig))
 
 	e.POST("/auth/telegram", a.TelegramAuth)
 
@@ -407,6 +407,7 @@ func main() {
 	g.GET("/survey-stats", a.GetSurveyStats)
 	g.POST("/payments/invoice", a.SendInvoice)
 	g.DELETE("/subscriptions", a.CancelSubscription)
+	g.POST("/message", a.BroadcastSubscriptionMessage)
 
 	done := make(chan bool, 1)
 

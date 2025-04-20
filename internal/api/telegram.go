@@ -24,7 +24,7 @@ func (a *API) SendInvoice(c echo.Context) error {
 	uid := GetContextUserID(c)
 
 	// Стоимость подписки в Telegram Stars (XTR)
-	amount := 1 // 1 XTR за подписку на месяц
+	amount := 150 // 150 XTR за подписку на месяц
 
 	invoice := telegram.CreateInvoiceLinkParams{
 		Title:              "Monthly Subscription",

@@ -24,14 +24,14 @@ func (a *API) SavePrediction(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 
-	//user, err := a.storage.GetUserByID(uid)
-	//if err != nil {
-	//	return terrors.InternalServer(err, "failed to get user")
-	//}
-	//
-	//if !user.SubscriptionActive || user.SubscriptionExpiry.Before(time.Now()) {
-	//	return ErrNoActiveSubscription
-	//}
+	user, err := a.storage.GetUserByID(uid)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get user")
+	}
+
+	if !user.SubscriptionActive || user.SubscriptionExpiry.Before(time.Now()) {
+		return ErrNoActiveSubscription
+	}
 
 	match, err := a.storage.GetMatchByID(ctx, req.MatchID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
@@ -43,7 +43,6 @@ func (a *API) SavePrediction(c echo.Context) error {
 		return terrors.BadRequest(nil, "match is not scheduled")
 	}
 
-	// Сохраняем прогноз без учета токенов
 	prediction := db.Prediction{
 		UserID:             uid,
 		MatchID:            req.MatchID,

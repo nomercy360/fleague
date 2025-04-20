@@ -1,11 +1,8 @@
 import { createEffect, createSignal, For, Show } from 'solid-js'
 import {
-	deleteMatchPrediction,
-	fetchMatchStats,
 	MatchResponse,
 	PredictionRequest,
 	PredictionResponse,
-	requestInvoice,
 	saveMatchPrediction,
 } from '~/lib/api'
 import { DrawerClose, DrawerContent, DrawerFooter } from '~/components/ui/drawer'
@@ -56,11 +53,6 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 	}
 
 	const onPredictionSave = async () => {
-		if (!store.user.subscription_active) {
-			setShowSubscriptionModal(true)
-			return
-		}
-
 		const prediction: PredictionRequest = {
 			match_id: props.match.id,
 			predicted_home_score: null,
@@ -78,6 +70,11 @@ export default function FootballScoreboard(props: ScoreboardProps) {
 		}
 
 		const { data, error } = await saveMatchPrediction(prediction)
+		if (error === 'no active subscription') {
+			setShowSubscriptionModal(true)
+			return
+		}
+
 		if (!error) {
 			props.onUpdate()
 
