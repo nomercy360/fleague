@@ -78,7 +78,12 @@ func (a *API) GetUserInfo(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to get user")
 	}
 
-	userPredictions, err := a.predictionsByUserID(ctx, user.ID)
+	userPredictions, err := a.predictionsByUserID(
+		ctx,
+		user.ID,
+		db.WithStartTime(time.Now().Add(-7*24*time.Hour)),
+		db.WithLimit(100),
+	)
 
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user predictions")

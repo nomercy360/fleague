@@ -7,6 +7,7 @@ import (
 	"github.com/user/project/internal/db"
 	"github.com/user/project/internal/terrors"
 	"net/http"
+	"time"
 )
 
 var ErrNoActiveSubscription = terrors.Forbidden(errors.New("no active subscription"), "no active subscription")
@@ -97,7 +98,13 @@ func (a *API) GetUserPredictions(c echo.Context) error {
 	ctx := c.Request().Context()
 	uid := GetContextUserID(c)
 
-	resp, err := a.predictionsByUserID(ctx, uid)
+	resp, err := a.predictionsByUserID(
+		ctx,
+		uid,
+		db.WithStartTime(time.Now().Add(-7*24*time.Hour)),
+		db.WithLimit(100),
+	)
+
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get user predictions")
 	}
