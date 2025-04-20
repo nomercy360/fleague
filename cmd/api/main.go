@@ -407,7 +407,7 @@ func main() {
 	g.GET("/survey-stats", a.GetSurveyStats)
 	g.POST("/payments/invoice", a.SendInvoice)
 	g.DELETE("/subscriptions", a.CancelSubscription)
-	g.POST("/message", a.BroadcastSubscriptionMessage)
+	//g.POST("/message", a.BroadcastSubscriptionMessage)
 
 	done := make(chan bool, 1)
 
